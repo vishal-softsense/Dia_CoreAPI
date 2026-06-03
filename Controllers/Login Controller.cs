@@ -1,9 +1,8 @@
-﻿using Dia_CoreAPI.DTOs;
-using Dia_CoreAPI.Models;
-using Dia_CoreAPI.Repository;
-using Dia_CoreAPI.Services;
+﻿using System;
+using System.Threading.Tasks;
+using Dia_CoreAPI.DTOs;
+using Dia_CoreAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
 
 namespace Dia_CoreAPI.Controllers
 {
@@ -11,113 +10,32 @@ namespace Dia_CoreAPI.Controllers
     [Route("api/[controller]")]
     public class LoginController : ControllerBase
     {
-        private readonly JwtService _jwtService;
-        private readonly MasterRepository _repository;
+        private readonly IAuthService _authService;
 
-        public LoginController(
-            JwtService jwtService,
-            MasterRepository repository)
+        public LoginController(IAuthService authService)
         {
-            _jwtService = jwtService;
-            _repository = repository;
+            _authService = authService;
         }
 
         [HttpPost("login")]
-        public IActionResult Login(LoginModel model)
+        public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
             try
             {
-                string connString =
-                    _repository.GetConnectionString(
-                        "DefaultConnection");
+                var authResult = await _authService.AuthenticateAsync(model);
 
-                LoginResponseModel user = null;
-
-                string encryptedPassword =
-                    SecurityProcessor.EncryptPassword(
-                        model.Password);
-
-                using (SqlConnection con =
-                    new SqlConnection(connString))
+                if (authResult == null)
                 {
-                    con.Open();
+                    return Unauthorized(new { Success = false, Message = "User not found" });
 
-                    SqlCommand cmd =
-                        new SqlCommand(@"
-                        SELECT TOP 1 *
-                        FROM TabUserMaster
-                        WHERE UserName=@UserName
-                        AND CompanyID=@CompanyID",
-                        con);
-
-                    cmd.Parameters.AddWithValue(
-                        "@UserName",
-                        model.Username);
-
-                    cmd.Parameters.AddWithValue(
-                        "@CompanyID",
-                        model.CompanyId);
-
-                    SqlDataReader dr =
-                        cmd.ExecuteReader();
-
-                    if (dr.Read())
-                    {
-                        user =
-                            new LoginResponseModel
-                            {
-                                UserID =
-                                    Convert.ToInt32(
-                                        dr["UserID"]),
-                                UserName =
-                                    dr["UserName"].ToString(),
-                                FirstName =
-                                    dr["FirstName"].ToString(),
-                                LastName =
-                                    dr["LastName"].ToString(),
-                                Title =
-                                    dr["Title"].ToString(),
-                                UserTypeId =
-                                    Convert.ToInt32(
-                                        dr["UserTypeId"]),
-                                CompanyID =
-                                    Convert.ToInt32(
-                                        dr["CompanyID"]),
-                                ProfileImage =
-                                    dr["ProfileImage"]
-                                    .ToString()
-                            };
-                    }
                 }
 
-                if (user == null)
-                {
-                    return Unauthorized(
-                        new
-                        {
-                            Success = false,
-                            Message = "User not found"
-                        });
-                }
-
-                string token =
-                    _jwtService.GenerateToken(user);
-
-                return Ok(new
-                {
-                    Success = true,
-                    Token = token,
-                    User = user
-                });
+                return Ok(new { Success = true, Token = authResult.Token, User = authResult.User });
             }
             catch (Exception ex)
             {
-                return BadRequest(
-                    new
-                    {
-                        Success = false,
-                        Message = ex.Message
-                    });
+                return BadRequest(new { Success = false, Message = ex.Message });
+
             }
         }
     }

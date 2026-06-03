@@ -1,12 +1,15 @@
-﻿using Dia_CoreAPI.Models;
-using Microsoft.IdentityModel.Tokens;
+﻿using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Dia_CoreAPI.Models;
+using Dia_CoreAPI.Services.Interfaces;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Configuration;
 
-namespace Dia_CoreAPI.Services
+namespace Dia_CoreAPI.Services.Implementations
 {
-    public class JwtService
+    public class JwtService : IJwtService
     {
         private readonly IConfiguration _configuration;
 
@@ -25,13 +28,10 @@ namespace Dia_CoreAPI.Services
             };
 
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(
-                    _configuration["Jwt:Key"]));
+                Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]
+                    ?? throw new InvalidOperationException("JWT Key not found in configuration.")));
 
-            var creds =
-                new SigningCredentials(
-                    key,
-                    SecurityAlgorithms.HmacSha256);
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
@@ -40,8 +40,7 @@ namespace Dia_CoreAPI.Services
                 expires: DateTime.Now.AddDays(1),
                 signingCredentials: creds);
 
-            return new JwtSecurityTokenHandler()
-                .WriteToken(token);
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }
