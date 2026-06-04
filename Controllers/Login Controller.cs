@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.Services.Interfaces;
@@ -22,12 +22,11 @@ namespace Dia_CoreAPI.Controllers
         {
             try
             {
-                var authResult = await _authService.AuthenticateAsync(model);
+                var (authResult, errorMessage) = await _authService.AuthenticateAsync(model);
 
                 if (authResult == null)
                 {
-                    return Unauthorized(new { Success = false, Message = "User not found" });
-
+                    return Unauthorized(new { Success = false, Message = errorMessage });
                 }
 
                 return Ok(new { Success = true, Token = authResult.Token, User = authResult.User });

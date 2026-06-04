@@ -17,7 +17,7 @@ namespace Dia_CoreAPI.Repositories.Implementations
             _connectionFactory = connectionFactory;
         }
 
-        public async Task<LoginResponseModel?> GetUserByCredentialsAsync(string username, string password, string companyId)
+        public async Task<(LoginResponseModel? User, string ErrorMessage)> GetUserByCredentialsAsync(string username, string password, string companyId)
         {
             // 1. First connect to the Master Database to get the Client's Connection String
             using var masterConnection = (SqlConnection)_connectionFactory.CreateConnection("MasterConnection");
@@ -39,7 +39,7 @@ namespace Dia_CoreAPI.Repositories.Implementations
             if (connStringResult == null || string.IsNullOrWhiteSpace(connStringResult.ToString()))
             {
                 // Company not found or no connection string mapped
-                return null;
+                return (null, "Invalid Company ID");
             }
 
             string clientConnectionString = connStringResult.ToString()!;
@@ -56,12 +56,10 @@ namespace Dia_CoreAPI.Repositories.Implementations
                 SELECT *
                 FROM TabUserMaster
                 WHERE UserName = @UserName
-                AND UserPassword = @Password
                 AND CompanyID = @CompanyID";
 
             using var command = new SqlCommand(query, clientConnection);
             command.Parameters.AddWithValue("@UserName", username);
-            command.Parameters.AddWithValue("@Password", password);
             command.Parameters.AddWithValue("@CompanyID", companyId);
 
             if (clientConnection.State != ConnectionState.Open)
@@ -72,7 +70,13 @@ namespace Dia_CoreAPI.Repositories.Implementations
             using var reader = await command.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
-                return new LoginResponseModel
+                string dbPassword = reader["UserPassword"]?.ToString() ?? string.Empty;
+                if (dbPassword != password)
+                {
+                    return (null, "Invalid Password");
+                }
+
+                var user = new LoginResponseModel
                 {
                     UserID = Convert.ToInt32(reader["UserID"]),
                     UserName = reader["UserName"]?.ToString() ?? string.Empty,
@@ -83,9 +87,11 @@ namespace Dia_CoreAPI.Repositories.Implementations
                     CompanyID = Convert.ToInt32(reader["CompanyID"]),
                     ProfileImage = reader["ProfileImage"]?.ToString() ?? string.Empty
                 };
+                
+                return (user, string.Empty);
             }
 
-            return null;
+            return (null, "Invalid Username");
         }
     }
 }

@@ -5,6 +5,6 @@ namespace Dia_CoreAPI.Repositories.Interfaces
 {
     public interface IUserRepository
     {
-        Task<LoginResponseModel?> GetUserByCredentialsAsync(string username, string password, string companyId);
+        Task<(LoginResponseModel? User, string ErrorMessage)> GetUserByCredentialsAsync(string username, string password, string companyId);
     }
 }
