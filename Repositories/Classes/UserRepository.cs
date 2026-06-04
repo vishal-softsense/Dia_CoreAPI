@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Threading.Tasks;
 using Dia_CoreAPI.DataAccess;
@@ -17,25 +17,56 @@ namespace Dia_CoreAPI.Repositories.Implementations
             _connectionFactory = connectionFactory;
         }
 
-        public async Task<LoginResponseModel?> GetUserByUsernameAndCompanyAsync(string username, string companyId)
+        public async Task<LoginResponseModel?> GetUserByCredentialsAsync(string username, string password, string companyId)
         {
-            using var connection = (SqlConnection)_connectionFactory.CreateConnection();
+            // 1. First connect to the Master Database to get the Client's Connection String
+            using var masterConnection = (SqlConnection)_connectionFactory.CreateConnection("MasterConnection");
+            
+            const string masterQuery = @"
+                SELECT ConnectionString 
+                FROM TabCompanyMaster 
+                WHERE CompanyID = @CompanyID";
 
-            // Raw SQL query to fetch user credentials matching username and companyID.
-            // Under a clean architecture, database schema query logic is restricted to the Repository layer.
+            using var masterCommand = new SqlCommand(masterQuery, masterConnection);
+            masterCommand.Parameters.AddWithValue("@CompanyID", companyId);
+
+            if (masterConnection.State != ConnectionState.Open)
+            {
+                await masterConnection.OpenAsync();
+            }
+
+            var connStringResult = await masterCommand.ExecuteScalarAsync();
+            if (connStringResult == null || string.IsNullOrWhiteSpace(connStringResult.ToString()))
+            {
+                // Company not found or no connection string mapped
+                return null;
+            }
+
+            string clientConnectionString = connStringResult.ToString()!;
+
+            // Fix for 'The certificate chain was issued by an authority that is not trusted'
+            // Older connection strings in the DB might not have TrustServerCertificate=True
+            var builder = new SqlConnectionStringBuilder(clientConnectionString);
+            builder.TrustServerCertificate = true;
+            
+            // 2. Now connect to the specific client database using their full connection string
+            using var clientConnection = (SqlConnection)_connectionFactory.CreateConnectionWithConnectionString(builder.ConnectionString);
+            
             const string query = @"
                 SELECT *
                 FROM TabUserMaster
                 WHERE UserName = @UserName
+                AND UserPassword = @Password
                 AND CompanyID = @CompanyID";
 
-            using var command = new SqlCommand(query, connection);
+            using var command = new SqlCommand(query, clientConnection);
             command.Parameters.AddWithValue("@UserName", username);
+            command.Parameters.AddWithValue("@Password", password);
             command.Parameters.AddWithValue("@CompanyID", companyId);
 
-            if (connection.State != ConnectionState.Open)
+            if (clientConnection.State != ConnectionState.Open)
             {
-                await connection.OpenAsync();
+                await clientConnection.OpenAsync();
             }
 
             using var reader = await command.ExecuteReaderAsync();

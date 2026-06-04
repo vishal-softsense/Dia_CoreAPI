@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.Repositories.Interfaces;
 using Dia_CoreAPI.Services.Interfaces;
@@ -26,8 +26,8 @@ namespace Dia_CoreAPI.Services.Implementations
             // Encrypt input password
             string encryptedPassword = _securityService.EncryptPassword(model.Password);
 
-            // Fetch matching user from the database via repository
-            var user = await _userRepository.GetUserByUsernameAndCompanyAsync(model.Username, model.CompanyId);
+            // Fetch matching user from the database via repository (verifying password)
+            var user = await _userRepository.GetUserByCredentialsAsync(model.Username, encryptedPassword, model.CompanyId);
             if (user == null)
             {
                 return null;

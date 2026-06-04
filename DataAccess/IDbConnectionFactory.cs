@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 
 namespace Dia_CoreAPI.DataAccess
 {
@@ -6,5 +6,6 @@ namespace Dia_CoreAPI.DataAccess
     {
         IDbConnection CreateConnection();
         IDbConnection CreateConnection(string connectionName);
+        IDbConnection CreateConnectionWithConnectionString(string connectionString);
     }
 }

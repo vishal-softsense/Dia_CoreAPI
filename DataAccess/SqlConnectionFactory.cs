@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 
@@ -26,6 +26,11 @@ namespace Dia_CoreAPI.DataAccess
             var connStr = _configuration.GetConnectionString(connectionName)
                 ?? throw new InvalidOperationException($"Connection string '{connectionName}' not found.");
             return new SqlConnection(connStr);
+        }
+
+        public IDbConnection CreateConnectionWithConnectionString(string connectionString)
+        {
+            return new SqlConnection(connectionString);
         }
     }
 }
