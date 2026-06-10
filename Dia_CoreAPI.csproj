@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -22,6 +22,13 @@
     <Folder Include="wwwroot\css\" />
     <Folder Include="wwwroot\js\" />
     <Folder Include="wwwroot\images\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="TestDbApp\**" />
+    <Content Remove="TestDbApp\**" />
+    <EmbeddedResource Remove="TestDbApp\**" />
+    <None Remove="TestDbApp\**" />
   </ItemGroup>
 
 </Project>

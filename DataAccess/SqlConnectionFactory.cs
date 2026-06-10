@@ -7,18 +7,17 @@ namespace Dia_CoreAPI.DataAccess
     public class SqlConnectionFactory : IDbConnectionFactory
     {
         private readonly IConfiguration _configuration;
-        private readonly string _connectionString;
 
         public SqlConnectionFactory(IConfiguration configuration)
         {
             _configuration = configuration;
-            _connectionString = _configuration.GetConnectionString("DefaultConnection")
-                ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
         }
 
         public IDbConnection CreateConnection()
         {
-            return new SqlConnection(_connectionString);
+            var connStr = _configuration.GetConnectionString("DefaultConnection")
+                ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+            return new SqlConnection(connStr);
         }
 
         public IDbConnection CreateConnection(string connectionName)

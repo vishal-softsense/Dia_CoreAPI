@@ -1,4 +1,4 @@
-﻿namespace Dia_CoreAPI.Services.Interfaces
+namespace Dia_CoreAPI.Services.Interfaces
 {
     public interface ISecurityService
     {
