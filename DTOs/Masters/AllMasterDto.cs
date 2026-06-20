@@ -1,4 +1,4 @@
-﻿namespace Dia_CoreAPI.DTOs.Masters
+namespace Dia_CoreAPI.DTOs.Masters
 {
     public class AllMasterDto
     {
@@ -12,5 +12,11 @@
     {
         public int TotalMasters { get; set; }
         public int TotalCategories { get; set; }
+    }
+
+    public class PermissionCheck
+    {
+        public int UserTypeID { get; set; }
+        public int FormID { get; set; }
     }
 }

@@ -1,5 +1,10 @@
 using Dia_CoreAPI.DataAccess;
+using Dia_CoreAPI.Repositories.Classes;
 using Dia_CoreAPI.Repositories.Classes.Masters;
+using Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction;
+using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
+using Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction;
+using Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Implementations;
 using Dia_CoreAPI.Repositories.Interfaces;
 using Dia_CoreAPI.Repositories.Interfaces.Masters;
@@ -31,6 +36,12 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddScoped<IAllMasterRepository, AllMasterRepository>();
 builder.Services.AddScoped<IAllMasterService, AllMasterService>();
+
+builder.Services.AddScoped<I4CMasterRepository, _4CMasterRepository>();
+builder.Services.AddScoped<I4CMasterService, _4CMasterService>();
+
+builder.Services.AddScoped<IPurchaseParcelRepository, PurchaseParcelRepository>();
+builder.Services.AddScoped<IPurchaseParcelService, PurchaseParcelService>();
 
 // Masters Registration
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.IUserMasterRepository, Dia_CoreAPI.Repositories.Implementations.Masters.UserMasterRepository>();
