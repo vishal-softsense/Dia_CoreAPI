@@ -6,6 +6,7 @@ using Dia_CoreAPI.Services.Implementations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,16 +14,41 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Dia Core API", Version = "v1" });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "JWT Authorization header using the Bearer scheme."
+    });
+    c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+    });
+});
 
 builder.Services.AddMemoryCache();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 builder.Services.AddSingleton<IDbConnectionFactory, SqlConnectionFactory>();
 builder.Services.AddScoped<ISqlDataAccess, SqlDataAccess>();
 builder.Services.AddScoped<IMasterRepository, MasterRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.IMasterService, Dia_CoreAPI.Services.Classes.MasterService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ISecurityService, SecurityService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<Dia_CoreAPI.Interfaces.IUserSessionService, Dia_CoreAPI.Services.Implementations.UserSessionService>();
 
 // Masters Registration
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.IUserMasterRepository, Dia_CoreAPI.Repositories.Implementations.Masters.UserMasterRepository>();
@@ -30,6 +56,14 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IUserMasterSe
 
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.IUserRoleRepository, Dia_CoreAPI.Repositories.Implementations.Masters.UserRoleRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IUserRoleService, Dia_CoreAPI.Services.Classes.Masters.UserRoleService>();
+
+// Color Master Registration
+builder.Services.AddScoped<Dia_CoreAPI.Interfaces.IColorRepository, Dia_CoreAPI.Repositories.Implementations.ColorRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Interfaces.IColorService, Dia_CoreAPI.Services.Implementations.ColorService>();
+
+// Setting Master Registration
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.ISettingRepository, Dia_CoreAPI.Repositories.Implementations.Masters.SettingRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.ISettingService, Dia_CoreAPI.Services.Classes.Masters.SettingService>();
 
 builder.Services.AddCors(options =>
 {
@@ -88,6 +122,8 @@ app.UseStaticFiles(new StaticFileOptions
     FileProvider = new PhysicalFileProvider(uploadPath),
     RequestPath = "/Upload"
 });
+
+app.UseSession();
 
 app.UseAuthentication();
 app.UseAuthorization();
