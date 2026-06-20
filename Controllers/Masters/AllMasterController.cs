@@ -319,6 +319,7 @@ namespace Dia_CoreAPI.Controllers.Masters
 
         #endregion
 
+        /*
         #region Color Master
 
         [HttpGet("list-color")]
@@ -515,5 +516,6 @@ namespace Dia_CoreAPI.Controllers.Masters
 
 
         #endregion
+        */
     }
 }

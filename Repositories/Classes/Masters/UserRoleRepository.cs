@@ -6,7 +6,7 @@ using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs.Masters;
 using Dia_CoreAPI.Repositories.Interfaces.Masters;
 
-namespace Dia_CoreAPI.Repositories.Implementations.Masters
+namespace Dia_CoreAPI.Repositories.Classes.Masters
 {
     public class UserRoleRepository : IUserRoleRepository
     {

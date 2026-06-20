@@ -6,7 +6,7 @@ using Dia_CoreAPI.Repositories.Interfaces.Masters;
 using Dia_CoreAPI.Services.Interfaces;
 using Dia_CoreAPI.Services.Interfaces.Masters;
 
-namespace Dia_CoreAPI.Services.Implementations.Masters
+namespace Dia_CoreAPI.Services.Classes.Masters
 {
     public class UserMasterService : IUserMasterService
     {

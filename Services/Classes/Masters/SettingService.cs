@@ -1,6 +1,7 @@
 using Dia_CoreAPI.DTOs;
-using Dia_CoreAPI.Interfaces;
+using Dia_CoreAPI.DTOs.Masters;
 using Dia_CoreAPI.Models;
+using Dia_CoreAPI.Models.Masters;
 using Dia_CoreAPI.Repositories.Interfaces.Masters;
 using Dia_CoreAPI.Services.Interfaces.Masters;
 using System;
@@ -14,63 +15,39 @@ namespace Dia_CoreAPI.Services.Classes.Masters
     public class SettingService : ISettingService
     {
         private readonly ISettingRepository _settingRepository;
-        private readonly IUserSessionService _sessionService;
 
-        public SettingService(ISettingRepository settingRepository, IUserSessionService sessionService)
+        public SettingService(ISettingRepository settingRepository)
         {
             _settingRepository = settingRepository;
-            _sessionService = sessionService;
         }
 
-        private async Task LogAccessAsync(string status)
+        private async Task LogAccessAsync(string status, string companyId, string userName)
         {
-            string userName = _sessionService.UserName ?? "Unknown";
-            string device = _sessionService.SearchLogDevice ?? "Unknown";
-            string deviceType = _sessionService.SearchLogDeviceType ?? "Unknown";
-            string os = _sessionService.SearchLogOS ?? "Unknown";
-            string ip = _sessionService.SearchLogIP ?? "Unknown";
-            string companyId = _sessionService.CompanyId?.ToString() ?? "0";
-
-            await _settingRepository.LogPageAccessAsync(userName, status, device, deviceType, os, ip, companyId);
+            await _settingRepository.LogPageAccessAsync(userName, status, "Unknown", "Unknown", "Unknown", "Unknown", companyId);
         }
 
-        public async Task<IEnumerable<CompanySettingMaster>> GetSettingListAsync()
+        public async Task<IEnumerable<CompanySettingMaster>> GetSettingListAsync(string companyId, string userName)
         {
-            string companyId = _sessionService.CompanyId?.ToString() ?? "0";
-            await LogAccessAsync("SettingMasterList");
+            await LogAccessAsync("SettingMasterList", companyId, userName);
 
             var data = await _settingRepository.GetSettingListAsync("and GroupId=''COMPANY'' and Active=''1''Order By Priority", companyId);
             return data;
         }
-        public async Task<IEnumerable<CompanySettingMaster>> FilterSettingListAsync(string groupId)
-        {
-            string companyId = _sessionService.CompanyId?.ToString() ?? "0";
 
+        public async Task<IEnumerable<CompanySettingMaster>> FilterSettingListAsync(string groupId, string companyId, string userName)
+        {
             // Clean GroupId
             groupId = groupId?.Replace(":", "").Replace("\"", "").Replace("'", "").Trim() ?? string.Empty;
 
-            await LogAccessAsync("SettingMasterList");
+            await LogAccessAsync("SettingMasterList", companyId, userName);
 
-            var data = await _settingRepository.GetSettingListAsync("and GroupId=''" + groupId + "'' and Active=''1'' Order By Priority",companyId);
+            var data = await _settingRepository.GetSettingListAsync("and GroupId=''" + groupId + "'' and Active=''1'' Order By Priority", companyId);
 
             return data;
         }
 
-        //public async Task<IEnumerable<CompanySettingMaster>> FilterSettingListAsync(string groupId)
-        //{
-        //    string companyId = _sessionService.CompanyId?.ToString() ?? "0";
-        //    groupId = groupId?.Trim('"', '\'') ?? string.Empty;
-        //    await LogAccessAsync("SettingMasterList");
-
-        //    var data = await _settingRepository.GetSettingListAsync("and GroupId=''" + groupId + "'' and Active=''1''Order By Priority", companyId);
-        //    return data;
-        //}
-
-        public async Task<(bool Success, string Message)> SubmitSettingDataAsync(CompanySettingMasterDto dto)
+        public async Task<(bool Success, string Message)> SubmitSettingDataAsync(CompanySettingMasterDto dto, int? userTypeId, string companyId)
         {
-            int? userTypeId = _sessionService.UserTypeId;
-            string companyId = _sessionService.CompanyId?.ToString() ?? "0";
-
             if (dto.Id == 0) // Insert
             {
                 bool hasPermission = await _settingRepository.CheckUserPermissionAsync(userTypeId, "Company Setting Master", "insert", companyId);
@@ -85,14 +62,16 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     return (false, $"Record already available with shape id - {dto.Name}");
                 }
 
+                int parsedCompanyId = 0;
+                int.TryParse(companyId, out parsedCompanyId);
+
                 var model = new CompanySettingMaster
                 {
-                   
                     Name = dto.Name,
                     Value = dto.Value,
                     Description = dto.Description,
                     COMMENT = dto.COMMENT,
-                    CompanyID = _sessionService.CompanyId ?? 0
+                    CompanyID = parsedCompanyId
                 };
 
                 bool saved = await _settingRepository.SaveSettingDataAsync(model, "insert", companyId);
@@ -117,6 +96,9 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     return (false, "Sorry.! You can not update record because Name already exists.");
                 }
 
+                int parsedCompanyId = 0;
+                int.TryParse(companyId, out parsedCompanyId);
+
                 var model = new CompanySettingMaster
                 {
                     Id = dto.Id,
@@ -124,7 +106,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     Value = dto.Value,
                     Description = dto.Description,
                     COMMENT = dto.COMMENT,
-                    CompanyID = _sessionService.CompanyId ?? 0
+                    CompanyID = parsedCompanyId
                 };
 
                 bool saved = await _settingRepository.SaveSettingDataAsync(model, "update", companyId);
@@ -137,18 +119,14 @@ namespace Dia_CoreAPI.Services.Classes.Masters
             }
         }
 
-        public async Task<CompanySettingMaster?> GetSettingByIdAndNameAsync(int id, string name)
+        public async Task<CompanySettingMaster?> GetSettingByIdAndNameAsync(int id, string name, string companyId)
         {
-            string companyId = _sessionService.CompanyId?.ToString() ?? "0";
             var list = await _settingRepository.GetSettingListAsync($" AND ID = {id} AND Name = ''{name}'' ", companyId);
             return list.FirstOrDefault();
         }
 
-        public async Task<(bool Success, string Message)> DeleteSettingAsync(int id)
+        public async Task<(bool Success, string Message)> DeleteSettingAsync(int id, int? userTypeId, string companyId)
         {
-            int? userTypeId = _sessionService.UserTypeId;
-            string companyId = _sessionService.CompanyId?.ToString() ?? "0";
-
             bool hasPermission = await _settingRepository.CheckUserPermissionAsync(userTypeId, "Company Setting Master", "delete", companyId);
             if (!hasPermission)
             {
@@ -173,9 +151,8 @@ namespace Dia_CoreAPI.Services.Classes.Masters
             }
         }
 
-        public async Task<(CompanySettingMaster? Setting, IEnumerable<GetInvoiceFormatData> Formats)> GetInvoiceFormatSettingAsync(int Id, string name)
+        public async Task<(CompanySettingMaster? Setting, IEnumerable<GetInvoiceFormatData> Formats)> GetInvoiceFormatSettingAsync(int Id, string name, string companyId)
         {
-            string companyId = _sessionService.CompanyId?.ToString() ?? "0";
             var list = await _settingRepository.GetSettingListAsync($" AND ID = {Id}", companyId);
             var setting = list.FirstOrDefault();
 
@@ -218,9 +195,8 @@ namespace Dia_CoreAPI.Services.Classes.Masters
             return (setting, formats);
         }
 
-        public async Task<string?> GetInvoicePreviewPathAsync(string name, string value)
+        public async Task<string?> GetInvoicePreviewPathAsync(string name, string value, string companyId)
         {
-            string companyId = _sessionService.CompanyId?.ToString() ?? "0";
             string type = "";
             switch (name)
             {
@@ -244,18 +220,14 @@ namespace Dia_CoreAPI.Services.Classes.Masters
             return await _settingRepository.GetInvoicePathAsync($"AND Type = ''{type}'' AND FormateName = ''{value}''", companyId);
         }
 
-        public async Task<IEnumerable<ColumnAbbrMaster>> GetColumnAbbrListAsync()
+        public async Task<IEnumerable<ColumnAbbrMaster>> GetColumnAbbrListAsync(string companyId, string userName)
         {
-            string companyId = _sessionService.CompanyId?.ToString() ?? "0";
-            await LogAccessAsync("SettingMasterList");
+            await LogAccessAsync("SettingMasterList", companyId, userName);
             return await _settingRepository.GetColumnAbbrListAsync("SELECT", "", "", companyId);
         }
 
-        public async Task<(bool Success, string Message)> UpdateColumnAbbrListAsync(IEnumerable<ColumnAbbrMaster> rows)
+        public async Task<(bool Success, string Message)> UpdateColumnAbbrListAsync(IEnumerable<ColumnAbbrMaster> rows, int? userTypeId, string companyId)
         {
-            int? userTypeId = _sessionService.UserTypeId;
-            string companyId = _sessionService.CompanyId?.ToString() ?? "0";
-
             bool hasPermission = await _settingRepository.CheckUserPermissionAsync(userTypeId, "Company Setting Master", "edit", companyId);
             if (!hasPermission)
             {

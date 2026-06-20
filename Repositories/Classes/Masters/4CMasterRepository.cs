@@ -1,4 +1,3 @@
-using Dapper;
 using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs.Masters;
 using Dia_CoreAPI.Repositories.Interfaces.Masters;
@@ -8,6 +7,9 @@ using Microsoft.Data.SqlClient;
 using System.ComponentModel.Design;
 using System.Data;
 using System.Drawing;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Dia_CoreAPI.Repositories.Classes.Masters
 {
@@ -39,11 +41,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Masters
             else if (actionType == "select")
                 where = " SelectData = 1 ";
 
-            var parameters = new DynamicParameters();
-
-            parameters.Add("@UserTypeId", "'" + userTypeId + "'");
-            parameters.Add("@FormName", "'" + formName + "'");
-            parameters.Add("@Where", where);
+            var parameters = new Dictionary<string, object>
+            {
+                { "@UserTypeId", "'" + userTypeId + "'" },
+                { "@FormName", "'" + formName + "'" },
+                { "@Where", where }
+            };
 
             var result =
                 await _sqlDataAccess.SelectDataFromSP<PermissionCheck>(
@@ -58,9 +61,11 @@ namespace Dia_CoreAPI.Repositories.Classes.Masters
             string where,
             string companyId)
         {
-            var param = new DynamicParameters();
-            param.Add("@Type", "Shape");
-            param.Add("@Where", where);
+            var param = new Dictionary<string, object>
+            {
+                { "@Type", "Shape" },
+                { "@Where", where }
+            };
 
             var result =
                 await _sqlDataAccess.SelectDataFromSP<ShapeMaster>(
@@ -70,13 +75,17 @@ namespace Dia_CoreAPI.Repositories.Classes.Masters
 
             return result.ToList();
         }
+
+        /*
         public async Task<List<ColorMaster>> GetColorMasterListAsync(
             string where,
             string companyId)
         {
-            var param = new DynamicParameters();
-            param.Add("@Type", "Color");
-            param.Add("@Where", where);
+            var param = new Dictionary<string, object>
+            {
+                { "@Type", "Color" },
+                { "@Where", where }
+            };
 
             var result =
                 await _sqlDataAccess.SelectDataFromSP<ColorMaster>(
@@ -86,6 +95,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Masters
 
             return result.ToList();
         }
+        */
 
         public async Task<bool> SaveShapeMasterAsync(
            ShapeMaster model,
@@ -93,59 +103,66 @@ namespace Dia_CoreAPI.Repositories.Classes.Masters
            string companyId,
            string actionType)
         {
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>
+            {
+                { "@id", model.ID },
+                { "@ShapeId", model.ShapeID },
+                { "@ShapeName", model.ShapeName },
+                { "@ShapePriority", model.ShapePriority },
+                { "@ShapeGroupName", model.ShapeGroupName },
+                { "@ShapeGroupPriority", model.ShapeGroupPriority },
+                { "@PricingShapeID", model.PricingShapeID },
+                { "@CreatedBy", userId },
+                { "@ModifyBy", userId },
+                { "@CompanyID", companyId },
+                { "@ActionType", actionType }
+            };
 
-            param.Add("@id", model.ID);
-            param.Add("@ShapeId", model.ShapeID);
-            param.Add("@ShapeName", model.ShapeName);
-            param.Add("@ShapePriority", model.ShapePriority);
-            param.Add("@ShapeGroupName", model.ShapeGroupName);
-            param.Add("@ShapeGroupPriority", model.ShapeGroupPriority);
-            param.Add("@PricingShapeID", model.PricingShapeID);
-            param.Add("@CreatedBy", userId);
-            param.Add("@ModifyBy", userId);
-            param.Add("@CompanyID", companyId);
-            param.Add("@ActionType", actionType);
-
-            int result = await _sqlDataAccess.ExecuteSP("SP_ShapeMaster", param,companyId);
+            int result = await _sqlDataAccess.ExecuteSP("SP_ShapeMaster", param, companyId);
             return result > 0;
-            //return true;
         }
 
+        /*
         public async Task<bool> SaveColorMasterAsync(
            ColorMaster model,
            string userId,
            string companyId,
            string actionType)
         {
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>
+            {
+                { "@id", model.ID },
+                { "@ColorId", model.ColorID },
+                { "@ColorName", model.ColorName },
+                { "@ColorPriority", model.ColorPriority },
+                { "@ColorGroupName", model.ColorGroupName },
+                { "@ColorGroupPriority", model.ColorGroupPriority },
+                { "@PricingColorID", model.PricingColorID },
+                { "@CreatedBy", userId },
+                { "@ModifyBy", userId },
+                { "@CompanyID", companyId },
+                { "@ActionType", actionType }
+            };
 
-            param.Add("@id", model.ID);
-            param.Add("@ColorId", model.ColorID);
-            param.Add("@ColorName", model.ColorName);
-            param.Add("@ColorPriority", model.ColorPriority);
-            param.Add("@ColorGroupName", model.ColorGroupName);
-            param.Add("@ColorGroupPriority", model.ColorGroupPriority);
-            param.Add("@PricingColorID", model.PricingColorID);
-            param.Add("@CreatedBy", userId);
-            param.Add("@ModifyBy", userId);
-            param.Add("@CompanyID", companyId);
-            param.Add("@ActionType", actionType);
-
-            param.Add("@ReturnValue",dbType: DbType.Int32,direction: ParameterDirection.Output);
+            var returnValueParam = new SqlParameter("@ReturnValue", SqlDbType.Int)
+            {
+                Direction = ParameterDirection.Output
+            };
+            param.Add("@ReturnValue", returnValueParam);
 
             await _sqlDataAccess.ExecuteSP("SP_ColorMaster", param, companyId);
 
-            int returnValue = param.Get<int>("@ReturnValue");
+            int returnValue = (int)(returnValueParam.Value ?? 0);
 
             return returnValue == 1;
         }
+        */
 
         public async Task<bool> DeleteShapeAsync(
-    int id,
-    string userTypeId,
-    string userId,
-    string companyId)
+            int id,
+            string userTypeId,
+            string userId,
+            string companyId)
         {
             int permission =
                 await CheckUserPermissionAsync(userTypeId,"Shape Master", "delete",companyId);

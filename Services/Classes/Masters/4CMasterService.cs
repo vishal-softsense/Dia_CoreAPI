@@ -1,4 +1,4 @@
-﻿using Dia_CoreAPI.DTOs.Masters;
+using Dia_CoreAPI.DTOs.Masters;
 using Dia_CoreAPI.Repositories.Classes.Masters;
 using Dia_CoreAPI.Repositories.Interfaces.Masters;
 using Dia_CoreAPI.Services.Interfaces.Masters;
@@ -35,6 +35,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                 where,
                 companyId);
         }
+        /*
         public async Task<List<ColorMaster>> GetColorMasterListAsync(
             string where,
             string companyId)
@@ -43,6 +44,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                 where,
                 companyId);
         }
+        */
 
         public async Task<bool> SaveShapeMasterAsync(
             ShapeMaster model,
@@ -57,6 +59,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                 actionType);
         }
 
+        /*
         public async Task<bool> SaveColorMasterAsync(
             ColorMaster model,
             string userId,
@@ -69,6 +72,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                 companyId,
                 actionType);
         }
+        */
 
         public async Task<bool> DeleteShapeAsync(
     int id,

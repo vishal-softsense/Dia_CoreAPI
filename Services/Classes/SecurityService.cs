@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Dia_CoreAPI.Services.Interfaces;
 
-namespace Dia_CoreAPI.Services.Implementations
+namespace Dia_CoreAPI.Services.Classes
 {
     public class SecurityService : ISecurityService
     {

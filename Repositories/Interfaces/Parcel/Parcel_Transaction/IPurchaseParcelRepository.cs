@@ -1,4 +1,4 @@
-﻿using Dia_CoreAPI.DTOs.Masters;
+using Dia_CoreAPI.DTOs.Masters;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -19,7 +19,7 @@ namespace Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction
 
         Task<List<LotNoDataPPur>> GetLotDetailsAsync(string lotNo,string companyId);
 
-        Task<bool> AddPurchaseParcelAsync(
+        Task<(bool Success, string Message)> AddPurchaseParcelAsync(
     SalePurs salePur,
     List<ImportExcelpurAdd> items,
     string userId,

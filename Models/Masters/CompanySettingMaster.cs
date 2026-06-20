@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Dia_CoreAPI.Models
+namespace Dia_CoreAPI.Models.Masters
 {
     public class CompanySettingMaster
     {
@@ -18,5 +18,4 @@ namespace Dia_CoreAPI.Models
 
         public int CompanyID { get; set; }
     }
-
 }

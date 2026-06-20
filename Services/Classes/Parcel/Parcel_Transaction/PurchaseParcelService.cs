@@ -1,4 +1,4 @@
-﻿using Dia_CoreAPI.DTOs.Masters;
+using Dia_CoreAPI.DTOs.Masters;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
@@ -49,6 +49,15 @@ namespace Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction
         public async Task<List<LotNoDataPPur>> GetLotDetailsAsync(string lotNo, string companyId)
         {
             return await _repository.GetLotDetailsAsync(lotNo,companyId);
+        }
+
+        public async Task<(bool Success, string Message)> AddPurchaseParcelAsync(
+            SalePurs salePur,
+            List<ImportExcelpurAdd> items,
+            string userId,
+            string companyId)
+        {
+            return await _repository.AddPurchaseParcelAsync(salePur, items, userId, companyId);
         }
     }
 }

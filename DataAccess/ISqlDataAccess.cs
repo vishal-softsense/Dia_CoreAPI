@@ -10,5 +10,6 @@ namespace Dia_CoreAPI.DataAccess
         Task<int> ExecuteSP(string spName, Dictionary<string, object> parameters, string companyId);
         Task<T?> ExecuteQuerySingle<T>(string query, object parameters, string companyId);
         Task<int> ExecuteQuery(string query, object parameters, string companyId);
+        Task<string> GetClientConnectionString(string companyId);
     }
 }

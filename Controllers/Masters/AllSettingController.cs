@@ -1,5 +1,7 @@
 using Dia_CoreAPI.DTOs;
+using Dia_CoreAPI.DTOs.Masters;
 using Dia_CoreAPI.Models;
+using Dia_CoreAPI.Models.Masters;
 using Dia_CoreAPI.Services.Interfaces.Masters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,12 +24,17 @@ namespace Dia_CoreAPI.Controllers.Masters
             _settingService = settingService;
         }
 
+        private string GetUserId() => HttpContext.User.FindFirst("UserID")?.Value ?? "0";
+        private int? GetUserTypeId() => int.TryParse(HttpContext.User.FindFirst("UserTypeId")?.Value, out int ut) ? ut : (int?)null;
+        private string GetCompanyId() => HttpContext.User.FindFirst("CompanyID")?.Value ?? "0";
+        private string GetUserName() => HttpContext.User.FindFirst("Username")?.Value ?? "Unknown";
+
         [HttpGet("get-setting-data")]
         public async Task<IActionResult> GetSettingData()
         {
             try
             {
-                var settings = await _settingService.GetSettingListAsync();
+                var settings = await _settingService.GetSettingListAsync(GetCompanyId(), GetUserName());
                 var data = settings.Select(row => new
                 {
                     Id = row.Id,
@@ -50,7 +57,7 @@ namespace Dia_CoreAPI.Controllers.Masters
         {
             try
             {
-                var settings = await _settingService.FilterSettingListAsync(groupId);
+                var settings = await _settingService.FilterSettingListAsync(groupId, GetCompanyId(), GetUserName());
                 var data = settings.Select(row => new
                 {
                     Id = row.Id,
@@ -81,7 +88,7 @@ namespace Dia_CoreAPI.Controllers.Masters
 
             try
             {
-                var (success, message) = await _settingService.SubmitSettingDataAsync(model);
+                var (success, message) = await _settingService.SubmitSettingDataAsync(model, GetUserTypeId(), GetCompanyId());
                 if (success)
                 {
                     return Ok(new { success = true, data = message });
@@ -102,7 +109,7 @@ namespace Dia_CoreAPI.Controllers.Masters
         {
             try
             {
-                var setting = await _settingService.GetSettingByIdAndNameAsync(id, name);
+                var setting = await _settingService.GetSettingByIdAndNameAsync(id, name, GetCompanyId());
                 if (setting != null)
                 {
                     var data = new
@@ -110,8 +117,6 @@ namespace Dia_CoreAPI.Controllers.Masters
                         Id = setting.Id,
                         Name = setting.Name,
                         Value = setting.Value,
-                        //Description = setting.Description,
-                        //COMMENT = setting.COMMENT
                     };
                     return Ok(new { success = true, data = data });
                 }
@@ -131,7 +136,7 @@ namespace Dia_CoreAPI.Controllers.Masters
         {
             try
             {
-                var (success, message) = await _settingService.DeleteSettingAsync(id);
+                var (success, message) = await _settingService.DeleteSettingAsync(id, GetUserTypeId(), GetCompanyId());
                 if (success)
                 {
                     return Ok(new { success = true, data = message });
@@ -146,13 +151,14 @@ namespace Dia_CoreAPI.Controllers.Masters
                 return BadRequest(new { success = false, data = ex.Message });
             }
         }
+
         //All print format
         [HttpGet("get-print-format-data")]
         public async Task<IActionResult> GetPrintFormatData()
         {
             try
             {
-                var settings = await _settingService.FilterSettingListAsync("PRINT FORMAT");
+                var settings = await _settingService.FilterSettingListAsync("PRINT FORMAT", GetCompanyId(), GetUserName());
                 var data = settings.Select(row => new
                 {
                     Id = row.Id,
@@ -187,7 +193,7 @@ namespace Dia_CoreAPI.Controllers.Masters
         {
             try
             {
-                var (setting, formats) = await _settingService.GetInvoiceFormatSettingAsync(Id, Name);
+                var (setting, formats) = await _settingService.GetInvoiceFormatSettingAsync(Id, Name, GetCompanyId());
                 if (setting != null)
                 {
                     var data = new
@@ -224,7 +230,7 @@ namespace Dia_CoreAPI.Controllers.Masters
         {
             try
             {
-                var filePath = await _settingService.GetInvoicePreviewPathAsync(model.Name, model.Value);
+                var filePath = await _settingService.GetInvoicePreviewPathAsync(model.Name, model.Value, GetCompanyId());
                 return Ok(new { success = true, path = filePath });
             }
             catch (Exception ex)
@@ -238,7 +244,7 @@ namespace Dia_CoreAPI.Controllers.Masters
         {
             try
             {
-                var list = await _settingService.GetColumnAbbrListAsync();
+                var list = await _settingService.GetColumnAbbrListAsync(GetCompanyId(), GetUserName());
                 var data = list.Select(row => new
                 {
                     Id = row.Id,
@@ -258,7 +264,7 @@ namespace Dia_CoreAPI.Controllers.Masters
         {
             try
             {
-                var (success, message) = await _settingService.UpdateColumnAbbrListAsync(rows);
+                var (success, message) = await _settingService.UpdateColumnAbbrListAsync(rows, GetUserTypeId(), GetCompanyId());
                 if (success)
                 {
                     return Ok(new { success = true });

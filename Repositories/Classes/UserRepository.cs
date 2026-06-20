@@ -6,7 +6,7 @@ using Dia_CoreAPI.Models;
 using Dia_CoreAPI.Repositories.Interfaces;
 using Microsoft.Data.SqlClient;
 
-namespace Dia_CoreAPI.Repositories.Implementations
+namespace Dia_CoreAPI.Repositories.Classes
 {
     public class UserRepository : IUserRepository
     {

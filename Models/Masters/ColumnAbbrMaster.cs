@@ -1,4 +1,4 @@
-namespace Dia_CoreAPI.Models
+namespace Dia_CoreAPI.Models.Masters
 {
     public class ColumnAbbrMaster
     {

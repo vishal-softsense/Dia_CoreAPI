@@ -3,7 +3,7 @@ using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.Repositories.Interfaces;
 using Dia_CoreAPI.Services.Interfaces;
 
-namespace Dia_CoreAPI.Services.Implementations
+namespace Dia_CoreAPI.Services.Classes
 {
     public class AuthService : IAuthService
     {

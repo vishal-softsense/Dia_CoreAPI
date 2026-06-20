@@ -6,7 +6,7 @@ using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs.StockAccount;
 using Dia_CoreAPI.Repositories.Interfaces.StockAccount;
 
-namespace Dia_CoreAPI.Repositories.Implementations.StockAccount
+namespace Dia_CoreAPI.Repositories.Classes.StockAccount
 {
     public class ParcelItemMasterRepository : IParcelItemMasterRepository
     {

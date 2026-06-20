@@ -1,4 +1,4 @@
-﻿using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
+using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction;
 using Microsoft.AspNetCore.Http;
@@ -18,7 +18,7 @@ namespace Dia_CoreAPI.Controllers.Parcel.Parcel_Transaction
             _service = service;
         }
 
-        //private string GetUserId() => HttpContext.User.FindFirst("UserID")?.Value ?? "0";
+        private string GetUserId() => HttpContext.User.FindFirst("UserID")?.Value ?? "0";
         private string GetUserTypeId() => HttpContext.User.FindFirst("UserTypeId")?.Value ?? "0";
         private string GetCompanyId() => HttpContext.User.FindFirst("CompanyID")?.Value ?? "0";
 

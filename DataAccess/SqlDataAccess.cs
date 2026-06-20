@@ -20,7 +20,7 @@ namespace Dia_CoreAPI.DataAccess
             _cache = cache;
         }
 
-        private async Task<string> GetClientConnectionString(string companyId)
+        public async Task<string> GetClientConnectionString(string companyId)
         {
             string cacheKey = $"ClientDb_{companyId}";
             if (!_cache.TryGetValue(cacheKey, out string? connStringResult))
@@ -58,7 +58,14 @@ namespace Dia_CoreAPI.DataAccess
             {
                 foreach (var param in dictParams)
                 {
-                    cmd.Parameters.AddWithValue(param.Key, param.Value ?? DBNull.Value);
+                    if (param.Value is SqlParameter sqlParam)
+                    {
+                        cmd.Parameters.Add(sqlParam);
+                    }
+                    else
+                    {
+                        cmd.Parameters.AddWithValue(param.Key, param.Value ?? DBNull.Value);
+                    }
                 }
             }
             else

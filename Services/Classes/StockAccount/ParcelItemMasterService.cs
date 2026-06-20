@@ -4,7 +4,7 @@ using Dia_CoreAPI.DTOs.StockAccount;
 using Dia_CoreAPI.Repositories.Interfaces.StockAccount;
 using Dia_CoreAPI.Services.Interfaces.StockAccount;
 
-namespace Dia_CoreAPI.Services.Implementations.StockAccount
+namespace Dia_CoreAPI.Services.Classes.StockAccount
 {
     public class ParcelItemMasterService : IParcelItemMasterService
     {

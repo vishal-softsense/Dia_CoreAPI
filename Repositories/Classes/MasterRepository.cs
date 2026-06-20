@@ -1,7 +1,7 @@
-﻿using Dia_CoreAPI.Repositories.Interfaces;
+using Dia_CoreAPI.Repositories.Interfaces;
 using Microsoft.Extensions.Configuration;
 
-namespace Dia_CoreAPI.Repositories.Implementations
+namespace Dia_CoreAPI.Repositories.Classes
 {
     public class MasterRepository : IMasterRepository
     {

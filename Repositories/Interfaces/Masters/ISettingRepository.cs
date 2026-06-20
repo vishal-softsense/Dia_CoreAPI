@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Dia_CoreAPI.Models;
+using Dia_CoreAPI.Models.Masters;
 
 namespace Dia_CoreAPI.Repositories.Interfaces.Masters
 {

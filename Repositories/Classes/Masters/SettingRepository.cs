@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
-using Dapper;
 using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.Models;
+using Dia_CoreAPI.Models.Masters;
 using Dia_CoreAPI.Repositories.Interfaces.Masters;
 
-namespace Dia_CoreAPI.Repositories.Implementations.Masters
+namespace Dia_CoreAPI.Repositories.Classes.Masters
 {
     public class SettingRepository : ISettingRepository
     {
@@ -23,23 +23,27 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
         {
             string cleanFilter = (filter ?? "").Replace("''", "'");
 
-            var parameters = new DynamicParameters();
-            parameters.Add("@Type", "Setting");
-            parameters.Add("@Where", cleanFilter);
+            var parameters = new Dictionary<string, object>
+            {
+                { "@Type", "Setting" },
+                { "@Where", cleanFilter }
+            };
 
             return await _sqlDataAccess.SelectDataFromSP<CompanySettingMaster>("GetALLMasterList", parameters, companyId);
         }
 
         public async Task<bool> SaveSettingDataAsync(CompanySettingMaster model, string actionType, string companyId)
         {
-            var parameters = new DynamicParameters();
-            parameters.Add("@ID", model.Id);
-            parameters.Add("@Name", model.Name);
-            parameters.Add("@Value", model.Value);
-            parameters.Add("@Description", model.Description);
-            parameters.Add("@COMMENT", model.COMMENT);
-            parameters.Add("@CompanyID", model.CompanyID);
-            parameters.Add("@ActionType", actionType);
+            var parameters = new Dictionary<string, object>
+            {
+                { "@ID", model.Id },
+                { "@Name", model.Name },
+                { "@Value", model.Value },
+                { "@Description", model.Description },
+                { "@COMMENT", model.COMMENT },
+                { "@CompanyID", model.CompanyID },
+                { "@ActionType", actionType }
+            };
 
             int result = await _sqlDataAccess.ExecuteSP("SP_CompanySettingMaster", parameters, companyId);
             return result > 0;
@@ -65,10 +69,12 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
             else if (actionLower == "select")
                 whereClause = " SelectData = 1 ";
 
-            var parameters = new DynamicParameters();
-            parameters.Add("@UserTypeId", $"'{userTypeId}'");
-            parameters.Add("@FormName", $"'{formName}'");
-            parameters.Add("@Where", whereClause);
+            var parameters = new Dictionary<string, object>
+            {
+                { "@UserTypeId", $"'{userTypeId}'" },
+                { "@FormName", $"'{formName}'" },
+                { "@Where", whereClause }
+            };
 
             var result = await _sqlDataAccess.SelectDataFromSP<dynamic>("GetUserPermission", parameters, companyId);
             return result.Any();
@@ -76,14 +82,16 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
 
         public async Task LogPageAccessAsync(string userName, string status, string device, string deviceType, string os, string ip, string companyId)
         {
-            var parameters = new DynamicParameters();
-            parameters.Add("@Userid", userName);
-            parameters.Add("@Status", status);
-            parameters.Add("@Device", device ?? "Unknown");
-            parameters.Add("@DeviceType", deviceType ?? "Unknown");
-            parameters.Add("@OperatingSystem", os ?? "Unknown");
-            parameters.Add("@Model", "API");
-            parameters.Add("@IPLocation", ip ?? "Unknown");
+            var parameters = new Dictionary<string, object>
+            {
+                { "@Userid", userName },
+                { "@Status", status },
+                { "@Device", device ?? "Unknown" },
+                { "@DeviceType", deviceType ?? "Unknown" },
+                { "@OperatingSystem", os ?? "Unknown" },
+                { "@Model", "API" },
+                { "@IPLocation", ip ?? "Unknown" }
+            };
 
             await _sqlDataAccess.ExecuteSP("sp_InsertPagesLog", parameters, companyId);
         }
@@ -92,9 +100,11 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
         {
             string cleanFilter = (filter ?? "").Replace("''", "'");
 
-            var parameters = new DynamicParameters();
-            parameters.Add("@Type", "GetInvoiceFormat");
-            parameters.Add("@Where", cleanFilter);
+            var parameters = new Dictionary<string, object>
+            {
+                { "@Type", "GetInvoiceFormat" },
+                { "@Where", cleanFilter }
+            };
 
             var result = await _sqlDataAccess.SelectDataFromSP<GetInvoiceFormatData>("GetALLMasterList", parameters, companyId);
             return result;
@@ -104,9 +114,11 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
         {
             string cleanFilter = (filter ?? "").Replace("''", "'");
 
-            var parameters = new DynamicParameters();
-            parameters.Add("@Type", "PreviewPrint");
-            parameters.Add("@Where", cleanFilter);
+            var parameters = new Dictionary<string, object>
+            {
+                { "@Type", "PreviewPrint" },
+                { "@Where", cleanFilter }
+            };
 
             var result = await _sqlDataAccess.SelectDataFromSPSingle<string>("GetALLMasterList", parameters, companyId);
             return result;
@@ -114,10 +126,12 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
 
         public async Task<IEnumerable<ColumnAbbrMaster>> GetColumnAbbrListAsync(string type, string columnName, string abbreviation, string companyId)
         {
-            var parameters = new DynamicParameters();
-            parameters.Add("@Type", type);
-            parameters.Add("@ColumnName", columnName);
-            parameters.Add("@Abbreviation", abbreviation);
+            var parameters = new Dictionary<string, object>
+            {
+                { "@Type", type },
+                { "@ColumnName", columnName },
+                { "@Abbreviation", abbreviation }
+            };
 
             var result = await _sqlDataAccess.SelectDataFromSP<ColumnAbbrMaster>("SP_UpdateColumnAbbreviation", parameters, companyId);
             return result;

@@ -5,7 +5,7 @@ using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.Repositories.Interfaces;
 using Dia_CoreAPI.DataAccess;
 
-namespace Dia_CoreAPI.Repositories.Implementations
+namespace Dia_CoreAPI.Repositories.Classes
 {
     public class MenuRepository : IMenuRepository
     {

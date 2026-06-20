@@ -7,7 +7,7 @@ using Dia_CoreAPI.Services.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Configuration;
 
-namespace Dia_CoreAPI.Services.Implementations
+namespace Dia_CoreAPI.Services.Classes
 {
     public class JwtService : IJwtService
     {

@@ -5,12 +5,10 @@ using Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction;
-using Dia_CoreAPI.Repositories.Implementations;
 using Dia_CoreAPI.Repositories.Interfaces;
 using Dia_CoreAPI.Repositories.Interfaces.Masters;
 using Dia_CoreAPI.Services.Classes;
 using Dia_CoreAPI.Services.Classes.Masters;
-using Dia_CoreAPI.Services.Implementations;
 using Dia_CoreAPI.Services.Interfaces;
 using Dia_CoreAPI.Services.Interfaces.Masters;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -71,20 +69,20 @@ builder.Services.AddScoped<IPurchaseParcelRepository, PurchaseParcelRepository>(
 builder.Services.AddScoped<IPurchaseParcelService, PurchaseParcelService>();
 
 // Stock & Account
-builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.StockAccount.IParcelItemMasterRepository, Dia_CoreAPI.Repositories.Implementations.StockAccount.ParcelItemMasterRepository>();
-builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.StockAccount.IParcelItemMasterService, Dia_CoreAPI.Services.Implementations.StockAccount.ParcelItemMasterService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.StockAccount.IParcelItemMasterRepository, Dia_CoreAPI.Repositories.Classes.StockAccount.ParcelItemMasterRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.StockAccount.IParcelItemMasterService, Dia_CoreAPI.Services.Classes.StockAccount.ParcelItemMasterService>();
 
 // Masters Registration
-builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.IUserMasterRepository, Dia_CoreAPI.Repositories.Implementations.Masters.UserMasterRepository>();
-builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IUserMasterService, Dia_CoreAPI.Services.Implementations.Masters.UserMasterService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.IUserMasterRepository, Dia_CoreAPI.Repositories.Classes.Masters.UserMasterRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IUserMasterService, Dia_CoreAPI.Services.Classes.Masters.UserMasterService>();
 
-builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.IUserRoleRepository, Dia_CoreAPI.Repositories.Implementations.Masters.UserRoleRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.IUserRoleRepository, Dia_CoreAPI.Repositories.Classes.Masters.UserRoleRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IUserRoleService, Dia_CoreAPI.Services.Classes.Masters.UserRoleService>();
 
 
 
 // Setting Master Registration
-builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.ISettingRepository, Dia_CoreAPI.Repositories.Implementations.Masters.SettingRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.ISettingRepository, Dia_CoreAPI.Repositories.Classes.Masters.SettingRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.ISettingService, Dia_CoreAPI.Services.Classes.Masters.SettingService>();
 
 builder.Services.AddCors(options =>
