@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
-using Dapper;
+
 using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs.Masters;
 using Dia_CoreAPI.Repositories.Interfaces.Masters;
@@ -21,7 +21,7 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
 
         public async Task<IEnumerable<UserListDto>> GetAllUsersAsync(string companyId)
         {
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>();
             param.Add("@Where", "");
             param.Add("@ActionType", "userlist");
 
@@ -30,7 +30,7 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
 
         public async Task<UserMasterDto?> GetUserByIdAsync(int userId, string companyId)
         {
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>();
             param.Add("@Where", $" and UserID = {userId}");
             param.Add("@ActionType", "userdetail");
 
@@ -50,7 +50,7 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
                 whereClause += $" and UserID != {excludeUserId}";
             }
 
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>();
             param.Add("@Where", whereClause);
             param.Add("@ActionType", "userlist");
 
@@ -60,7 +60,7 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
 
         public async Task<int> CreateUserAsync(UserMasterDto user, string createdBy)
         {
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>();
             param.Add("@UserID", 0);
             param.Add("@UserName", user.UserName);
             param.Add("@UserPassword", user.Password);
@@ -91,7 +91,7 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
 
         public async Task<bool> UpdateUserAsync(UserMasterDto user, string updatedBy)
         {
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>();
             param.Add("@UserID", user.UserID);
             param.Add("@UserName", user.UserName);
             param.Add("@UserPassword", user.Password ?? "");
@@ -122,7 +122,7 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
 
         public async Task<bool> DeleteUserAsync(int userId, string companyId)
         {
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>();
             param.Add("@UserID", userId);
             param.Add("@UserName", "");
             param.Add("@UserPassword", "");
@@ -153,7 +153,7 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
 
         public async Task<IEnumerable<DropdownDto>> GetUserDropdownAsync(string companyId)
         {
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>();
             param.Add("@Where", "");
             param.Add("@ActionType", "usercheck");
 

@@ -52,13 +52,8 @@ namespace Dia_CoreAPI.Repositories.Implementations
             // 2. Now connect to the specific client database using their full connection string
             using var clientConnection = (SqlConnection)_connectionFactory.CreateConnectionWithConnectionString(builder.ConnectionString);
             
-            const string query = @"
-                SELECT *
-                FROM TabUserMaster
-                WHERE UserName = @UserName
-                AND CompanyID = @CompanyID";
-
-            using var command = new SqlCommand(query, clientConnection);
+            using var command = new SqlCommand("sp_GetUserLoginDetails", clientConnection);
+            command.CommandType = CommandType.StoredProcedure;
             command.Parameters.AddWithValue("@UserName", username);
             command.Parameters.AddWithValue("@CompanyID", companyId);
 
@@ -84,6 +79,7 @@ namespace Dia_CoreAPI.Repositories.Implementations
                     LastName = reader["LastName"]?.ToString() ?? string.Empty,
                     Title = reader["Title"]?.ToString() ?? string.Empty,
                     UserTypeId = Convert.ToInt32(reader["UserTypeId"]),
+                    UserRole = reader["UserRoleName"]?.ToString() ?? string.Empty,
                     CompanyID = Convert.ToInt32(reader["CompanyID"]),
                     ProfileImage = reader["ProfileImage"]?.ToString() ?? string.Empty
                 };

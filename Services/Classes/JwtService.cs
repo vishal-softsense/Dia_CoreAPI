@@ -25,7 +25,7 @@ namespace Dia_CoreAPI.Services.Implementations
                 new Claim("UserID", user.UserID.ToString()),
                 new Claim("UserName", user.UserName),
                 new Claim("CompanyID", user.CompanyID.ToString()),
-                new Claim("UserTypeID", user.UserTypeId.ToString())
+                new Claim("UserTypeId", user.UserTypeId.ToString()),
             };
 
             var key = new SymmetricSecurityKey(
