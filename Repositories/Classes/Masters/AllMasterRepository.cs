@@ -1,4 +1,4 @@
-﻿using Dapper;
+
 using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs.Masters;
 using Dia_CoreAPI.Repositories.Interfaces.Masters;
@@ -16,7 +16,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Masters
 
         public async Task<List<AllMasterDto>> GetAllMasterListAsync(string UserTypeId, string companyId)
         {
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>();
             param.Add("@UserTypeId", UserTypeId);
 
             var result =

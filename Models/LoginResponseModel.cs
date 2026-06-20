@@ -1,4 +1,4 @@
-﻿namespace Dia_CoreAPI.Models
+namespace Dia_CoreAPI.Models
 {
     public class LoginResponseModel
     {
@@ -8,6 +8,7 @@
         public string LastName { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty;
         public int UserTypeId { get; set; }
+        public string UserRole { get; set; } = string.Empty;
         public int CompanyID { get; set; }
         public string ProfileImage { get; set; } = string.Empty;
     }

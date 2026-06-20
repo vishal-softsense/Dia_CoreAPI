@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using Dapper;
 using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs.Masters;
 using Dia_CoreAPI.Repositories.Interfaces.Masters;
@@ -19,7 +19,7 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
 
         public async Task<IEnumerable<UserRoleViewDto>> GetAllRolesAsync(string companyId)
         {
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>();
             param.Add("@Where", "");
             param.Add("@ActionType", "list-user-role");
 
@@ -28,7 +28,7 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
 
         public async Task<UserRoleViewDto?> GetRoleByIdAsync(int id, string companyId)
         {
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>();
             param.Add("@Where", $" AND UserTypeID = '{id}' ");
             param.Add("@ActionType", "list-user-role");
 
@@ -43,17 +43,17 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
                 whereClause += $" AND UserTypeID != {excludeRoleId}";
             }
 
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>();
             param.Add("@Where", whereClause);
             param.Add("@ActionType", "usercheckname");
 
             var result = await _sqlDataAccess.SelectDataFromSP<UserRoleViewDto>("SP_GetUserDataUsingWhere", param, companyId);
-            return result.AsList().Count > 0;
+            return result.ToList().Count > 0;
         }
 
         public async Task<bool> SaveRoleAsync(UserRoleDto role, string userId, string companyId)
         {
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>();
             param.Add("@UserTypeID", 0);
             param.Add("@UserType", role.UserType);
             param.Add("@Description", role.Description);
@@ -69,7 +69,7 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
 
         public async Task<bool> UpdateRoleAsync(UserRoleDto role, string userId, string companyId)
         {
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>();
             param.Add("@UserTypeID", role.UserTypeID);
             param.Add("@UserType", role.UserType);
             param.Add("@Description", role.Description);
@@ -85,7 +85,7 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
 
         public async Task<bool> DeleteRoleAsync(int id, string companyId)
         {
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>();
             param.Add("@UserTypeID", id);
             param.Add("@UserType", "");
             param.Add("@Description", "");
@@ -105,7 +105,7 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
             // If fetching for matrix to edit, use 'userpermissionlistrecord'
             // If fetching empty schema (used for forms master), it's 'form-list'.
             // The MVC passes ID into userpermissionlistrecord to get assigned values.
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>();
             param.Add("@Where", roleId.ToString());
             param.Add("@ActionType", "userpermissionlistrecord");
 
@@ -115,7 +115,7 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
         public async Task<bool> SaveRolePermissionsAsync(int roleId, IEnumerable<UserPermissionSaveDto> permissions, string userId, string companyId)
         {
             // 1. Delete all existing permissions
-            var deleteParam = new DynamicParameters();
+            var deleteParam = new Dictionary<string, object>();
             deleteParam.Add("@UserTypeID", roleId);
             deleteParam.Add("@ActionType", "delete");
             await _sqlDataAccess.ExecuteSP("SPInsertUserPermissionMaster", deleteParam, companyId);
@@ -151,7 +151,7 @@ namespace Dia_CoreAPI.Repositories.Implementations.Masters
 
         public async Task<IEnumerable<UserRoleViewDto>> GetRoleDropdownAsync(string companyId)
         {
-            var param = new DynamicParameters();
+            var param = new Dictionary<string, object>();
             param.Add("@Where", "");
             param.Add("@ActionType", "usertype");
 
