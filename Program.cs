@@ -53,12 +53,10 @@ builder.Services.AddSession(options =>
 builder.Services.AddSingleton<IDbConnectionFactory, SqlConnectionFactory>();
 builder.Services.AddScoped<ISqlDataAccess, SqlDataAccess>();
 builder.Services.AddScoped<IMasterRepository, MasterRepository>();
-builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.IMasterService, Dia_CoreAPI.Services.Classes.MasterService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ISecurityService, SecurityService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<Dia_CoreAPI.Interfaces.IUserSessionService, Dia_CoreAPI.Services.Implementations.UserSessionService>();
 
 builder.Services.AddScoped<IMenuRepository, MenuRepository>();
 builder.Services.AddScoped<IMenuService, MenuService>();
@@ -83,9 +81,7 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IUserMasterSe
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.IUserRoleRepository, Dia_CoreAPI.Repositories.Implementations.Masters.UserRoleRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IUserRoleService, Dia_CoreAPI.Services.Classes.Masters.UserRoleService>();
 
-// Color Master Registration
-builder.Services.AddScoped<Dia_CoreAPI.Interfaces.IColorRepository, Dia_CoreAPI.Repositories.Implementations.ColorRepository>();
-builder.Services.AddScoped<Dia_CoreAPI.Interfaces.IColorService, Dia_CoreAPI.Services.Implementations.ColorService>();
+
 
 // Setting Master Registration
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.ISettingRepository, Dia_CoreAPI.Repositories.Implementations.Masters.SettingRepository>();
