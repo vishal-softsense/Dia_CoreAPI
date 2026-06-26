@@ -4,6 +4,7 @@ namespace Dia_CoreAPI.Services.Interfaces.Masters
 {
     public interface IAllMasterService
     {
-        Task<List<AllMasterDto>> GetAllMasterListAsync(string UserTypeId, string companyId);
+        Task<List<AllMasterDto>> 
+            GetAllMasterListAsync(string UserTypeId, string companyId);
     }
 }

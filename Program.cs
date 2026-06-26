@@ -85,6 +85,10 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IUserRoleServ
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.ISettingRepository, Dia_CoreAPI.Repositories.Classes.Masters.SettingRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.ISettingService, Dia_CoreAPI.Services.Classes.Masters.SettingService>();
 
+// Grading Master Registration
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.IGradingRepository, Dia_CoreAPI.Repositories.Classes.Masters.GradingRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IGradingService, Dia_CoreAPI.Services.Classes.Masters.GradingService>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
