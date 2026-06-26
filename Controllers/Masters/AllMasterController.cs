@@ -12,12 +12,27 @@ namespace Dia_CoreAPI.Controllers.Masters
     {
         private readonly IAllMasterService _masterService;
         private readonly I4CMasterService _4cmasterService;
+        private readonly ILocationService _locationService;
+        private readonly IInvoiceService _invoiceService;
+        private readonly IDiamondOriginService _originService;
+        private readonly IJewelleryService _jewelleryService;
         private readonly IGradingService _gradingService;
 
+        public AllMasterController(
+            IAllMasterService masterService, 
+            I4CMasterService fourCMasterService, 
+            ILocationService locationService,
+            IInvoiceService invoiceService,
+            IDiamondOriginService originService,
+            IJewelleryService jewelleryService)
         public AllMasterController(IAllMasterService masterService, I4CMasterService fourCMasterService, IGradingService gradingService)
         {
             _masterService = masterService;
             _4cmasterService = fourCMasterService;
+            _locationService = locationService;
+            _invoiceService = invoiceService;
+            _originService = originService;
+            _jewelleryService = jewelleryService;
             _gradingService = gradingService;
         }
 
@@ -51,6 +66,7 @@ namespace Dia_CoreAPI.Controllers.Masters
         }
         #endregion
 
+        //4CMaster
         #region Shape Master
 
         [HttpGet("list-shape")]
@@ -439,6 +455,7 @@ namespace Dia_CoreAPI.Controllers.Masters
         }
         #endregion
 
+        #endregion
         #region LAB Master
         [HttpGet("list-lab")]
         public async Task<IActionResult> LABMaster()
@@ -451,6 +468,21 @@ namespace Dia_CoreAPI.Controllers.Masters
             catch (Exception ex) { return Ok(new { Success = false, Data = ex.Message }); }
         }
 
+        //Location
+        #region Area Master
+        [HttpGet("list-area")]
+        public async Task<IActionResult> AreaMaster()
+        {
+            try
+            {
+                var result = await _locationService.GetAreaMasterListAsync("", GetCompanyId());
+                return Ok(new { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
         [HttpGet("get-lab/{id}")]
         public async Task<IActionResult> GetLAB(int id)
         {
@@ -465,6 +497,19 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
         }
 
+        [HttpGet("get-area/{id}")]
+        public async Task<IActionResult> GetArea(int id)
+        {
+            try
+            {
+                var data = await _locationService.GetAreaMasterListAsync($" AND ID = {id}", GetCompanyId());
+                return Ok(new { Success = true, Data = data.FirstOrDefault() });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
         [HttpPost("save-lab")]
         public async Task<IActionResult> SaveLAB([FromBody] LABMaster model)
         {
@@ -483,6 +528,18 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
         }
 
+        [HttpPost("save-area")]
+        public async Task<IActionResult> SaveArea([FromBody] AreaMaster model)
+        {
+            try
+            {
+                var actionType = model.ID == 0 ? "insert" : "update";
+                var (success, message) = await _locationService.SaveAreaMasterAsync(
+                    model,
+                    GetUserId(),
+                    GetUserTypeId(),
+                    GetCompanyId(),
+                    actionType);
         [HttpPost("delete-lab/{id}")]
         public async Task<IActionResult> DeleteLAB(int id)
         {
@@ -491,6 +548,13 @@ namespace Dia_CoreAPI.Controllers.Masters
                 bool result =
                     await _4cmasterService.DeleteLABAsync(id, GetUserTypeId(), GetUserId(), GetCompanyId());
 
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
                 return Ok(new
                 {
                     Success = result,
@@ -510,6 +574,16 @@ namespace Dia_CoreAPI.Controllers.Masters
         }
         #endregion
 
+        [HttpPost("delete-area/{id}")]
+        public async Task<IActionResult> DeleteArea(int id)
+        {
+            try
+            {
+                var (success, message) = await _locationService.DeleteAreaAsync(
+                    id,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
         #region Prop Master
         [HttpGet("list-prop")]
         public async Task<IActionResult> PropMaster()
@@ -522,6 +596,14 @@ namespace Dia_CoreAPI.Controllers.Masters
             catch (Exception ex) { return Ok(new { Success = false, Data = ex.Message }); }
         }
 
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+        #endregion
         [HttpGet("get-prop/{id}")]
         public async Task<IActionResult> GetProp(int id)
         {
@@ -536,6 +618,20 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
         }
 
+        #region City Master
+        [HttpGet("list-city")]
+        public async Task<IActionResult> CityMaster()
+        {
+            try
+            {
+                var result = await _locationService.GetCityMasterListAsync("", GetCompanyId());
+                return Ok(new { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
         [HttpPost("save-prop")]
         public async Task<IActionResult> SaveProp([FromBody] PropMaster model)
         {
@@ -554,6 +650,19 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
         }
 
+        [HttpGet("get-city/{id}")]
+        public async Task<IActionResult> GetCity(int id)
+        {
+            try
+            {
+                var data = await _locationService.GetCityMasterListAsync($" AND ID = {id}", GetCompanyId());
+                return Ok(new { Success = true, Data = data.FirstOrDefault() });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
         [HttpPost("delete-prop/{id}")]
         public async Task<IActionResult> DeleteProp(int id)
         {
@@ -562,6 +671,18 @@ namespace Dia_CoreAPI.Controllers.Masters
                 bool result =
                     await _4cmasterService.DeletePropAsync(id, GetUserTypeId(), GetUserId(), GetCompanyId());
 
+        [HttpPost("save-city")]
+        public async Task<IActionResult> SaveCity([FromBody] CityMaster model)
+        {
+            try
+            {
+                var actionType = model.ID == 0 ? "insert" : "update";
+                var (success, message) = await _locationService.SaveCityMasterAsync(
+                    model,
+                    GetUserId(),
+                    GetUserTypeId(),
+                    GetCompanyId(),
+                    actionType);
                 return Ok(new
                 {
                     Success = result,
@@ -581,6 +702,13 @@ namespace Dia_CoreAPI.Controllers.Masters
         }
         #endregion
 
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
         #region Polish Master
         [HttpGet("list-polish")]
         public async Task<IActionResult> PolishMaster()
@@ -593,6 +721,16 @@ namespace Dia_CoreAPI.Controllers.Masters
             catch (Exception ex) { return Ok(new { Success = false, Data = ex.Message }); }
         }
 
+        [HttpPost("delete-city/{id}")]
+        public async Task<IActionResult> DeleteCity(int id)
+        {
+            try
+            {
+                var (success, message) = await _locationService.DeleteCityAsync(
+                    id,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
         [HttpGet("get-polish/{id}")]
         public async Task<IActionResult> GetPolish(int id)
         {
@@ -607,6 +745,14 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
         }
 
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+        #endregion
         [HttpPost("save-polish")]
         public async Task<IActionResult> SavePolish([FromBody] PolishMaster model)
         {
@@ -625,6 +771,20 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
         }
 
+        #region State Master
+        [HttpGet("list-state")]
+        public async Task<IActionResult> StateMaster()
+        {
+            try
+            {
+                var result = await _locationService.GetStateMasterListAsync("", GetCompanyId());
+                return Ok(new { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
         [HttpPost("delete-polish/{id}")]
         public async Task<IActionResult> DeletePolish(int id)
         {
@@ -696,6 +856,19 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
         }
 
+        [HttpGet("get-state/{id}")]
+        public async Task<IActionResult> GetState(int id)
+        {
+            try
+            {
+                var data = await _locationService.GetStateMasterListAsync($" AND ID = {id}", GetCompanyId());
+                return Ok(new { Success = true, Data = data.FirstOrDefault() });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
         [HttpPost("delete-sym/{id}")]
         public async Task<IActionResult> DeleteSym(int id)
         {
@@ -704,6 +877,45 @@ namespace Dia_CoreAPI.Controllers.Masters
                 bool result =
                     await _4cmasterService.DeleteSymAsync(id, GetUserTypeId(), GetUserId(), GetCompanyId());
 
+        [HttpPost("save-state")]
+        public async Task<IActionResult> SaveState([FromBody] StateMaster model)
+        {
+            try
+            {
+                var actionType = model.ID == 0 ? "insert" : "update";
+                var (success, message) = await _locationService.SaveStateMasterAsync(
+                    model,
+                    GetUserId(),
+                    GetUserTypeId(),
+                    GetCompanyId(),
+                    actionType);
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpPost("delete-state/{id}")]
+        public async Task<IActionResult> DeleteState(int id)
+        {
+            try
+            {
+                var (success, message) = await _locationService.DeleteStateAsync(
+                    id,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
                 return Ok(new
                 {
                     Success = result,
@@ -723,6 +935,307 @@ namespace Dia_CoreAPI.Controllers.Masters
         }
         #endregion
 
+        #region Country Master
+        [HttpGet("list-country")]
+        public async Task<IActionResult> CountryMaster()
+        {
+            try
+            {
+                var result = await _locationService.GetCountryMasterListAsync("", GetCompanyId());
+                return Ok(new { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpGet("get-country/{id}")]
+        public async Task<IActionResult> GetCountry(int id)
+        {
+            try
+            {
+                var data = await _locationService.GetCountryMasterListAsync($" AND ID = {id}", GetCompanyId());
+                return Ok(new { Success = true, Data = data.FirstOrDefault() });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpPost("save-country")]
+        public async Task<IActionResult> SaveCountry([FromBody] CountryMaster model)
+        {
+            try
+            {
+                var actionType = model.ID == 0 ? "insert" : "update";
+                var (success, message) = await _locationService.SaveCountryMasterAsync(
+                    model,
+                    GetUserId(),
+                    GetUserTypeId(),
+                    GetCompanyId(),
+                    actionType);
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpPost("delete-country/{id}")]
+        public async Task<IActionResult> DeleteCountry(int id)
+        {
+            try
+            {
+                var (success, message) = await _locationService.DeleteCountryAsync(
+                    id,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+        #endregion
+
+        //Invoice
+        #region Term Master
+        [HttpGet("list-term")]
+        public async Task<IActionResult> GetTermList()
+        {
+            try
+            {
+                var result = await _invoiceService.GetTermMasterListAsync("", GetCompanyId());
+                return Ok(new { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpGet("get-term/{id}")]
+        public async Task<IActionResult> GetTerm(int id)
+        {
+            try
+            {
+                var result = await _invoiceService.GetTermByIdAsync(id, GetCompanyId());
+                if (result != null)
+                    return Ok(new { Success = true, Data = result });
+                else
+                    return Ok(new { Success = false, Data = "Selected record not found." });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpPost("submit-term")]
+        public async Task<IActionResult> SubmitTerm([FromBody] TermMaster model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join("<br>", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage));
+                return Ok(new { Success = false, Data = errors });
+            }
+
+            try
+            {
+                var (success, message) = await _invoiceService.SubmitTermDataAsync(
+                    model,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpPost("delete-term/{id}")]
+        public async Task<IActionResult> DeleteTerm(int id)
+        {
+            try
+            {
+                var (success, message) = await _invoiceService.DeleteTermAsync(
+                    id,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+        #endregion
+
+        #region Type Master
+        [HttpGet("list-type")]
+        public async Task<IActionResult> GetTypeList()
+        {
+            try
+            {
+                var result = await _invoiceService.GetTypeMasterListAsync("", GetCompanyId());
+                return Ok(new { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpGet("get-type/{id}")]
+        public async Task<IActionResult> GetType(int id)
+        {
+            try
+            {
+                var result = await _invoiceService.GetTypeByIdAsync(id, GetCompanyId());
+                if (result != null)
+                    return Ok(new { Success = true, Data = result });
+                else
+                    return Ok(new { Success = false, Data = "Selected record not found." });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpPost("submit-type")]
+        public async Task<IActionResult> SubmitType([FromBody] TypeMaster model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join("<br>", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage));
+                return Ok(new { Success = false, Data = errors });
+            }
+
+            try
+            {
+                var (success, message) = await _invoiceService.SubmitTypeDataAsync(
+                    model,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpPost("delete-type/{id}")]
+        public async Task<IActionResult> DeleteType(int id)
+        {
+            try
+            {
+                var (success, message) = await _invoiceService.DeleteTypeAsync(
+                    id,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+        #endregion
+
+        #region SubType Master
+        [HttpGet("list-subtype")]
+        public async Task<IActionResult> GetSubTypeList()
+        {
+            try
+            {
+                var result = await _invoiceService.GetSubTypeMasterListAsync("", GetCompanyId());
+                return Ok(new { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpGet("get-subtype/{id}")]
+        public async Task<IActionResult> GetSubType(int id)
+        {
+            try
+            {
+                var result = await _invoiceService.GetSubTypeByIdAsync(id, GetCompanyId());
+                if (result != null)
+                    return Ok(new { Success = true, Data = result });
+                else
+                    return Ok(new { Success = false, Data = "Selected record not found." });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpPost("submit-subtype")]
+        public async Task<IActionResult> SubmitSubType([FromBody] SubTypeMaster model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join("<br>", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage));
+                return Ok(new { Success = false, Data = errors });
+            }
+
+            try
+            {
+                var (success, message) = await _invoiceService.SubmitSubTypeDataAsync(
+                    model,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpPost("delete-subtype/{id}")]
+        public async Task<IActionResult> DeleteSubType(int id)
+        {
+            try
+            {
+                var (success, message) = await _invoiceService.DeleteSubTypeAsync(
+                    id,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+        #endregion
         #region FL Master
         [HttpGet("list-fl")]
         public async Task<IActionResult> FLMaster()
@@ -767,14 +1280,35 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
         }
 
+        #region Currency Master
+        [HttpGet("list-currency")]
+        public async Task<IActionResult> GetCurrencyList()
         [HttpPost("delete-fl/{id}")]
         public async Task<IActionResult> DeleteFL(int id)
         {
             try
             {
+                var result = await _invoiceService.GetCurrencyMasterListAsync("", GetCompanyId());
+                return Ok(new { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
                 bool result =
                     await _4cmasterService.DeleteFLAsync(id, GetUserTypeId(), GetUserId(), GetCompanyId());
 
+        [HttpGet("get-currency/{id}")]
+        public async Task<IActionResult> GetCurrency(int id)
+        {
+            try
+            {
+                var result = await _invoiceService.GetCurrencyByIdAsync(id, GetCompanyId());
+                if (result != null)
+                    return Ok(new { Success = true, Data = result });
+                else
+                    return Ok(new { Success = false, Data = "Selected record not found." });
                 return Ok(new
                 {
                     Success = result,
@@ -830,19 +1364,64 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
             catch (Exception ex)
             {
-                return Ok(new
-                {
-                    Success = false,
-                    Data = ex.Message
-                });
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+        #endregion
+
+        //Origin
+        #region Mines Master
+        [HttpGet("list-mines")]
+        public async Task<IActionResult> GetMinesList()
+        {
+            try
+            {
+                var result = await _originService.GetMinesMasterListAsync("", GetCompanyId());
+                return Ok(new { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
             }
         }
 
+        [HttpGet("get-mines/{id}")]
+        public async Task<IActionResult> GetMines(int id)
         [HttpPost("delete-flcolor/{id}")]
         public async Task<IActionResult> DeleteFLColor(int id)
         {
             try
             {
+                var result = await _originService.GetMinesByIdAsync(id, GetCompanyId());
+                if (result != null)
+                    return Ok(new { Success = true, Data = result });
+                else
+                    return Ok(new { Success = false, Data = "Selected record not found." });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpPost("submit-mines")]
+        public async Task<IActionResult> SubmitMines([FromBody] MinesMaster model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join("<br>", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage));
+                return Ok(new { Success = false, Data = errors });
+            }
+
+            try
+            {
+                var (success, message) = await _originService.SubmitMinesDataAsync(
+                    model,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
                 bool result =
                     await _4cmasterService.DeleteFLColorAsync(id, GetUserTypeId(), GetUserId(), GetCompanyId());
 
@@ -856,13 +1435,29 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
             catch (Exception ex)
             {
-                return Ok(new
-                {
-                    Success = false,
-                    Data = ex.Message
-                });
+                return Ok(new { Success = false, Data = ex.Message });
             }
         }
+
+        [HttpPost("delete-mines/{id}")]
+        public async Task<IActionResult> DeleteMines(int id)
+        {
+            try
+            {
+                var (success, message) = await _originService.DeleteMinesAsync(
+                    id,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+        #endregion
         #endregion
 
 
@@ -895,11 +1490,22 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
         }
 
+        #region Rough Master
+        [HttpGet("list-rough")]
+        public async Task<IActionResult> GetRoughList()
         [HttpPost("save-brown")]
         public async Task<IActionResult> SaveBrown([FromBody] BrownMaster model)
         {
             try
             {
+                var result = await _originService.GetRoughMasterListAsync("", GetCompanyId());
+                return Ok(new { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
                 var (success, data) = await _gradingService.SaveBrownMasterAsync(model, GetUserTypeId(), GetUserId(), GetCompanyId());
                 return Ok(new { Success = success, Data = data });
             }
@@ -921,6 +1527,22 @@ namespace Dia_CoreAPI.Controllers.Masters
                 bool result =
                     await _gradingService.DeleteBrownAsync(id, GetUserTypeId(), GetUserId(), GetCompanyId());
 
+        [HttpGet("get-rough/{id}")]
+        public async Task<IActionResult> GetRough(int id)
+        {
+            try
+            {
+                var result = await _originService.GetRoughByIdAsync(id, GetCompanyId());
+                if (result != null)
+                    return Ok(new { Success = true, Data = result });
+                else
+                    return Ok(new { Success = false, Data = "Selected record not found." });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
                 return Ok(new
                 {
                     Success = result,
@@ -952,6 +1574,14 @@ namespace Dia_CoreAPI.Controllers.Masters
             catch (Exception ex) { return Ok(new { Success = false, Data = ex.Message }); }
         }
 
+        [HttpPost("submit-rough")]
+        public async Task<IActionResult> SubmitRough([FromBody] RoughMaster model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join("<br>", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage));
+                return Ok(new { Success = false, Data = errors });
+            }
         [HttpGet("get-green/{id}")]
         public async Task<IActionResult> GetGreen(int id)
         {
@@ -966,6 +1596,21 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
         }
 
+            try
+            {
+                var (success, message) = await _originService.SubmitRoughDataAsync(
+                    model,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
         [HttpPost("save-green")]
         public async Task<IActionResult> SaveGreen([FromBody] GreenMaster model)
         {
@@ -984,6 +1629,25 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
         }
 
+        [HttpPost("delete-rough/{id}")]
+        public async Task<IActionResult> DeleteRough(int id)
+        {
+            try
+            {
+                var (success, message) = await _originService.DeleteRoughAsync(
+                    id,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+        #endregion
         [HttpPost("delete-green/{id}")]
         public async Task<IActionResult> DeleteGreen(int id)
         {
@@ -992,6 +1656,47 @@ namespace Dia_CoreAPI.Controllers.Masters
                 bool result =
                     await _gradingService.DeleteGreenAsync(id, GetUserTypeId(), GetUserId(), GetCompanyId());
 
+        //Jewellery
+        #region Jewellery Category Master
+        [HttpGet("list-jew-category")]
+        public async Task<IActionResult> GetJewCategoryList()
+        {
+            try
+            {
+                var result = await _jewelleryService.GetJewCategoryMasterListAsync("", GetCompanyId());
+                return Ok(new { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpGet("get-jew-category/{id}")]
+        public async Task<IActionResult> GetJewCategory(int id)
+        {
+            try
+            {
+                var result = await _jewelleryService.GetJewCategoryByIdAsync(id, GetCompanyId());
+                if (result != null)
+                    return Ok(new { Success = true, Data = result });
+                else
+                    return Ok(new { Success = false, Data = "Selected record not found." });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpPost("submit-jew-category")]
+        public async Task<IActionResult> SubmitJewCategory([FromBody] JewCategoryMaster model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join("<br>", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage));
+                return Ok(new { Success = false, Data = errors });
+            }
                 return Ok(new
                 {
                     Success = result,
@@ -1063,6 +1768,21 @@ namespace Dia_CoreAPI.Controllers.Masters
                 bool result =
                     await _gradingService.DeleteMilkyAsync(id, GetUserTypeId(), GetUserId(), GetCompanyId());
 
+            try
+            {
+                var (success, message) = await _jewelleryService.SubmitJewCategoryDataAsync(
+                    model,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
                 return Ok(new
                 {
                     Success = result,
@@ -1094,6 +1814,25 @@ namespace Dia_CoreAPI.Controllers.Masters
             catch (Exception ex) { return Ok(new { Success = false, Data = ex.Message }); }
         }
 
+        [HttpPost("delete-jew-category/{id}")]
+        public async Task<IActionResult> DeleteJewCategory(int id)
+        {
+            try
+            {
+                var (success, message) = await _jewelleryService.DeleteJewCategoryAsync(
+                    id,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+        #endregion
         [HttpGet("get-luster/{id}")]
         public async Task<IActionResult> GetLuster(int id)
         {
@@ -1108,6 +1847,20 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
         }
 
+        #region Jewellery SubCategory Master
+        [HttpGet("list-jew-subcategory")]
+        public async Task<IActionResult> GetJewSubCategoryList()
+        {
+            try
+            {
+                var result = await _jewelleryService.GetJewSubCategoryMasterListAsync("", GetCompanyId());
+                return Ok(new { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
         [HttpPost("save-luster")]
         public async Task<IActionResult> SaveLuster([FromBody] LusterMaster model)
         {
@@ -1126,6 +1879,22 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
         }
 
+        [HttpGet("get-jew-subcategory/{id}")]
+        public async Task<IActionResult> GetJewSubCategory(int id)
+        {
+            try
+            {
+                var result = await _jewelleryService.GetJewSubCategoryByIdAsync(id, GetCompanyId());
+                if (result != null)
+                    return Ok(new { Success = true, Data = result });
+                else
+                    return Ok(new { Success = false, Data = "Selected record not found." });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
         [HttpPost("delete-luster/{id}")]
         public async Task<IActionResult> DeleteLuster(int id)
         {
@@ -1134,6 +1903,24 @@ namespace Dia_CoreAPI.Controllers.Masters
                 bool result =
                     await _gradingService.DeleteLusterAsync(id, GetUserTypeId(), GetUserId(), GetCompanyId());
 
+        [HttpPost("submit-jew-subcategory")]
+        public async Task<IActionResult> SubmitJewSubCategory([FromBody] JewSubCategoryMaster model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join("<br>", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage));
+                return Ok(new { Success = false, Data = errors });
+            }
+
+            try
+            {
+                var (success, message) = await _jewelleryService.SubmitJewSubCategoryDataAsync(
+                    model,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
                 return Ok(new
                 {
                     Success = result,
@@ -1189,22 +1976,73 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
             catch (Exception ex)
             {
-                return Ok(new
-                {
-                    Success = false,
-                    Data = ex.Message
-                });
+                return Ok(new { Success = false, Data = ex.Message });
             }
         }
 
+        [HttpPost("delete-jew-subcategory/{id}")]
+        public async Task<IActionResult> DeleteJewSubCategory(int id)
+        {
+            try
+            {
+                var (success, message) = await _jewelleryService.DeleteJewSubCategoryAsync(
+                    id,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+        #endregion
+
+        #region Jewellery Metal Master
+        [HttpGet("list-jew-metal")]
+        public async Task<IActionResult> GetJewMetalList([FromQuery] string? metalType = null)
         [HttpPost("delete-natts/{id}")]
         public async Task<IActionResult> DeleteNatts(int id)
         {
             try
             {
+                if (metalType != null)
+                {
+                    var result = await _jewelleryService.GetPurityDataAsync($"and Metal=''{metalType}''", GetCompanyId());
+                    return Ok(new { Success = true, Data = result });
+                }
+                else
+                {
+                    var result = await _jewelleryService.GetJewMetalMasterListAsync("", GetCompanyId());
+                    return Ok(new { Success = true, Data = result });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
                 bool result =
                     await _gradingService.DeleteNattsAsync(id, GetUserTypeId(), GetUserId(), GetCompanyId());
 
+        [HttpGet("get-jew-metal/{id}")]
+        public async Task<IActionResult> GetJewMetal(int id)
+        {
+            try
+            {
+                var result = await _jewelleryService.GetJewMetalByIdAsync(id, GetCompanyId());
+                if (result != null)
+                    return Ok(new { Success = true, Data = result });
+                else
+                    return Ok(new { Success = false, Data = "Selected record not found." });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
                 return Ok(new
                 {
                     Success = result,
@@ -1236,6 +2074,14 @@ namespace Dia_CoreAPI.Controllers.Masters
             catch (Exception ex) { return Ok(new { Success = false, Data = ex.Message }); }
         }
 
+        [HttpPost("submit-jew-metal")]
+        public async Task<IActionResult> SubmitJewMetal([FromBody] JewMetalMaster model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join("<br>", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage));
+                return Ok(new { Success = false, Data = errors });
+            }
         [HttpGet("get-ha/{id}")]
         public async Task<IActionResult> GetHA(int id)
         {
@@ -1250,6 +2096,21 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
         }
 
+            try
+            {
+                var (success, message) = await _jewelleryService.SubmitJewMetalDataAsync(
+                    model,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
         [HttpPost("save-ha")]
         public async Task<IActionResult> SaveHA([FromBody] HAMaster model)
         {
@@ -1268,6 +2129,25 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
         }
 
+        [HttpPost("delete-jew-metal/{id}")]
+        public async Task<IActionResult> DeleteJewMetal(int id)
+        {
+            try
+            {
+                var (success, message) = await _jewelleryService.DeleteJewMetalAsync(
+                    id,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+        #endregion
         [HttpPost("delete-ha/{id}")]
         public async Task<IActionResult> DeleteHA(int id)
         {
@@ -1276,6 +2156,91 @@ namespace Dia_CoreAPI.Controllers.Masters
                 bool result =
                     await _gradingService.DeleteHAAsync(id, GetUserTypeId(), GetUserId(), GetCompanyId());
 
+        #region Jewellery Metal Purity Master
+        [HttpGet("list-jew-metal-purity")]
+        public async Task<IActionResult> GetJewMetalPurityList()
+        {
+            try
+            {
+                var result = await _jewelleryService.GetJewMetalPurityMasterListAsync("", GetCompanyId());
+                return Ok(new { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpGet("get-jew-metal-purity/{id}")]
+        public async Task<IActionResult> GetJewMetalPurity(int id)
+        {
+            try
+            {
+                var result = await _jewelleryService.GetJewMetalPurityByIdAsync(id, GetCompanyId());
+                if (result != null)
+                    return Ok(new { Success = true, Data = result });
+                else
+                    return Ok(new { Success = false, Data = "Selected record not found." });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpPost("submit-jew-metal-purity")]
+        public async Task<IActionResult> SubmitJewMetalPurity([FromBody] JewMetalPurityMaster model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join("<br>", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage));
+                return Ok(new { Success = false, Data = errors });
+            }
+
+            try
+            {
+                var (success, message) = await _jewelleryService.SubmitJewMetalPurityDataAsync(
+                    model,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpPost("delete-jew-metal-priority/{id}")]
+        public async Task<IActionResult> DeleteJewMetalPurity(int id)
+        {
+            try
+            {
+                var (success, message) = await _jewelleryService.DeleteJewMetalPurityAsync(
+                    id,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+        #endregion
+
+        #region Jewellery Color Master
+        [HttpGet("list-jew-color")]
+        public async Task<IActionResult> GetJewColorList()
+        {
+            try
+            {
+                var result = await _jewelleryService.GetJewColorMasterListAsync("", GetCompanyId());
+                return Ok(new { Success = true, Data = result });
                 return Ok(new
                 {
                     Success = result,
@@ -1331,14 +2296,51 @@ namespace Dia_CoreAPI.Controllers.Masters
             }
             catch (Exception ex)
             {
-                return Ok(new
-                {
-                    Success = false,
-                    Data = ex.Message
-                });
+                return Ok(new { Success = false, Data = ex.Message });
             }
         }
 
+        [HttpGet("get-jew-color/{id}")]
+        public async Task<IActionResult> GetJewColor(int id)
+        {
+            try
+            {
+                var result = await _jewelleryService.GetJewColorByIdAsync(id, GetCompanyId());
+                if (result != null)
+                    return Ok(new { Success = true, Data = result });
+                else
+                    return Ok(new { Success = false, Data = "Selected record not found." });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpPost("submit-jew-color")]
+        public async Task<IActionResult> SubmitJewColor([FromBody] JewColorMaster model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join("<br>", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage));
+                return Ok(new { Success = false, Data = errors });
+            }
+
+            try
+            {
+                var (success, message) = await _jewelleryService.SubmitJewColorDataAsync(
+                    model,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
+
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
         [HttpPost("delete-shade/{id}")]
         public async Task<IActionResult> DeleteShade(int id)
         {
@@ -1347,6 +2349,16 @@ namespace Dia_CoreAPI.Controllers.Masters
                 bool result =
                     await _gradingService.DeleteShadeAsync(id, GetUserTypeId(), GetUserId(), GetCompanyId());
 
+        [HttpPost("delete-jew-color/{id}")]
+        public async Task<IActionResult> DeleteJewColor(int id)
+        {
+            try
+            {
+                var (success, message) = await _jewelleryService.DeleteJewColorAsync(
+                    id,
+                    GetUserTypeId(),
+                    GetUserId(),
+                    GetCompanyId());
                 return Ok(new
                 {
                     Success = result,
@@ -1366,6 +2378,13 @@ namespace Dia_CoreAPI.Controllers.Masters
         }
         #endregion
 
+                return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
         #endregion
     }
 }
