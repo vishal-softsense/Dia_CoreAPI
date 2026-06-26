@@ -66,6 +66,7 @@ namespace Dia_CoreAPI.Controllers.Masters
         }
         #endregion
 
+        //4C Master
         #region Shape Master
 
         [HttpGet("list-shape")]
@@ -880,6 +881,7 @@ namespace Dia_CoreAPI.Controllers.Masters
         }
         #endregion
 
+        //Location Master
         #region Area Master
         [HttpGet("list-area")]
         public async Task<IActionResult> AreaMaster()
@@ -1160,6 +1162,7 @@ namespace Dia_CoreAPI.Controllers.Masters
         }
         #endregion
 
+        //Invoice Master
         #region Term Master
         [HttpGet("list-term")]
         public async Task<IActionResult> GetTermList()
@@ -1424,6 +1427,7 @@ namespace Dia_CoreAPI.Controllers.Masters
         }
         #endregion
 
+        //Origin Master
         #region Mines Master
         [HttpGet("list-mines")]
         public async Task<IActionResult> GetMinesList()
@@ -1578,8 +1582,7 @@ namespace Dia_CoreAPI.Controllers.Masters
         }
         #endregion
 
-        #region Grading master
-
+        //Grading Master
         #region Brown Master
         [HttpGet("list-brown")]
         public async Task<IActionResult> BrownMaster()
@@ -2077,8 +2080,7 @@ namespace Dia_CoreAPI.Controllers.Masters
         }
         #endregion
 
-        #endregion
-
+        //Jewellery Master
         #region Jewellery Category Master
         [HttpGet("list-jew-category")]
         public async Task<IActionResult> GetJewCategoryList()
