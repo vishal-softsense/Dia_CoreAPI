@@ -79,11 +79,23 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IUserMasterSe
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.IUserRoleRepository, Dia_CoreAPI.Repositories.Classes.Masters.UserRoleRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IUserRoleService, Dia_CoreAPI.Services.Classes.Masters.UserRoleService>();
 
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.ILocationRepository, Dia_CoreAPI.Repositories.Classes.Masters.LocationRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.ILocationService, Dia_CoreAPI.Services.Classes.Masters.LocationService>();
 
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.IInvoiceRepository, Dia_CoreAPI.Repositories.Classes.Masters.InvoiceRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IInvoiceService, Dia_CoreAPI.Services.Classes.Masters.InvoiceService>();
+
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.IDiamondOriginRepository, Dia_CoreAPI.Repositories.Classes.Masters.DiamondOriginRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IDiamondOriginService, Dia_CoreAPI.Services.Classes.Masters.DiamondOriginService>();
 
 // Setting Master Registration
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.ISettingRepository, Dia_CoreAPI.Repositories.Classes.Masters.SettingRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.ISettingService, Dia_CoreAPI.Services.Classes.Masters.SettingService>();
+
+// Jewellery Master Registration
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.IJewelleryRepository, Dia_CoreAPI.Repositories.Classes.Masters.JewelleryRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IJewelleryService, Dia_CoreAPI.Services.Classes.Masters.JewelleryService>();
+
 
 builder.Services.AddCors(options =>
 {
