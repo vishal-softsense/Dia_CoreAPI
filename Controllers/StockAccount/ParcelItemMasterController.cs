@@ -44,45 +44,68 @@ namespace Dia_CoreAPI.Controllers.StockAccount
                 return BadRequest(new { Success = false, Message = ex.Message });
             }
         }
-
         [HttpGet("dropdowns")]
         public async Task<IActionResult> GetDropdowns()
         {
             try
             {
                 var companyId = GetCompanyId();
+
                 var list = await _service.GetItemMasterDropdownAsync(companyId);
-                
-                var shape = list.Where(x => x.Type.Equals("Shape", StringComparison.OrdinalIgnoreCase)).ToList();
-                var color = list.Where(x => x.Type.Equals("Color", StringComparison.OrdinalIgnoreCase)).ToList();
-                var size = list.Where(x => x.Type.Equals("Size", StringComparison.OrdinalIgnoreCase)).ToList();
-                var clarity = list.Where(x => x.Type.Equals("Clarity", StringComparison.OrdinalIgnoreCase)).ToList();
-                var sieve = list.Where(x => x.Type.Equals("Sieve", StringComparison.OrdinalIgnoreCase)).ToList();
-                var itemGroup = list.Where(x => x.Type.Equals("ItemGroup", StringComparison.OrdinalIgnoreCase)).ToList();
-                var category = list.Where(x => x.Type.Equals("Category", StringComparison.OrdinalIgnoreCase)).ToList();
-                var productType = list.Where(x => x.Type.Equals("ProductType", StringComparison.OrdinalIgnoreCase)).ToList();
 
                 return Ok(new
                 {
-                    Success = true,
-                    Data = new
-                    {
-                        Shape = shape,
-                        Color = color,
-                        Size = size,
-                        Clarity = clarity,
-                        Sieve = sieve,
-                        ItemGroup = itemGroup,
-                        Category = category,
-                        ProductType = productType
-                    }
+                    Success = true,                   
+                    Data = list
                 });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { Success = false, Message = ex.Message });
+                return BadRequest(new
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
             }
         }
+        //[HttpGet("dropdowns")]
+        //public async Task<IActionResult> GetDropdowns()
+        //{
+        //    try
+        //    {
+        //        var companyId = GetCompanyId();
+        //        var list = await _service.GetItemMasterDropdownAsync(companyId);
+
+        //        var shape = list.Where(x => x.Type.Equals("Shape", StringComparison.OrdinalIgnoreCase)).ToList();
+        //        var color = list.Where(x => x.Type.Equals("Color", StringComparison.OrdinalIgnoreCase)).ToList();
+        //        var size = list.Where(x => x.Type.Equals("Size", StringComparison.OrdinalIgnoreCase)).ToList();
+        //        var clarity = list.Where(x => x.Type.Equals("Clarity", StringComparison.OrdinalIgnoreCase)).ToList();
+        //        var sieve = list.Where(x => x.Type.Equals("Sieve", StringComparison.OrdinalIgnoreCase)).ToList();
+        //        var itemGroup = list.Where(x => x.Type.Equals("ItemGroup", StringComparison.OrdinalIgnoreCase)).ToList();
+        //        var category = list.Where(x => x.Type.Equals("Category", StringComparison.OrdinalIgnoreCase)).ToList();
+        //        var productType = list.Where(x => x.Type.Equals("ProductType", StringComparison.OrdinalIgnoreCase)).ToList();
+
+        //        return Ok(new
+        //        {
+        //            Success = true,
+        //            Data = new
+        //            {
+        //                Shape = shape,
+        //                Color = color,
+        //                Size = size,
+        //                Clarity = clarity,
+        //                Sieve = sieve,
+        //                ItemGroup = itemGroup,
+        //                Category = category,
+        //                ProductType = productType
+        //            }
+        //        });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(new { Success = false, Message = ex.Message });
+        //    }
+        //}
 
         [HttpGet("detail/{id}")]
         public async Task<IActionResult> GetDetail(int id)
