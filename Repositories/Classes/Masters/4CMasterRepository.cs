@@ -106,7 +106,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Masters
         }
         #endregion
 
-
         #region Color Master
         public async Task<List<ColorMaster>> GetColorMasterListAsync(
             string where,
@@ -166,7 +165,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Masters
             return await SaveColorMasterAsync(data, userId, companyId, "delete");
         }
         #endregion
-
 
         #region Size Master
         public async Task<List<SizeMaster>> GetSizeMasterListAsync(
@@ -686,9 +684,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Masters
 
             return await SaveFLColorMasterAsync(data, userId, companyId, "delete");
         }
-        #endregion
-
-       
-        
+        #endregion               
     }
 }
