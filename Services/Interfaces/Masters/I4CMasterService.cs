@@ -70,11 +70,7 @@ namespace Dia_CoreAPI.Services.Interfaces.Masters
         Task<List<FLColorMaster>> GetFLColorMasterListAsync(string where, string companyId);
         Task<(bool Success, string Message)> SaveFLColorMasterAsync(FLColorMaster model, string userTypeId, string userId, string companyId);
         Task<bool> DeleteFLColorAsync(int id, string userTypeId, string userId, string companyId);
-        #endregion
-
-       
-
-        
+        #endregion               
     }
 
 

@@ -548,6 +548,5 @@ namespace Dia_CoreAPI.Services.Classes.Masters
             return await _repository.DeleteFLColorAsync(id, userTypeId, userId, companyId);
         }
         #endregion
-
     }
 }
