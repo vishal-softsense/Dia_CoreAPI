@@ -45,7 +45,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetMinesMasterListAsync($" AND MinesId = ''{model.MinesID}'' ", companyId);
+                    var duplicate = await _repository.GetMinesMasterListAsync($" AND MinesId = '{model.MinesID}' ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Record already available with Mines id - " + model.MinesID);
 
@@ -58,7 +58,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetMinesMasterListAsync($" AND MinesId = ''{model.MinesID}'' AND ID != {model.ID} ", companyId);
+                    var duplicate = await _repository.GetMinesMasterListAsync($" AND MinesId = '{model.MinesID}' AND ID != {model.ID} ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Sorry.! You can not update record because Mines id already exists.");
 
@@ -132,7 +132,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetRoughMasterListAsync($" AND RoughId = ''{model.RoughID}'' ", companyId);
+                    var duplicate = await _repository.GetRoughMasterListAsync($" AND RoughId = '{model.RoughID}' ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Record already available with Rough id - " + model.RoughID);
 
@@ -145,7 +145,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetRoughMasterListAsync($" AND RoughId = ''{model.RoughID}'' AND ID != {model.ID} ", companyId);
+                    var duplicate = await _repository.GetRoughMasterListAsync($" AND RoughId = '{model.RoughID}' AND ID != {model.ID} ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Sorry.! You can not update record because Rough id already exists.");
 

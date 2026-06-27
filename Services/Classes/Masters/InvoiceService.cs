@@ -45,7 +45,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetTermMasterListAsync($" AND TermId = ''{model.TermID}'' ", companyId);
+                    var duplicate = await _repository.GetTermMasterListAsync($" AND TermId = '{model.TermID}' ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Record already available with Term id - " + model.TermID);
 
@@ -58,7 +58,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetTermMasterListAsync($" AND TermId = ''{model.TermID}'' AND ID != {model.ID} ", companyId);
+                    var duplicate = await _repository.GetTermMasterListAsync($" AND TermId = '{model.TermID}' AND ID != {model.ID} ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Sorry.! You can not update record because Term id already exists.");
 
@@ -132,7 +132,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetTypeMasterListAsync($" AND TypeName = ''{model.TypeName}'' ", companyId);
+                    var duplicate = await _repository.GetTypeMasterListAsync($" AND TypeName = '{model.TypeName}' ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Record already available with Type Name - " + model.TypeName);
 
@@ -145,7 +145,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetTypeMasterListAsync($" AND TypeId = ''{model.TypeID}'' AND ID != {model.ID} ", companyId);
+                    var duplicate = await _repository.GetTypeMasterListAsync($" AND TypeId = '{model.TypeID}' AND ID != {model.ID} ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Sorry.! You can not update record because Type id already exists.");
 
@@ -219,7 +219,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetSubTypeMasterListAsync($" AND SubTypeName = ''{model.SubTypeName}'' ", companyId);
+                    var duplicate = await _repository.GetSubTypeMasterListAsync($" AND SubTypeName = '{model.SubTypeName}' ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Record already available with SubType Name - " + model.SubTypeName);
 
@@ -232,7 +232,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetSubTypeMasterListAsync($" AND SubTypeId = ''{model.SubTypeID}'' AND ID != {model.ID} ", companyId);
+                    var duplicate = await _repository.GetSubTypeMasterListAsync($" AND SubTypeId = '{model.SubTypeID}' AND ID != {model.ID} ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Sorry.! You can not update record because SubType id already exists.");
 

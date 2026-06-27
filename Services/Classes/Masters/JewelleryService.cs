@@ -45,7 +45,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetJewCategoryMasterListAsync($" AND CategoryID = ''{model.CategoryID}'' ", companyId);
+                    var duplicate = await _repository.GetJewCategoryMasterListAsync($" AND CategoryID = '{model.CategoryID}' ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Record already available with category id - " + model.CategoryID);
 
@@ -58,7 +58,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetJewCategoryMasterListAsync($" AND CategoryID = ''{model.CategoryID}'' AND ID != {model.ID} ", companyId);
+                    var duplicate = await _repository.GetJewCategoryMasterListAsync($" AND CategoryID = '{model.CategoryID}' AND ID != {model.ID} ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Sorry.! You can not update record because category id already exists.");
 
@@ -132,7 +132,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetJewSubCategoryMasterListAsync($" AND SubCategoryID = ''{model.SubCategoryID}'' ", companyId);
+                    var duplicate = await _repository.GetJewSubCategoryMasterListAsync($" AND SubCategoryID = '{model.SubCategoryID}' ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Record already available with subcategory id - " + model.SubCategoryID);
 
@@ -145,7 +145,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetJewSubCategoryMasterListAsync($" AND SubCategoryID = ''{model.SubCategoryID}'' AND ID != {model.ID} ", companyId);
+                    var duplicate = await _repository.GetJewSubCategoryMasterListAsync($" AND SubCategoryID = '{model.SubCategoryID}' AND ID != {model.ID} ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Sorry.! You can not update record because subcategory id already exists.");
 
@@ -220,7 +220,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetJewMetalMasterListAsync($" AND MetalID = ''{model.MetalID}'' ", companyId);
+                    var duplicate = await _repository.GetJewMetalMasterListAsync($" AND MetalID = '{model.MetalID}' ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Record already available with metal id - " + model.MetalID);
 
@@ -233,7 +233,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetJewMetalMasterListAsync($" AND MetalID = ''{model.MetalID}'' AND ID != {model.ID} ", companyId);
+                    var duplicate = await _repository.GetJewMetalMasterListAsync($" AND MetalID = '{model.MetalID}' AND ID != {model.ID} ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Sorry.! You can not update record because metal id already exists.");
 
@@ -316,7 +316,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetJewMetalPurityMasterListAsync($" AND MetalPurityID = ''{model.MetalPurityID}'' AND Metal = ''{model.Metal}'' ", companyId);
+                    var duplicate = await _repository.GetJewMetalPurityMasterListAsync($" AND MetalPurityID = '{model.MetalPurityID}' AND Metal = '{model.Metal}' ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Record already available with metal purity id - " + model.MetalPurityID);
 
@@ -329,7 +329,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetJewMetalPurityMasterListAsync($" AND MetalPurityID = ''{model.MetalPurityID}'' AND Metal = ''{model.Metal}'' AND ID != {model.ID} ", companyId);
+                    var duplicate = await _repository.GetJewMetalPurityMasterListAsync($" AND MetalPurityID = '{model.MetalPurityID}' AND Metal = '{model.Metal}' AND ID != {model.ID} ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Sorry.! You can not update record because metal purity id already exists.");
 
@@ -405,7 +405,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetJewColorMasterListAsync($" AND JewColorID = ''{model.JewColorID}'' ", companyId);
+                    var duplicate = await _repository.GetJewColorMasterListAsync($" AND JewColorID = '{model.JewColorID}' ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Record already available with jewcolor id - " + model.JewColorID);
 
@@ -418,7 +418,7 @@ namespace Dia_CoreAPI.Services.Classes.Masters
                     if (permission != 1)
                         return (false, "You are not authorized to perform this task.");
 
-                    var duplicate = await _repository.GetJewColorMasterListAsync($" AND JewColorID = ''{model.JewColorID}'' AND ID != {model.ID} ", companyId);
+                    var duplicate = await _repository.GetJewColorMasterListAsync($" AND JewColorID = '{model.JewColorID}' AND ID != {model.ID} ", companyId);
                     if (duplicate.Count > 0)
                         return (false, "Sorry.! You can not update record because jewcolor id already exists.");
 
