@@ -1,4 +1,4 @@
-﻿using Dia_CoreAPI.DTOs.Masters;
+using Dia_CoreAPI.DTOs.Masters;
 using Dia_CoreAPI.Services.Interfaces.Masters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -2312,6 +2312,23 @@ namespace Dia_CoreAPI.Controllers.Masters
                     GetCompanyId());
 
                 return Ok(new { Success = success, Data = message });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { Success = false, Data = ex.Message });
+            }
+        }
+
+        [HttpGet("list-jew-purity-by-metal")]
+        public async Task<IActionResult> GetJewPurityByMetal([FromQuery] string metalType)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(metalType))
+                    return Ok(new { Success = false, Data = "metalType is required." });
+
+                var result = await _jewelleryService.GetPurityDataAsync($"and Metal='{metalType}'", GetCompanyId());
+                return Ok(new { Success = true, Data = result });
             }
             catch (Exception ex)
             {
