@@ -279,5 +279,54 @@ namespace Dia_CoreAPI.Controllers.Masters
                 return BadRequest(new { success = false, data = ex.Message });
             }
         }
+
+        [HttpPost("upload-logo")]
+        public async Task<IActionResult> UploadCompanyLoginLogo([FromForm] LogoUploadModel model)
+        {
+            try
+            {
+                var image = model?.Image;
+                if (image == null || image.Length == 0)
+                    return BadRequest(new { success = false, message = "No file selected" });
+
+                string extension = System.IO.Path.GetExtension(image.FileName).ToLower();
+                if (extension != ".jpg" && extension != ".jpeg" && extension != ".png")
+                    return BadRequest(new { success = false, message = "Only JPG, JPEG, or PNG images allowed" });
+
+                string companyId = GetCompanyId();
+                string originalFileName = System.IO.Path.GetFileNameWithoutExtension(image.FileName);
+                string cleanFileName = System.Text.RegularExpressions.Regex.Replace(originalFileName, @"[^a-zA-Z0-9_\-]", "");
+                string uniqueFileName = $"{cleanFileName}_{companyId}_{DateTime.Now.Ticks}{extension}";
+                string relativeFolder = "Upload";
+                string webRootPath = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot");
+                string folderPath = System.IO.Path.Combine(webRootPath, relativeFolder);
+
+                if (!System.IO.Directory.Exists(folderPath))
+                    System.IO.Directory.CreateDirectory(folderPath);
+
+                string fullPath = System.IO.Path.Combine(folderPath, uniqueFileName);
+                using (var stream = new System.IO.FileStream(fullPath, System.IO.FileMode.Create))
+                {
+                    await image.CopyToAsync(stream);
+                }
+
+                string imagePath = "/" + relativeFolder + "/" + uniqueFileName;
+
+                return Ok(new
+                {
+                    success = true,
+                    path = imagePath
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+    }
+
+    public class LogoUploadModel
+    {
+        public Microsoft.AspNetCore.Http.IFormFile Image { get; set; }
     }
 }
