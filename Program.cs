@@ -145,7 +145,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var uploadPath = Path.Combine(builder.Environment.ContentRootPath, "Upload");
+var uploadPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "Upload");
 if (!Directory.Exists(uploadPath))
 {
     Directory.CreateDirectory(uploadPath);
