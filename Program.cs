@@ -2,20 +2,21 @@ using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.Repositories.Classes;
 using Dia_CoreAPI.Repositories.Classes.Masters;
 using Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction;
-using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
-using Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction;
-using Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces;
 using Dia_CoreAPI.Repositories.Interfaces.Masters;
+using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Services.Classes;
 using Dia_CoreAPI.Services.Classes.Masters;
+using Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Services.Interfaces;
 using Dia_CoreAPI.Services.Interfaces.Masters;
+using Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -100,6 +101,9 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IJewellerySer
 // Grading Master Registration
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.IGradingRepository, Dia_CoreAPI.Repositories.Classes.Masters.GradingRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IGradingService, Dia_CoreAPI.Services.Classes.Masters.GradingService>();
+
+builder.Services.AddScoped<ISyncSettingService, SyncSettingService>();
+builder.Services.AddScoped<ISyncSettingRepository, SyncSettingRepository>();
 
 builder.Services.AddCors(options =>
 {
