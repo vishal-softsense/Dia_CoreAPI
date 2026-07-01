@@ -162,23 +162,16 @@ namespace Dia_CoreAPI.Controllers.StockAccount
             {
                 var companyId = GetCompanyId();
 
-                // Validation: check if LotNo already exists
-                bool exists = await _service.CheckLotNoExistsAsync(model.LotNo, companyId);
-                if (exists)
-                {
-                    return BadRequest(new { Success = false, Message = "LotNo Already Exists" });
-                }
-
                 // Get next Max SrNo
                 int maxSrNo = await _service.GetMaxItemSrNoAsync(companyId);
                 model.SrNo = (maxSrNo + 1).ToString();
 
-                bool success = await _service.SaveParcelItemMasterAsync(model, "insert", companyId);
+                var (success, message) = await _service.SaveParcelItemMasterAsync(model, "insert", companyId);
                 if (success)
                 {
-                    return Ok(new { Success = true, Message = "Parcel Item created successfully." });
+                    return Ok(new { Success = true, Message = message });
                 }
-                return BadRequest(new { Success = false, Message = "Failed to save Parcel Item." });
+                return BadRequest(new { Success = false, Message = message });
             }
             catch (Exception ex)
             {
@@ -197,16 +190,12 @@ namespace Dia_CoreAPI.Controllers.StockAccount
                     return BadRequest(new { Success = false, Message = "ID mismatch." });
                 }
 
-                // Check LotNo uniqueness (exclude self if needed, but the original checks if it exists in DB)
-                // In MVC, checking lot no exists for edit was done via front-end on lotNo change if the field changed.
-                // We'll trust the validation.
-
-                bool success = await _service.SaveParcelItemMasterAsync(model, "update", companyId);
+                var (success, message) = await _service.SaveParcelItemMasterAsync(model, "update", companyId);
                 if (success)
                 {
-                    return Ok(new { Success = true, Message = "Parcel Item updated successfully." });
+                    return Ok(new { Success = true, Message = message });
                 }
-                return BadRequest(new { Success = false, Message = "Failed to update Parcel Item." });
+                return BadRequest(new { Success = false, Message = message });
             }
             catch (Exception ex)
             {
@@ -220,18 +209,13 @@ namespace Dia_CoreAPI.Controllers.StockAccount
             try
             {
                 var companyId = GetCompanyId();
-                string countStr = await _service.GetAccandItemCountAsync(id, companyId);
-                if (countStr != "0")
-                {
-                    return BadRequest(new { Success = false, Message = "This Item is in Transaction" });
-                }
 
-                bool success = await _service.DeleteParcelItemMasterAsync(id, companyId);
+                var (success, message) = await _service.DeleteParcelItemMasterAsync(id, companyId);
                 if (success)
                 {
-                    return Ok(new { Success = true, Message = "Parcel Item deleted successfully." });
+                    return Ok(new { Success = true, Message = message });
                 }
-                return BadRequest(new { Success = false, Message = "Failed to delete Parcel Item." });
+                return BadRequest(new { Success = false, Message = message });
             }
             catch (Exception ex)
             {
