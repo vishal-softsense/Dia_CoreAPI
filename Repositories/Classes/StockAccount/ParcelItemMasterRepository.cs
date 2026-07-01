@@ -40,11 +40,16 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             return await _sqlDataAccess.SelectDataFromSPSingle<ParcelItemMasterDto>("GetItemDataForEdit", param, companyId);
         }
 
-        public async Task<bool> CheckLotNoExistsAsync(string lotNo, string companyId)
+        public async Task<bool> CheckLotNoExistsAsync(string lotNo, string companyId, int? excludeId = null)
         {
             var param = new Dictionary<string, object>();
             param.Add("@Type", "LotExist");
-            param.Add("@Where", $" AND LotNo = '{lotNo}'");
+            string whereClause = $" AND LotNo = '{lotNo}'";
+            if (excludeId.HasValue)
+            {
+                whereClause += $" AND ItemCode != {excludeId.Value}";
+            }
+            param.Add("@Where", whereClause);
 
             var result = await _sqlDataAccess.SelectDataFromSPSingle<string>("GetAllCommonData", param, companyId);
             return result != "0" && !string.IsNullOrEmpty(result);
@@ -102,8 +107,8 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
         {
             var param = new Dictionary<string, object>();
             param.Add("@ActionType", "DeleteItem");
-            param.Add("@Where", $" And ItemCode= {id}");
-            param.Add("@Where2", "");
+            param.Add("@Where", $" (ItemCode = {id} OR FItemCode = {id} OR TItemCode = {id}) ");
+            param.Add("@Where2", $" (ItemCode = {id}) ");
 
             var result = await _sqlDataAccess.SelectDataFromSPSingle<string>("GetAccandItemCount", param, companyId);
             return result ?? "0";

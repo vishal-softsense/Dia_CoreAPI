@@ -9,10 +9,10 @@ namespace Dia_CoreAPI.Services.Interfaces.StockAccount
         Task<IEnumerable<PItemMasterDto>> GetParcelItemMasterListAsync(string companyId, string whereClause = "");
         Task<IEnumerable<BasicDataDto>> GetItemMasterDropdownAsync(string companyId);
         Task<ParcelItemMasterDto?> GetParcelItemMasterByIdAsync(int id, string companyId);
-        Task<bool> CheckLotNoExistsAsync(string lotNo, string companyId);
+        Task<bool> CheckLotNoExistsAsync(string lotNo, string companyId, int? excludeId = null);
         Task<int> GetMaxItemSrNoAsync(string companyId);
-        Task<bool> SaveParcelItemMasterAsync(ParcelItemMasterDto model, string actionType, string companyId);
+        Task<(bool success, string message)> SaveParcelItemMasterAsync(ParcelItemMasterDto model, string actionType, string companyId);
         Task<string> GetAccandItemCountAsync(int id, string companyId);
-        Task<bool> DeleteParcelItemMasterAsync(int id, string companyId);
+        Task<(bool success, string message)> DeleteParcelItemMasterAsync(int id, string companyId);
     }
 }
