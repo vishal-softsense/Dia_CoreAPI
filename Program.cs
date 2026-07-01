@@ -1,10 +1,12 @@
 using Dia_CoreAPI.DataAccess;
+using Dia_CoreAPI.Repositories;
 using Dia_CoreAPI.Repositories.Classes;
 using Dia_CoreAPI.Repositories.Classes.Masters;
 using Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces;
 using Dia_CoreAPI.Repositories.Interfaces.Masters;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
+using Dia_CoreAPI.Services;
 using Dia_CoreAPI.Services.Classes;
 using Dia_CoreAPI.Services.Classes.Masters;
 using Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction;
@@ -104,6 +106,9 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IGradingServi
 
 builder.Services.AddScoped<ISyncSettingService, SyncSettingService>();
 builder.Services.AddScoped<ISyncSettingRepository, SyncSettingRepository>();
+
+builder.Services.AddScoped<IMenuSearchRepository, MenuSearchRepository>();
+builder.Services.AddScoped<IMenuSearchService, MenuSearchService>();
 
 builder.Services.AddCors(options =>
 {
