@@ -75,6 +75,9 @@ builder.Services.AddScoped<IPurchaseParcelService, PurchaseParcelService>();
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.StockAccount.IParcelItemMasterRepository, Dia_CoreAPI.Repositories.Classes.StockAccount.ParcelItemMasterRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.StockAccount.IParcelItemMasterService, Dia_CoreAPI.Services.Classes.StockAccount.ParcelItemMasterService>();
 
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.StockAccount.ISolitaireItemMasterRepository, Dia_CoreAPI.Repositories.Classes.StockAccount.SolitaireItemMasterRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.StockAccount.ISolitaireItemMasterService, Dia_CoreAPI.Services.Classes.StockAccount.SolitaireItemMasterService>();
+
 // Masters Registration
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.IUserMasterRepository, Dia_CoreAPI.Repositories.Classes.Masters.UserMasterRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Masters.IUserMasterService, Dia_CoreAPI.Services.Classes.Masters.UserMasterService>();
