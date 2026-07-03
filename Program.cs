@@ -116,8 +116,8 @@ builder.Services.AddScoped<ISyncSettingRepository, SyncSettingRepository>();
 builder.Services.AddScoped<IMenuSearchRepository, MenuSearchRepository>();
 builder.Services.AddScoped<IMenuSearchService, MenuSearchService>();
 
-builder.Services.AddScoped<IJewStockMasterRepository, JewStockMasterRepository>();
-builder.Services.AddScoped<IJewStockMasterService, JewStockMasterService>();
+//builder.Services.AddScoped<IJewStockMasterRepository, JewStockMasterRepository>();
+//builder.Services.AddScoped<IJewStockMasterService, JewStockMasterService>();
 
 builder.Services.AddCors(options =>
 {
