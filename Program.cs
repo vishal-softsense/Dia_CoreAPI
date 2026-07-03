@@ -81,8 +81,8 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.StockAccount.IParcelI
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.StockAccount.IAccGrpMasterRepository, Dia_CoreAPI.Repositories.Classes.StockAccount.AccGrpMasterRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.StockAccount.IAccGrpMasterService, Dia_CoreAPI.Services.Classes.StockAccount.AccGrpMasterService>();
 
-builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.StockAccount.ISolitaireItemMasterRepository, Dia_CoreAPI.Repositories.Classes.StockAccount.SolitaireItemMasterRepository>();
-builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.StockAccount.ISolitaireItemMasterService, Dia_CoreAPI.Services.Classes.StockAccount.SolitaireItemMasterService>();
+//builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.StockAccount.ISolitaireItemMasterRepository, Dia_CoreAPI.Repositories.Classes.StockAccount.SolitaireItemMasterRepository>();
+//builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.StockAccount.ISolitaireItemMasterService, Dia_CoreAPI.Services.Classes.StockAccount.SolitaireItemMasterService>();
 
 // Masters Registration
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Masters.IUserMasterRepository, Dia_CoreAPI.Repositories.Classes.Masters.UserMasterRepository>();
