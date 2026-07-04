@@ -1,11 +1,12 @@
+using Dapper;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace Dia_CoreAPI.DataAccess
 {
@@ -171,6 +172,29 @@ namespace Dia_CoreAPI.DataAccess
             AddParametersToCommand(cmd, parameters);
 
             return await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task<T> GetScalarDataFromSP<T>(
+    string storedProcedure,
+    Dictionary<string, object> parameters,
+    string companyId)
+        {
+            var connString = await GetClientConnectionString(companyId);
+            using var connection = (SqlConnection)_connectionFactory.CreateConnectionWithConnectionString(connString);
+            var dynamicParameters = new DynamicParameters();
+
+            if (parameters != null)
+            {
+                foreach (var item in parameters)
+                {
+                    dynamicParameters.Add(item.Key, item.Value);
+                }
+            }
+
+            return await connection.ExecuteScalarAsync<T>(
+                storedProcedure,
+                dynamicParameters,
+                commandType: CommandType.StoredProcedure);
         }
     }
 }
