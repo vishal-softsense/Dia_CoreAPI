@@ -1,4 +1,4 @@
-﻿using Dia_CoreAPI.DTOs.StockAccount;
+using Dia_CoreAPI.DTOs.StockAccount;
 using Dia_CoreAPI.Repositories.Interfaces.StockAccount;
 using Dia_CoreAPI.Services.Interfaces.StockAccount;
 
@@ -60,6 +60,204 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
         public async Task<List<SettingMasterDto>> GetJewSettingValueAsync(string companyId)
         {
             return await _repository.GetJewSettingValueAsync(companyId);
+        }
+
+        // Mounting-specific service methods
+        public async Task<JewStockMasterDto?> GetMountingStockByIdAsync(int id, string companyId)
+        {
+            return await _repository.GetMountingStockByIdAsync(id, companyId);
+        }
+
+        public async Task<(bool success, string message)> SaveMountingStockAsync(JewStockMasterDto model, List<DiamondDetails> diamond, List<SettingDetails> setting, string actionType, string userTypeId, string companyId)
+        {
+            if (string.IsNullOrWhiteSpace(model.Stock_ID))
+            {
+                return (false, "Stock Name is required.");
+            }
+
+            if (model.JewCode == 0 && actionType == "insert")
+            {
+                // Check if stock ID already exists
+                var existingStock = await _repository.GetMountingStockAsync(companyId, $" AND Stock_ID = ''{model.Stock_ID}'' AND CompanyID = {companyId}");
+                if (existingStock != null && existingStock.Any())
+                {
+                    return (false, "This Stock ID already exists. Please use a different Stock ID.");
+                }
+
+                // Permission check AFTER validation (matching MVC FINAL logic)
+                int permission = await _repository.CheckUserPermissionAsync(userTypeId, "Jew Stock Master", "insert", companyId);
+                if (permission != 1)
+                {
+                    return (false, "You are not authorized to perform this task.");
+                }
+            }
+            else if (actionType == "update")
+            {
+                // Permission check for update
+                int permission = await _repository.CheckUserPermissionAsync(userTypeId, "Jew Stock Master", "edit", companyId);
+                if (permission != 1)
+                {
+                    return (false, "You are not authorized to perform this task.");
+                }
+            }
+
+            bool saveSuccess = await _repository.SaveMountingStockAsync(model, diamond, setting, actionType, companyId);
+            if (saveSuccess)
+            {
+                string successMsg = actionType == "update" ? "Jewellery Stock record update successfully." : "Jewellery Stock record saved successfully.";
+                return (true, successMsg);
+            }
+            return (false, $"Failed to {actionType} Jewellery Stock record.");
+        }
+
+        public async Task<(bool success, string message)> DeleteMountingStockMasterAsync(int id, string companyId)
+        {
+            bool deleteSuccess = await _repository.DeleteMountingStockMasterAsync(id, companyId);
+            if (deleteSuccess)
+            {
+                return (true, "Record Deleted.");
+            }
+            return (false, "Record not found.");
+        }
+
+        public async Task<(bool success, string message, JewGridData? data)> AddMountingItemInGridAsync(AddJewLotNo item, List<JewDiamondDetails> existingGrid)
+        {
+            try
+            {
+                double totalCarats = 0;
+                double totalAmount = 0;
+                int totPcs = 0;
+
+                float purRate = item.Rate != 0 ? item.Rate : 0;
+                float back = item.Back != 0 ? item.Back : 0;
+                double issueCarats = item.IssueCarats;
+
+                if (issueCarats <= 0)
+                {
+                    return (false, "Carat is invalid.", null);
+                }
+
+                if (purRate == 0 && back == 0)
+                {
+                    return (false, "Rate and Discount both can not be 0.", null);
+                }
+
+                if (purRate != 0 && issueCarats != 0)
+                {
+                    back = (float)(((purRate * 100) / issueCarats) - 100);
+                }
+
+                var jewDiamond = new JewDiamondDetails
+                {
+                    Category = item.Category,
+                    LotNo = item.LotNo,
+                    Shape = item.ShapeId,
+                    Size = item.SizeId,
+                    Color = item.ColorId,
+                    Clarity = item.ClarityId,
+                    Sieve = item.SieveId,
+                    Pcs = item.Pcs,
+                    IssueCarats = item.IssueCarats,
+                    Rate = purRate,
+                    Amount = item.Amount,
+                    Cert = item.Cert
+                };
+
+                var jewExcel = existingGrid ?? new List<JewDiamondDetails>();
+
+                bool isEdit = item.editIndex >= 0 && item.editIndex < jewExcel.Count;
+                if (isEdit)
+                {
+                    jewExcel[item.editIndex] = jewDiamond;
+                }
+                else
+                {
+                    jewExcel.Add(jewDiamond);
+                }
+
+                foreach (var gridItem in jewExcel)
+                {
+                    totPcs += gridItem.Pcs;
+                    totalCarats += gridItem.IssueCarats;
+                    totalAmount += gridItem.Amount;
+                }
+
+                var gridData = new JewGridData
+                {
+                    TotalCarats = Math.Round(totalCarats, 3),
+                    TotalAmount = Math.Round(totalAmount, 2),
+                    TotalPcs = totPcs,
+                    ExcelData = jewExcel,
+                    IsEdit = isEdit
+                };
+
+                return (true, "Item added successfully.", gridData);
+            }
+            catch (Exception ex)
+            {
+                return (false, "Error: " + ex.Message, null);
+            }
+        }
+
+        public async Task<(bool success, string message, JewGridData? data)> DeleteMountingItemFromGridAsync(int index, List<JewDiamondDetails> existingGrid)
+        {
+            if (existingGrid == null)
+            {
+                return (false, "Data not found or session expired. Please reload the page.", null);
+            }
+
+            if (index < 0 || index >= existingGrid.Count)
+            {
+                return (false, "Invalid index provided.", null);
+            }
+
+            existingGrid.RemoveAt(index);
+
+            double totalCarats = 0;
+            double totalAmount = 0;
+            int totPcs = 0;
+
+            foreach (var item in existingGrid)
+            {
+                totPcs += item.Pcs;
+                totalCarats += item.IssueCarats;
+                totalAmount += item.Amount;
+            }
+
+            var gridData = new JewGridData
+            {
+                TotalCarats = Math.Round(totalCarats, 3),
+                TotalAmount = Math.Round(totalAmount, 2),
+                TotalPcs = totPcs,
+                ExcelData = existingGrid
+            };
+
+            return (true, "Item removed successfully.", gridData);
+        }
+
+        public async Task<string> GetNextMountingStockIdAsync(string designId, string companyId)
+        {
+            return await _repository.GetNextMountingStockIdAsync(designId, companyId);
+        }
+
+        public async Task<IEnumerable<BasicDataDto>> GetMountingStockDropdownAsync(string category, string companyId)
+        {
+            return await _repository.GetMountingStockDropdownAsync(category, companyId);
+        }
+
+        public async Task<IEnumerable<BasicDataDto>> GetAllLotNoListAllAsync(string searchby, string stoneType, string companyId)
+        {
+            return await _repository.GetAllLotNoListAllAsync(searchby, stoneType, companyId);
+        }
+
+        public async Task<(JewStockMasterDto? data, List<JewDiamondDetails> diamondList)> GetAllMountingDetailsAsync(int id, string companyId)
+        {
+            return await _repository.GetAllMountingDetailsAsync(id, companyId);
+        }
+
+        public async Task<List<LotNoDataJew>> GetJewLotNoDataAsync(string lotNo, string companyId)
+        {
+            return await _repository.GetJewLotNoDataAsync(lotNo, companyId);
         }
     }
 }

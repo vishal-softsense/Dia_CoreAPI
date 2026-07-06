@@ -1,4 +1,4 @@
-﻿using Dia_CoreAPI.DTOs.StockAccount;
+using Dia_CoreAPI.DTOs.StockAccount;
 
 namespace Dia_CoreAPI.Repositories.Interfaces.StockAccount
 {
@@ -21,5 +21,22 @@ namespace Dia_CoreAPI.Repositories.Interfaces.StockAccount
         Task<List<JewSubCategoryDto>> GetJewSubCategoryMasterAsync(string companyId,string whereClause = "");
 
         Task<List<SettingMasterDto>> GetJewSettingValueAsync(string companyId);
+
+        // Mounting-specific methods
+        Task<JewStockMasterDto?> GetMountingStockByIdAsync(int id, string companyId);
+        Task<bool> SaveMountingStockAsync(JewStockMasterDto model, List<DiamondDetails> diamond, List<SettingDetails> setting, string actionType, string companyId);
+        Task<bool> DeleteMountingStockMasterAsync(int id, string companyId);
+        Task<string> GetNextMountingStockIdAsync(string designId, string companyId);
+        Task<IEnumerable<BasicDataDto>> GetMountingStockDropdownAsync(string category, string companyId);
+        Task<IEnumerable<BasicDataDto>> GetAllLotNoListAllAsync(string searchby, string stoneType, string companyId);
+        Task<(JewStockMasterDto? data, List<JewDiamondDetails> diamondList)> GetAllMountingDetailsAsync(int id, string companyId);
+        Task<int> GetMaxStockCodeAsync(string companyId);
+        Task<string> GetMaxItemCodeAsync(string whereClause, string companyId);
+        Task<string> GetDesignNameAsync(string whereClause, string companyId);
+        Task<int> GetMaxStockSerialNoAsync(string whereClause, string companyId);
+        Task<bool> SaveStockDiamondDetailsDataAsync(int designId, int jewCode, int itemCode, string stockId, string type, string shape, string size, string sieve, string color, string clarity, int pcs, double carat, float price, double amount, string lab, string actionType, string companyId);
+        Task<bool> SaveStockSettingDetailsDataAsync(int designId, int jewCode, string type, string shape, string size, int pcs, string settingType, float price, double amount, string actionType, string companyId);
+        Task<bool> DeleteBothAsync(int jewCode, string actionType, string companyId);
+        Task<List<LotNoDataJew>> GetJewLotNoDataAsync(string lotNo, string companyId);
     }
 }

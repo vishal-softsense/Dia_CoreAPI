@@ -43,6 +43,7 @@ namespace Dia_CoreAPI.DTOs.StockAccount
         public int DueDays { get; set; }
         public int GracePeriod { get; set; }
         public string Term { get; set; } = string.Empty;
+        public string TermName { get; set; } = string.Empty;
         public double TermPer { get; set; }
         public string LocalLangName { get; set; } = string.Empty;
         public string LocalLangContactPerson { get; set; } = string.Empty;
@@ -52,6 +53,9 @@ namespace Dia_CoreAPI.DTOs.StockAccount
         public string Address1 { get; set; } = string.Empty;
         public string Address2 { get; set; } = string.Empty;
         public string Address3 { get; set; } = string.Empty;
+        public string AddressLine1 { get; set; } = string.Empty;
+        public string AddressLine2 { get; set; } = string.Empty;
+        public string AddressLine3 { get; set; } = string.Empty;
         public string Zipcode { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string State { get; set; } = string.Empty;

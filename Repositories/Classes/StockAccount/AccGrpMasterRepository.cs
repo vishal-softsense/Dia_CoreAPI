@@ -198,7 +198,7 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             param.Add("@StockCurrencyRate", model.SBaseRate);
             param.Add("@StockCurrencyAmount", sCurAmount);
             param.Add("@AG", model.AG ?? "A");
-            param.Add("@street", model.AG ?? "A");
+            param.Add("@street", model.Address1 ?? "");
             param.Add("@AreaCode", model.Area ?? "");
             param.Add("@CityCode", model.City ?? "");
             param.Add("@StateCode", model.State ?? "");
@@ -269,7 +269,7 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             param.Add("@RefPhone2", model.RefPhone2 ?? "");
             param.Add("@RefComments2", model.RefComments2 ?? "");
             param.Add("@Compilance", model.Compliance);
-            param.Add("@Inactive", model.Active);
+            param.Add("@Inactive", !model.Active);
             param.Add("@LocalLangName", model.LocalLangName ?? "");
             param.Add("@LocalLangContactPerson", model.LocalLangContactPerson ?? "");
             param.Add("@LocalLangAddress", model.LocalLangAddress ?? "");

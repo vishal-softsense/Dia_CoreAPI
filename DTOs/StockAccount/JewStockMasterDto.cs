@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Dia_CoreAPI.DTOs.StockAccount
 {
@@ -206,4 +206,125 @@ namespace Dia_CoreAPI.DTOs.StockAccount
         public string Name { get; set; }
         public string Value { get; set; }
     }
+
+    // Mounting-specific DTOs
+    public class MountingduplicateMaster
+    {
+        public int JewCode { get; set; }
+        public string Stock_ID { get; set; }
+        public string MountCategory { get; set; }
+        public string MetalType { get; set; }
+        public string Purity { get; set; }
+        public float TotalDiamondCarat { get; set; }
+        public double GrossWeight { get; set; }
+        public double NetWeight { get; set; }
+        public float TotalMetalAmount { get; set; }
+    }
+
+    public class JewDiamondDetails
+    {
+        public string LotNo { get; set; }
+        public string Category { get; set; }
+        public string Shape { get; set; }
+        public string Size { get; set; }
+        public string Sieve { get; set; }
+        public string Color { get; set; }
+        public string Clarity { get; set; }
+        public int Pcs { get; set; }
+        public double IssueCarats { get; set; }
+        public float Rate { get; set; }
+        public double Amount { get; set; }
+        public string Cert { get; set; }
+    }
+
+    public class JewGridData
+    {
+        public double TotalCarats { get; set; }
+        public double TotalAmount { get; set; }
+        public int TotalPcs { get; set; }
+        public List<JewDiamondDetails> ExcelData { get; set; }
+        public bool IsEdit { get; set; }
+    }
+
+    public class DiamondDetails
+    {
+        public string StockID { get; set; }
+        public string Type { get; set; }
+        public string Shape { get; set; }
+        public string Size { get; set; }
+        public string Sieve { get; set; }
+        public string Color { get; set; }
+        public string Clarity { get; set; }
+        public int Pcs { get; set; }
+        public double Carat { get; set; }
+        public float Price { get; set; }
+        public double Amount { get; set; }
+        public string Lab { get; set; }
+    }
+
+    public class SettingDetails
+    {
+        public string Type { get; set; }
+        public string Shape { get; set; }
+        public string Size { get; set; }
+        public int Pcs { get; set; }
+        public string SettingType { get; set; }
+        public float Price { get; set; }
+        public double Amount { get; set; }
+    }
+
+    public class AddJewLotNo
+    {
+        public string Category { get; set; }
+        public string LotNo { get; set; }
+        public string ShapeId { get; set; }
+        public string SizeId { get; set; }
+        public string ColorId { get; set; }
+        public string ClarityId { get; set; }
+        public string SieveId { get; set; }
+        public int Pcs { get; set; }
+        public double IssueCarats { get; set; }
+        public float Rate { get; set; }
+        public float Back { get; set; }
+        public double Amount { get; set; }
+        public string Cert { get; set; }
+        public int editIndex { get; set; }
+    }
+
+    public class JewSettingData
+    {
+        public string Type { get; set; }
+        public string ShapeId { get; set; }
+        public string SizeId { get; set; }
+        public int Pcs { get; set; }
+        public string SettingType { get; set; }
+        public float Price { get; set; }
+        public double Amount { get; set; }
+    }
+
+    public class LotNoDataJew
+    {
+        public string LotNo { get; set; } = "";
+        public string Category { get; set; } = "";
+        public string Carats { get; set; } = "";
+        public string Pcs { get; set; } = "";
+        public string PurchaseMRP { get; set; } = "";
+        public string PurchaseBack { get; set; } = "";
+        public string PurchaseRate { get; set; } = "";
+        public string PurchaseAmount { get; set; } = "";
+        public string ShapeId { get; set; } = "";
+        public string ColorId { get; set; } = "";
+        public string SizeId { get; set; } = "";
+        public string SieveId { get; set; } = "";
+        public string ClarityId { get; set; } = "";
+        public string CertId { get; set; } = "";
+        public float Rate { get; set; }
+        public float BalanceCarats3Dec { get; set; }
+    }
+
+    public class LotNoRequest
+    {
+        public string LotNo { get; set; } = "";
+    }
 }
+
