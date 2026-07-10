@@ -393,24 +393,24 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
 
             if (stoneType == "Mounting")
             {
-                strWhere += $" AND (Name LIKE ''%{safeSearch}%'' OR TextName LIKE ''%{safeSearch}%'') ";
-                strWhere += " AND Type = ''MountingJew'' ";
+                strWhere += $" AND (Name LIKE '%{safeSearch}%' OR TextName LIKE '%{safeSearch}%') ";
+                strWhere += " AND Type = 'MountingJew' ";
             }
             else if (stoneType == "Natural Diamond")
             {
-                strWhere += $" AND (Name LIKE ''%{safeSearch}%'' OR TextName LIKE ''%{safeSearch}%'') ";
-                strWhere += " AND Type = ''Item'' ";
-                strWhere += " AND Category = ''Natural Diamond'' ";
+                strWhere += $" AND (Name LIKE '%{safeSearch}%' OR TextName LIKE '%{safeSearch}%') ";
+                strWhere += " AND Type = 'Item' ";
+                strWhere += " AND Category = 'Natural Diamond' ";
             }
             else if (stoneType == "Lab Grown Diamond")
             {
-                strWhere += $" AND (Name LIKE ''%{safeSearch}%'' OR TextName LIKE ''%{safeSearch}%'') ";
-                strWhere += " AND Type = ''Item'' ";
-                strWhere += " AND Category = ''Lab Grown Diamond'' ";
+                strWhere += $" AND (Name LIKE '%{safeSearch}%' OR TextName LIKE '%{safeSearch}%') ";
+                strWhere += " AND Type = 'Item' ";
+                strWhere += " AND Category = 'Lab Grown Diamond' ";
             }
             else
             {
-                strWhere += $" AND (Name LIKE ''%{safeSearch}%'' OR TextName LIKE ''%{safeSearch}%'') ";
+                strWhere += $" AND (Name LIKE '%{safeSearch}%' OR TextName LIKE '%{safeSearch}%') ";
             }
 
             var results = new List<BasicDataDto>();
