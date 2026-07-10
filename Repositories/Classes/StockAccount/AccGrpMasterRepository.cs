@@ -29,7 +29,25 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
         public async Task<IEnumerable<BasicDataDto>> GetAccGrpMasterDropdownAsync(string companyId)
         {
             var param = new Dictionary<string, object>();
-            return await _sqlDataAccess.SelectDataFromSP<BasicDataDto>("AllMasterDataForAccGrpMaster", param, companyId);
+            var masterList = (await _sqlDataAccess.SelectDataFromSP<BasicDataDto>("AllMasterDataForAccGrpMaster", param, companyId)).ToList();
+
+            try
+            {
+                var brokerParam = new Dictionary<string, object>();
+                brokerParam.Add("@strWhere", "");
+                var brokers = await _sqlDataAccess.SelectDataFromSP<BasicDataDto>("GetAccountDataForDropdown", brokerParam, companyId);
+                foreach (var b in brokers)
+                {
+                    b.Type = "Broker";
+                    masterList.Add(b);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load brokers: {ex.Message}");
+            }
+
+            return masterList;
         }
 
         public async Task<AccGrpMasterDto?> GetAccGrpMasterByIdAsync(int id, string companyId)
@@ -240,7 +258,7 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             int.TryParse(model.Broker, out brokerVal);
             param.Add("@Broker", brokerVal);
 
-            param.Add("@Executive", "");
+            param.Add("@Executive", model.Executive ?? "");
             param.Add("@TermName", model.Term ?? "");
             param.Add("@TermPer", model.TermPer);
             param.Add("@GrNo", model.GRNO ?? "");

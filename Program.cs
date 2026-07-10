@@ -122,6 +122,9 @@ builder.Services.AddScoped<IMenuSearchService, MenuSearchService>();
 builder.Services.AddScoped<IJewStockMasterRepository, JewStockMasterRepository>();
 builder.Services.AddScoped<IJewStockMasterService, JewStockMasterService>();
 
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitaireStockSearchReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitaireStockSearchReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports.ISolitaireStockSearchReportService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports.SolitaireStockSearchReportService>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
