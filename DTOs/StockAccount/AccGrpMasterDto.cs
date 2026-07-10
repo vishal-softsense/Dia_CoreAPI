@@ -81,6 +81,7 @@ namespace Dia_CoreAPI.DTOs.StockAccount
         public double BrokerPer { get; set; }
         public string ContactPerson { get; set; } = string.Empty;
         public string Agent { get; set; } = string.Empty;
+        public string Executive { get; set; } = string.Empty;
         public string RefPartyName1 { get; set; } = string.Empty;
         public string RefParty1 { get; set; } = string.Empty;
         public string RefParty2 { get; set; } = string.Empty;
