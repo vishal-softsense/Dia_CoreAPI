@@ -214,6 +214,26 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             return await _sqlDataAccess.SelectDataFromSPSingle<JewStockMasterDto>("GetALLMasterList", param, companyId);
         }
 
+        public async Task<bool> CheckStockIdExistsAsync(string stockId, string companyId)
+        {
+            var param = new Dictionary<string, object>();
+            param.Add("@Where", $" AND Stock_ID = '{stockId}' ");
+            param.Add("@Type", "JewStock");
+
+            var result = await _sqlDataAccess.SelectDataFromSPSingle<JewStockMasterDto>("GetALLMasterList", param, companyId);
+            return result != null;
+        }
+
+        public async Task<bool> CheckMountingUsedAsync(string mountingId, string companyId)
+        {
+            var param = new Dictionary<string, object>();
+            param.Add("@Type", "JewStock");
+            param.Add("@Where", $" AND UseMounting = '{mountingId}' ");
+
+            var result = await _sqlDataAccess.SelectDataFromSPSingle<JewStockMasterDto>("GetALLMasterList", param, companyId);
+            return result != null;
+        }
+
         public async Task<bool> SaveMountingStockAsync(JewStockMasterDto model, List<DiamondDetails> diamond, List<SettingDetails> setting, string actionType, string companyId)
         {
             var param = new Dictionary<string, object>();
@@ -228,8 +248,8 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
 
             if (isDesignSelected)
             {
-                getDesignName = await GetDesignNameAsync($" AND ID=''{model.DesignID}''", companyId);
-                int maxSerialNo = await GetMaxStockSerialNoAsync($" AND DesignName=''{getDesignName}'' AND CompanyID={companyId}", companyId);
+                getDesignName = await GetDesignNameAsync($" AND ID='{model.DesignID}'", companyId);
+                int maxSerialNo = await GetMaxStockSerialNoAsync($" AND DesignName='{getDesignName}' AND CompanyID={companyId}", companyId);
                 
                 if (actionType == "insert")
                 {
@@ -325,9 +345,9 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             {
                 foreach (var dm in diamond)
                 {
-                    string itemCode = await GetMaxItemCodeAsync($" AND LotNo = ''{dm.StockID}''", companyId);
+                    string itemCode = await GetMaxItemCodeAsync($" AND LotNo = '{dm.StockID}'", companyId);
                     int maxItemCode = int.TryParse(itemCode, out int code) ? code : 0;
-                    await SaveStockDiamondDetailsDataAsync(int.TryParse(model.DesignID, out int did) ? did : 0, maxJewCode, maxItemCode, dm.StockID, dm.Type, dm.Shape, dm.Size, dm.Sieve, dm.Color, dm.Clarity, dm.Pcs, Math.Round(dm.Carat, 2), dm.Price, Math.Round(dm.Amount, 2), dm.Lab, "InsertStockDiamond", companyId);
+                    await SaveStockDiamondDetailsDataAsync(model.DesignID ?? "", maxJewCode, maxItemCode, dm.StockID ?? "", dm.Type ?? "", dm.Shape ?? "", dm.Size ?? "", dm.Sieve ?? "", dm.Color ?? "", dm.Clarity ?? "", dm.Pcs, Math.Round(dm.Carat, 2), dm.Price, Math.Round(dm.Amount, 2), dm.Lab ?? "", "InsertStockDiamond", companyId);
                 }
             }
 
@@ -336,7 +356,7 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             {
                 foreach (var st in setting)
                 {
-                    await SaveStockSettingDetailsDataAsync(int.TryParse(model.DesignID, out int did) ? did : 0, maxJewCode, st.Type, st.Shape, st.Size, st.Pcs, st.SettingType, st.Price, st.Amount, "InsertStockSetting", companyId);
+                    await SaveStockSettingDetailsDataAsync(model.DesignID ?? "", maxJewCode, st.Type, st.Shape, st.Size, st.Pcs, st.SettingType, st.Price, st.Amount, "InsertStockSetting", companyId);
                 }
             }
 
@@ -362,23 +382,31 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
 
         public async Task<string> GetNextMountingStockIdAsync(string designId, string companyId)
         {
-            return await GetDesignNameAsync($" AND JewCode=''{designId}''", companyId);
+            return await GetDesignNameAsync($" AND JewCode='{designId}'", companyId);
         }
 
-        public async Task<IEnumerable<BasicDataDto>> GetMountingStockDropdownAsync(string category, string companyId)
+        public async Task<IEnumerable<BasicDataDto>> GetMountingStockDropdownAsync(string category, string actionType, string companyId)
         {
             string strWhere = string.Empty;
 
             if (category == "Finished Jewellery" || category == "Semi Jewellery")
             {
-                strWhere = " AND MountCategory IN (''Mounting'',''Metal'')";
+                if (actionType == "edit")
+                {
+                    strWhere = " AND (MountCategory = 'Mounting' OR MountCategory = 'Metal')";
+                }
+                else
+                {
+                    strWhere = " AND MountCategory IN ('Mounting','Metal')";
+                }
             }
 
             var param = new Dictionary<string, object>();
-            param.Add("@Where", strWhere);
-            param.Add("@Type", "LotNoMetal");
+            param.Add("@strWhere", strWhere);
 
-            return await _sqlDataAccess.SelectDataFromSP<BasicDataDto>("GetALLMasterList", param, companyId);
+            var allMountings = await _sqlDataAccess.SelectDataFromSP<BasicDataDto>("GetlotandmetalDataForDropdown", param, companyId);
+
+            return allMountings;
         }
 
         public async Task<IEnumerable<BasicDataDto>> GetAllLotNoListAllAsync(string searchby, string stoneType, string companyId)
@@ -493,21 +521,59 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
                 });
         }
 
-        public async Task<(JewStockMasterDto? data, List<JewDiamondDetails> diamondList)> GetAllMountingDetailsAsync(int id, string companyId)
+        public async Task<(JewStockMasterDto? data, List<DiamondDetails> diamondList)> GetAllMountingDetailsAsync(int id, string companyId)
         {
             var param = new Dictionary<string, object>();
             param.Add("@Where", $" AND JewCode = {id} ");
-            param.Add("@Type", "JewMounting");
+            param.Add("@Type", "JewStock");
 
             var data = await _sqlDataAccess.SelectDataFromSPSingle<JewStockMasterDto>("GetALLMasterList", param, companyId);
 
             // Get diamond details
             var diamondParam = new Dictionary<string, object>();
             diamondParam.Add("@Where", $" AND JewCode = {id} ");
-            diamondParam.Add("@Type", "JewStockDiamond");
+            diamondParam.Add("@Type", "GetJewStockDiamond");
 
-            var diamondData = await _sqlDataAccess.SelectDataFromSP<JewDiamondDetails>("GetALLMasterList", diamondParam, companyId);
-            var diamondList = diamondData.ToList();
+            var dbDiamondData = await _sqlDataAccess.SelectDataFromSP<GetJewDiamond>("GetALLMasterList", diamondParam, companyId);
+            var diamondList = dbDiamondData.Select(row => new DiamondDetails
+            {
+                StockID = row.DiamondLotNo,
+                Type = row.DiamondType,
+                Shape = row.DiamondShape,
+                Size = row.DiamondSize,
+                Sieve = row.DiamondSieve,
+                Color = row.DiamondColor,
+                Clarity = row.DiamondClarity,
+                Pcs = row.DiamondPcs,
+                Carat = row.DiamondCarat,
+                Price = row.DiamondPrice,
+                Amount = row.DiamondAmount,
+                Lab = row.DiamondLab
+            }).ToList();
+
+            // Get setting details
+            var settingParam = new Dictionary<string, object>();
+            settingParam.Add("@Where", $" AND JewCode = {id} ");
+            settingParam.Add("@Type", "GetJewStockSetting");
+
+            var dbSettingData = await _sqlDataAccess.SelectDataFromSP<GetJewSetting>("GetALLMasterList", settingParam, companyId);
+            var settingList = dbSettingData.Select(row => new DiamondDetails
+            {
+                StockID = "", // Setting doesn't have LotNo usually
+                Type = row.Type,
+                Shape = row.Shape,
+                Size = row.Size,
+                Sieve = "", // Not applicable
+                Color = "", // Not applicable
+                Clarity = "", // Not applicable
+                Pcs = row.Pcs,
+                Carat = 0, // Setting doesn't have Carats
+                Price = row.Price,
+                Amount = row.Amount,
+                Lab = row.SettingType // SettingType is mapped to lab in frontend
+            }).ToList();
+
+            diamondList.AddRange(settingList);
 
             return (data, diamondList);
         }
@@ -515,7 +581,7 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
         public async Task<int> GetMaxStockCodeAsync(string companyId)
         {
             var param = new Dictionary<string, object>();
-            param.Add("@Type", "MaxStockCode");
+            param.Add("@Type", "StockCode");
             param.Add("@Where", "");
 
             var result = await _sqlDataAccess.SelectDataFromSPSingle<string>("GetALLCommonData", param, companyId);
@@ -525,10 +591,11 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
         public async Task<string> GetMaxItemCodeAsync(string whereClause, string companyId)
         {
             var param = new Dictionary<string, object>();
-            param.Add("@Type", "MaxItemCode");
+            param.Add("@Type", "ItemCode");
             param.Add("@Where", whereClause);
 
-            return await _sqlDataAccess.SelectDataFromSPSingle<string>("GetALLCommonData", param, companyId) ?? "0";
+            var result = await _sqlDataAccess.SelectDataFromSPSingle<string>("GetALLCommonData", param, companyId);
+            return result ?? "0";
         }
 
         public async Task<string> GetDesignNameAsync(string whereClause, string companyId)
@@ -544,18 +611,18 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
         {
             var param = new Dictionary<string, object>();
             param.Add("@Where", whereClause);
-            param.Add("@Type", "MaxStockSerialNo");
+            param.Add("@Type", "MaxStockSerianNo");
 
             var result = await _sqlDataAccess.SelectDataFromSPSingle<string>("GetALLCommonData", param, companyId);
             return int.TryParse(result, out int serialNo) ? serialNo : 0;
         }
 
-        public async Task<bool> SaveStockDiamondDetailsDataAsync(int designId, int jewCode, int itemCode, string stockId, string type, string shape, string size, string sieve, string color, string clarity, int pcs, double carat, float price, double amount, string lab, string actionType, string companyId)
+        public async Task<bool> SaveStockDiamondDetailsDataAsync(string designId, int jewCode, int itemCode, string stockId, string type, string shape, string size, string sieve, string color, string clarity, int pcs, double carat, float price, double amount, string lab, string actionType, string companyId)
         {
             var param = new Dictionary<string, object>();
             param.Add("@DesignID", designId);
             param.Add("@JewCode", jewCode);
-            param.Add("@ItemCode", itemCode);
+            param.Add("@diamonditemcode", itemCode);
             param.Add("@StockID", stockId);
             param.Add("@Type", type);
             param.Add("@Shape", shape);
@@ -569,12 +636,13 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             param.Add("@Amount", amount);
             param.Add("@Lab", lab);
             param.Add("@ActionType", actionType);
+            param.Add("@CompanyID", int.Parse(companyId));
 
-            int result = await _sqlDataAccess.ExecuteSP("SP_StockDiamondDetails", param, companyId);
+            int result = await _sqlDataAccess.ExecuteSP("SP_DiamondDetails", param, companyId);
             return result > 0;
         }
 
-        public async Task<bool> SaveStockSettingDetailsDataAsync(int designId, int jewCode, string type, string shape, string size, int pcs, string settingType, float price, double amount, string actionType, string companyId)
+        public async Task<bool> SaveStockSettingDetailsDataAsync(string designId, int jewCode, string type, string shape, string size, int pcs, string settingType, float price, double amount, string actionType, string companyId)
         {
             var param = new Dictionary<string, object>();
             param.Add("@DesignID", designId);
@@ -587,8 +655,9 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             param.Add("@Price", price);
             param.Add("@Amount", amount);
             param.Add("@ActionType", actionType);
+            param.Add("@CompanyID", int.Parse(companyId));
 
-            int result = await _sqlDataAccess.ExecuteSP("SP_StockSettingDetails", param, companyId);
+            int result = await _sqlDataAccess.ExecuteSP("SP_SettingDetails", param, companyId);
             return result > 0;
         }
 

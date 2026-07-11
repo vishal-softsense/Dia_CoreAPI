@@ -70,18 +70,31 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
 
         public async Task<(bool success, string message)> SaveMountingStockAsync(JewStockMasterDto model, List<DiamondDetails> diamond, List<SettingDetails> setting, string actionType, string userTypeId, string companyId)
         {
-            if (string.IsNullOrWhiteSpace(model.Stock_ID))
+            if (string.IsNullOrWhiteSpace(model.DesignID) && string.IsNullOrWhiteSpace(model.Stock_ID))
             {
                 return (false, "Stock Name is required.");
             }
 
             if (model.JewCode == 0 && actionType == "insert")
             {
-                // Check if stock ID already exists
-                var existingStock = await _repository.GetMountingStockAsync(companyId, $" AND Stock_ID = ''{model.Stock_ID}'' AND CompanyID = {companyId}");
-                if (existingStock != null && existingStock.Any())
+                if (string.IsNullOrWhiteSpace(model.DesignID))
                 {
-                    return (false, "This Stock ID already exists. Please use a different Stock ID.");
+                    // Check if stock ID already exists
+                    bool exists = await _repository.CheckStockIdExistsAsync(model.Stock_ID.Trim(), companyId);
+                    if (exists)
+                    {
+                        return (false, "This Stock ID already exists. Please use a different Stock ID.");
+                    }
+                }
+
+                // Check if UseMounting is already used
+                if (!string.IsNullOrWhiteSpace(model.UseMounting))
+                {
+                    bool isUsed = await _repository.CheckMountingUsedAsync(model.UseMounting, companyId);
+                    if (isUsed)
+                    {
+                        return (false, "This Mounting Lot No is already used in another stock.");
+                    }
                 }
 
                 // Permission check AFTER validation (matching MVC FINAL logic)
@@ -240,9 +253,9 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
             return await _repository.GetNextMountingStockIdAsync(designId, companyId);
         }
 
-        public async Task<IEnumerable<BasicDataDto>> GetMountingStockDropdownAsync(string category, string companyId)
+        public async Task<IEnumerable<BasicDataDto>> GetMountingStockDropdownAsync(string category, string actionType, string companyId)
         {
-            return await _repository.GetMountingStockDropdownAsync(category, companyId);
+            return await _repository.GetMountingStockDropdownAsync(category, actionType, companyId);
         }
 
         public async Task<IEnumerable<BasicDataDto>> GetAllLotNoListAllAsync(string searchby, string stoneType, string companyId)
@@ -250,7 +263,7 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
             return await _repository.GetAllLotNoListAllAsync(searchby, stoneType, companyId);
         }
 
-        public async Task<(JewStockMasterDto? data, List<JewDiamondDetails> diamondList)> GetAllMountingDetailsAsync(int id, string companyId)
+        public async Task<(JewStockMasterDto? data, List<DiamondDetails> diamondList)> GetAllMountingDetailsAsync(int id, string companyId)
         {
             return await _repository.GetAllMountingDetailsAsync(id, companyId);
         }

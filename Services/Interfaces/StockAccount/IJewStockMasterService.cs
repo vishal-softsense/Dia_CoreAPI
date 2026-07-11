@@ -26,9 +26,9 @@ namespace Dia_CoreAPI.Services.Interfaces.StockAccount
         Task<(bool success, string message, JewGridData? data)> AddMountingItemInGridAsync(AddJewLotNo item, List<JewDiamondDetails> existingGrid);
         Task<(bool success, string message, JewGridData? data)> DeleteMountingItemFromGridAsync(int index, List<JewDiamondDetails> existingGrid);
         Task<string> GetNextMountingStockIdAsync(string designId, string companyId);
-        Task<IEnumerable<BasicDataDto>> GetMountingStockDropdownAsync(string category, string companyId);
+        Task<IEnumerable<BasicDataDto>> GetMountingStockDropdownAsync(string category, string actionType, string companyId);
         Task<IEnumerable<BasicDataDto>> GetAllLotNoListAllAsync(string searchby, string stoneType, string companyId);
-        Task<(JewStockMasterDto? data, List<JewDiamondDetails> diamondList)> GetAllMountingDetailsAsync(int id, string companyId);
+        Task<(JewStockMasterDto? data, List<DiamondDetails> diamondList)> GetAllMountingDetailsAsync(int id, string companyId);
         Task<List<LotNoDataJew>> GetJewLotNoDataAsync(string lotNo, string companyId);
     }
 }

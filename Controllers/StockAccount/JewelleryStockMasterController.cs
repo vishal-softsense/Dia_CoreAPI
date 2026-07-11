@@ -349,7 +349,7 @@ namespace Dia_CoreAPI.Controllers.StockAccount
             try
             {
                 var companyId = GetCompanyId();
-                (JewStockMasterDto? data, List<JewDiamondDetails> diamondList) = await _service.GetAllMountingDetailsAsync(id, companyId);
+                (JewStockMasterDto? data, List<DiamondDetails> diamondList) = await _service.GetAllMountingDetailsAsync(id, companyId);
 
                 if (data == null)
                 {
@@ -397,11 +397,11 @@ namespace Dia_CoreAPI.Controllers.StockAccount
         }
 
         [HttpGet("mounting-stock-dropdown")]
-        public async Task<IActionResult> GetMountingStockDropdown([FromQuery] string category)
+        public async Task<IActionResult> GetMountingStockDropdown([FromQuery] string category, [FromQuery] string actionType = "")
         {
             try
             {
-                var result = await _service.GetMountingStockDropdownAsync(category, GetCompanyId());
+                var result = await _service.GetMountingStockDropdownAsync(category, actionType, GetCompanyId());
 
                 return Ok(new
                 {

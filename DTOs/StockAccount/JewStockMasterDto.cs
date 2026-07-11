@@ -6,33 +6,33 @@ namespace Dia_CoreAPI.DTOs.StockAccount
     {
         [Key]
         public int JewCode { get; set; }
-        public string Stock_ID { get; set; }
-        public string DesignID { get; set; }
+        public string? Stock_ID { get; set; }
+        public string? DesignID { get; set; }
 
 
-        public string DesignName { get; set; }
+        public string? DesignName { get; set; }
 
 
         public float DesignPriority { get; set; }
-        public string Category { get; set; }
-        public string SubCategory { get; set; }
-        public string JewSize { get; set; }
-        public string MetalType { get; set; }
-        public string JewelleryCerNo { get; set; }
-        public string Color { get; set; }
-        public string Purity { get; set; }
+        public string? Category { get; set; }
+        public string? SubCategory { get; set; }
+        public string? JewSize { get; set; }
+        public string? MetalType { get; set; }
+        public string? JewelleryCerNo { get; set; }
+        public string? Color { get; set; }
+        public string? Purity { get; set; }
         public double PureRatio { get; set; }
         public double GrossWeight { get; set; }
         public double NetWeight { get; set; }
         public double MetalPriceGm { get; set; }
-        public string MakingType { get; set; }
+        public string? MakingType { get; set; }
         public float MakingRate { get; set; }
         public float MakingCharges { get; set; }
         public float SettingCharges { get; set; }
         public float HandlingChargesPerCarat { get; set; }
         public float HandlingCarat { get; set; }
         public float TotalHandlingCharges { get; set; }
-        public string JewelleryCertificate { get; set; }
+        public string? JewelleryCertificate { get; set; }
         public float TotalCertificateCharges { get; set; }
         public float OtherCharges { get; set; }
         public float HallmarkCharges { get; set; }
@@ -43,15 +43,15 @@ namespace Dia_CoreAPI.DTOs.StockAccount
         public float TotalStoneAmount { get; set; }
         public float TotalMakingCharges { get; set; }
 
-        public string ImagePath { get; set; }
-        public string VideoPath { get; set; }
-        public string CertPath { get; set; }
+        public string? ImagePath { get; set; }
+        public string? VideoPath { get; set; }
+        public string? CertPath { get; set; }
         public float FinalAmount { get; set; }
 
-        public string CreatedBy { get; set; }
-        public string CreatedOn { get; set; }
-        public string ModifyBy { get; set; }
-        public string ModifyOn { get; set; }
+        public string? CreatedBy { get; set; }
+        public string? CreatedOn { get; set; }
+        public string? ModifyBy { get; set; }
+        public string? ModifyOn { get; set; }
         public int CompanyID { get; set; }
 
         public float AskingRate { get; set; }
@@ -59,13 +59,13 @@ namespace Dia_CoreAPI.DTOs.StockAccount
 
         public int TotalDiamondQty { get; set; }
         public int TotalStoneQty { get; set; }
-        public string Description { get; set; }
-        public byte[] ImageBinary { get; set; }
+        public string? Description { get; set; }
+        public byte[]? ImageBinary { get; set; }
 
-        public string TrnDate { get; set; }
-        public string UseMounting { get; set; }
-        public string UseMountingId { get; set; }
-        public string MountCategory { get; set; }
+        public string? TrnDate { get; set; }
+        public string? UseMounting { get; set; }
+        public string? UseMountingId { get; set; }
+        public string? MountCategory { get; set; }
 
     }
 
@@ -300,6 +300,34 @@ namespace Dia_CoreAPI.DTOs.StockAccount
         public string SettingType { get; set; }
         public float Price { get; set; }
         public double Amount { get; set; }
+    }
+
+    public class GetJewDiamond
+    {
+        public int JewCode { get; set; }
+        public string DiamondLotNo { get; set; }
+        public string DiamondType { get; set; }
+        public string DiamondShape { get; set; }
+        public string DiamondSize { get; set; }
+        public string DiamondSieve { get; set; }
+        public string DiamondColor { get; set; }
+        public string DiamondClarity { get; set; }
+        public int DiamondPcs { get; set; }
+        public float DiamondCarat { get; set; }
+        public float DiamondPrice { get; set; }
+        public float DiamondAmount { get; set; }
+        public string DiamondLab { get; set; }
+    }
+
+    public class GetJewSetting
+    {
+        public string Type { get; set; }
+        public string Shape { get; set; }
+        public string Size { get; set; }
+        public int Pcs { get; set; }
+        public string SettingType { get; set; }
+        public float Price { get; set; }
+        public float Amount { get; set; }
     }
 
     public class LotNoDataJew
