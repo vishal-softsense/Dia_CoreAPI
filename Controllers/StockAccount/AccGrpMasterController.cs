@@ -25,6 +25,26 @@ namespace Dia_CoreAPI.Controllers.StockAccount
             return User.FindFirst("CompanyID")?.Value ?? throw new UnauthorizedAccessException("CompanyID missing from token.");
         }
 
+        //[HttpGet("list")]
+        //public async Task<IActionResult> GetList([FromQuery] string? filter)
+        //{
+        //    try
+        //    {
+        //        var companyId = GetCompanyId();
+        //        string whereClause = "";
+        //        if (!string.IsNullOrEmpty(filter))
+        //        {
+        //            whereClause += $" AND (TAG.AccGrpName LIKE '%{filter}%' OR TAG.SName LIKE '%{filter}%' OR TAG.UnderGroupName LIKE '%{filter}%')";
+        //        }
+        //        var list = await _service.GetAccGrpMasterListAsync(companyId, whereClause);
+        //        return Ok(new { Success = true, Data = list });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(new { Success = false, Message = ex.Message });
+        //    }
+        //}
+
         [HttpGet("list")]
         public async Task<IActionResult> GetList([FromQuery] string? filter)
         {
@@ -32,19 +52,50 @@ namespace Dia_CoreAPI.Controllers.StockAccount
             {
                 var companyId = GetCompanyId();
                 string whereClause = "";
+
                 if (!string.IsNullOrEmpty(filter))
                 {
-                    whereClause += $" AND (TAG.AccGrpName LIKE '%{filter}%' OR TAG.SName LIKE '%{filter}%' OR TAG.UnderGroupName LIKE '%{filter}%')";
+                    whereClause += $" AND (TAG.AccGrpName LIKE '%{filter}%' OR TAG.SName LIKE '%{filter}%')";
                 }
-                var list = await _service.GetAccGrpMasterListAsync(companyId, whereClause);
-                return Ok(new { Success = true, Data = list });
+
+                var result = await _service.GetAccGrpMasterListAsync(companyId, whereClause);
+
+                List<AccGrpMasterListDto> data = new List<AccGrpMasterListDto>();
+
+                foreach (var row in result)
+                {
+                    // Skip duplicate AccGrpCode
+                    if (!data.Any(x => x.AccGrpCode == row.AccGrpCode))
+                    {
+                        data.Add(new AccGrpMasterListDto
+                        {
+                            AccGrpCode = row.AccGrpCode,
+                            AccGrpName = row.AccGrpName,
+                            Currency = row.Currency,
+                            ODrCr = row.ODrCr,
+                            UnderGroupName = row.UnderGroupName,
+                            AccountType = row.AccountType,
+                            OBalance = row.OBalance,
+                            Country = row.Country
+                        });
+                    }
+                }
+
+                return Ok(new
+                {
+                    Success = true,
+                    Data = data
+                });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { Success = false, Message = ex.Message });
+                return BadRequest(new
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
             }
         }
-
 
 
         [HttpGet("dropdowns")]
