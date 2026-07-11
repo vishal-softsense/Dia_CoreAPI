@@ -45,6 +45,8 @@ namespace Dia_CoreAPI.Controllers.StockAccount
             }
         }
 
+
+
         [HttpGet("dropdowns")]
         public async Task<IActionResult> GetDropdowns()
         {

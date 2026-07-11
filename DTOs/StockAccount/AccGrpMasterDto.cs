@@ -126,5 +126,6 @@ namespace Dia_CoreAPI.DTOs.StockAccount
         public string ShippingPhone { get; set; } = string.Empty;
         public string ShippingFax { get; set; } = string.Empty;
         public string Markup { get; set; } = string.Empty;
+        public string KAM { get; set; } = string.Empty;
     }
 }

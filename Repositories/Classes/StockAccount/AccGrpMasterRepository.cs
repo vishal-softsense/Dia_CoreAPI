@@ -298,6 +298,7 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             param.Add("@WebsiteUserID", model.WebUser ?? "");
             param.Add("@CompanyID", int.Parse(companyId));
             param.Add("@Markup", model.Markup ?? "");
+            param.Add("@KAM", model.KAM ?? "");
             param.Add("@ActionType", actionType);
 
             int result = await _sqlDataAccess.ExecuteSP("SP_AccGrpMaster", param, companyId);
