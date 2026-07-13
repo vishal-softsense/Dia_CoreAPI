@@ -65,7 +65,7 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
             {
                 singlePcs += 1;
             }
-
+                
             string itemName = "";
             if (!string.IsNullOrWhiteSpace(item.ItemName))
             {

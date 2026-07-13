@@ -39,9 +39,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Masters
                 { "@ID", model.Id },
                 { "@Name", model.Name },
                 { "@Value", model.Value },
-                { "@Description", model.Description },
-                { "@COMMENT", model.COMMENT },
-                { "@CompanyID", model.CompanyID },
                 { "@ActionType", actionType }
             };
 
