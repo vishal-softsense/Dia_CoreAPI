@@ -190,7 +190,9 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             param.Add("@MfgPacketID", model.MfgPacketID ?? "");
             param.Add("@RoughId", model.RoughID ?? "");
             param.Add("@MinesId", model.MinesID ?? "");
-            
+         
+           
+
             param.Add("@CompanyID", int.Parse(companyId));
             param.Add("@ActionType", actionType);
 
@@ -218,6 +220,24 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
 
             int result = await _sqlDataAccess.ExecuteSP("SP_ItemMaster", param, companyId);
             return result > 0 || true;
+        }
+
+        public async Task<string?> GetParameterIdAsync(string parameter, string parameterValue, string usedFor, string companyId)
+        {
+            var param = new Dictionary<string, object>
+            {
+                { "@Parameter", parameter },
+                { "@ParameterValue", parameterValue },
+                { "@UsedFor", usedFor }
+            };
+
+            var result = await _sqlDataAccess.SelectDataFromSP<ParameterIdResult>("GetParameterID", param, companyId);
+            return result?.FirstOrDefault()?.ParameterID;
+        }
+
+        private class ParameterIdResult
+        {
+            public string? ParameterID { get; set; }
         }
 
         #endregion

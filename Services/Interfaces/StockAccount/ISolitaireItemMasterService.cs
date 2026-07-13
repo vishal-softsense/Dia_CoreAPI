@@ -14,5 +14,7 @@ namespace Dia_CoreAPI.Services.Interfaces.StockAccount
         Task<bool> AddItemAsync(SolitaireItemMasterDto item, string companyId);
         Task<bool> EditItemAsync(SolitaireItemMasterDto item, string companyId);
         Task<bool> DeleteItemAsync(int id, string companyId);
+        Task<string?> GetParameterIdAsync(string parameter, string parameterValue, string usedFor, string companyId);
+        Task<IEnumerable<ItemMasterDto>> PreviewFullItemAsync(ImportCertExcel input, string companyId);
     }
 }

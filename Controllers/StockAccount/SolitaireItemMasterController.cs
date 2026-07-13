@@ -257,6 +257,21 @@ namespace Dia_CoreAPI.Controllers.StockAccount
             }
         }
 
+        [HttpPost("preview-full-item")]
+        public async Task<IActionResult> PreviewFullItem([FromBody] ImportCertExcel model)
+        {
+            try
+            {
+                var companyId = GetCompanyId();
+                var data = await _service.PreviewFullItemAsync(model, companyId);
+                return Ok(new { Success = true, Data = data });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Success = false, Message = ex.Message });
+            }
+        }
+
         #endregion
     }
 }

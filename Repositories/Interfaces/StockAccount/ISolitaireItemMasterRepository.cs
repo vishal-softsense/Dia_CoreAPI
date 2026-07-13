@@ -15,5 +15,6 @@ namespace Dia_CoreAPI.Repositories.Interfaces.StockAccount
         Task<bool> SaveItemMasterDataAsync(SolitaireItemMasterDto model, string actionType, string companyId, int singlePcs);
         Task<string> GetItemCountAsync(string where1, string where2, string companyId);
         Task<bool> DeleteItemMasterDataAsync(int id, string companyId, string actionType);
+        Task<string?> GetParameterIdAsync(string parameter, string parameterValue, string usedFor, string companyId);
     }
 }

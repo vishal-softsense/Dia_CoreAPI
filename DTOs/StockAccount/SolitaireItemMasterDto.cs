@@ -245,5 +245,17 @@ namespace Dia_CoreAPI.DTOs.StockAccount
         public string? HeartsImagePath { get; set; }
         public string? ArrowsImagePath { get; set; }
         public string? ImagePath { get; set; }
+        public string? LABComments { get; set; }
+        public string? MemberComments { get; set; }
+        public string? City { get; set; }
+        public string? State { get; set; }
+        public string? Country { get; set; }
+    }
+
+    public class ImportCertExcel
+    {
+        public string? LotNo { get; set; }
+        public string? CertificateNo { get; set; }
+        public double Carats { get; set; }
     }
 }
