@@ -17,6 +17,14 @@ using Dia_CoreAPI.Services.Interfaces;
 using Dia_CoreAPI.Services.Interfaces.Masters;
 using Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Services.Interfaces.StockAccount;
+using Dia_CoreAPI.Repositories.Interfaces.Dashboard;
+using Dia_CoreAPI.Repositories.Classes.Dashboard;
+using Dia_CoreAPI.Services.Interfaces.Dashboard;
+using Dia_CoreAPI.Services.Classes.Dashboard;
+using Dia_CoreAPI.Repositories.Interfaces.ParcelDashboard;
+using Dia_CoreAPI.Repositories.Classes.ParcelDashboard;
+using Dia_CoreAPI.Services.Interfaces.ParcelDashboard;
+using Dia_CoreAPI.Services.Classes.ParcelDashboard;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
@@ -118,6 +126,11 @@ builder.Services.AddScoped<ISyncSettingRepository, SyncSettingRepository>();
 
 builder.Services.AddScoped<IMenuSearchRepository, MenuSearchRepository>();
 builder.Services.AddScoped<IMenuSearchService, MenuSearchService>();
+
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IParcelDashboardRepository, ParcelDashboardRepository>();
+builder.Services.AddScoped<IParcelDashboardService, ParcelDashboardService>();
 
 builder.Services.AddScoped<IJewStockMasterRepository, JewStockMasterRepository>();
 builder.Services.AddScoped<IJewStockMasterService, JewStockMasterService>();
