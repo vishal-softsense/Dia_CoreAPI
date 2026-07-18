@@ -196,5 +196,23 @@ namespace Dia_CoreAPI.DataAccess
                 dynamicParameters,
                 commandType: CommandType.StoredProcedure);
         }
+
+        // Executes raw SQL text (EXEC SP with inline string-quoted params, matching MVC pattern)
+        public async Task<IEnumerable<T>> SelectRawSql<T>(string sql, string companyId)
+        {
+            var connString = await GetClientConnectionString(companyId);
+            using var connection = (SqlConnection)_connectionFactory.CreateConnectionWithConnectionString(connString);
+            await connection.OpenAsync();
+            using var cmd = new SqlCommand(sql, connection);
+            cmd.CommandType = CommandType.Text;
+            using var reader = await cmd.ExecuteReaderAsync();
+            return MapReaderToList<T>(reader);
+        }
+
+        public async Task<T?> SelectRawSqlSingle<T>(string sql, string companyId)
+        {
+            var list = await SelectRawSql<T>(sql, companyId);
+            return list.FirstOrDefault();
+        }
     }
 }

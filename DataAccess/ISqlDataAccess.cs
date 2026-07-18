@@ -12,6 +12,8 @@ namespace Dia_CoreAPI.DataAccess
         Task<int> ExecuteQuery(string query, object parameters, string companyId);
         Task<string> GetClientConnectionString(string companyId);
 
-        Task<T> GetScalarDataFromSP<T>(string storedProcedure,Dictionary<string, object> parameters,string companyId);
+        Task<T> GetScalarDataFromSP<T>(string storedProcedure, Dictionary<string, object> parameters, string companyId);
+        Task<IEnumerable<T>> SelectRawSql<T>(string sql, string companyId);
+        Task<T?> SelectRawSqlSingle<T>(string sql, string companyId);
     }
 }
