@@ -140,6 +140,8 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires
 
 builder.Services.AddScoped<IMonthAnalysisReportRepository, MonthAnalysisReportRepository>();
 builder.Services.AddScoped<IMonthAnalysisReportService, MonthAnalysisReportService>();
+builder.Services.AddScoped<IPurchaseAnalysisReportRepository, PurchaseAnalysisReportRepository>();
+builder.Services.AddScoped<IPurchaseAnalysisReportService, PurchaseAnalysisReportService>();
 
 builder.Services.AddCors(options =>
 {
