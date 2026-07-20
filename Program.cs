@@ -142,6 +142,8 @@ builder.Services.AddScoped<IMonthAnalysisReportRepository, MonthAnalysisReportRe
 builder.Services.AddScoped<IMonthAnalysisReportService, MonthAnalysisReportService>();
 builder.Services.AddScoped<IPurchaseAnalysisReportRepository, PurchaseAnalysisReportRepository>();
 builder.Services.AddScoped<IPurchaseAnalysisReportService, PurchaseAnalysisReportService>();
+builder.Services.AddScoped<ISaleAnalysisReportRepository, SaleAnalysisReportRepository>();
+builder.Services.AddScoped<ISaleAnalysisReportService, SaleAnalysisReportService>();
 
 builder.Services.AddCors(options =>
 {
