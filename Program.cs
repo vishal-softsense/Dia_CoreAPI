@@ -144,6 +144,8 @@ builder.Services.AddScoped<IPurchaseAnalysisReportRepository, PurchaseAnalysisRe
 builder.Services.AddScoped<IPurchaseAnalysisReportService, PurchaseAnalysisReportService>();
 builder.Services.AddScoped<ISaleAnalysisReportRepository, SaleAnalysisReportRepository>();
 builder.Services.AddScoped<ISaleAnalysisReportService, SaleAnalysisReportService>();
+builder.Services.AddScoped<IStockAnalysisReportRepository, StockAnalysisReportRepository>();
+builder.Services.AddScoped<IStockAnalysisReportService, StockAnalysisReportService>();
 
 builder.Services.AddCors(options =>
 {
