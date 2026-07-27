@@ -138,6 +138,9 @@ builder.Services.AddScoped<IJewStockMasterService, JewStockMasterService>();
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitaireStockSearchReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitaireStockSearchReportRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports.ISolitaireStockSearchReportService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports.SolitaireStockSearchReportService>();
 
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitaireAdminStockReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitaireAdminStockReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports.ISolitaireAdminStockReportService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports.SolitaireAdminStockReportService>();
+
 builder.Services.AddScoped<IMonthAnalysisReportRepository, MonthAnalysisReportRepository>();
 builder.Services.AddScoped<IMonthAnalysisReportService, MonthAnalysisReportService>();
 builder.Services.AddScoped<IPurchaseAnalysisReportRepository, PurchaseAnalysisReportRepository>();
