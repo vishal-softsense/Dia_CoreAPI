@@ -222,4 +222,39 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
         public string? Subject { get; set; }
         public string? Body { get; set; }
     }
+
+    // MVC: StockSearch Show History popup (SP_StockRegisterReport)
+    public class SolitaireStockSearchHistoryFilterDto
+    {
+        public string? LotNo { get; set; }
+        public string? FromDate { get; set; }
+        public string? ToDate { get; set; }
+        public List<string>? SelectedTypes { get; set; }
+        public bool StkEff { get; set; } = true;
+    }
+
+    public class SolitaireStockSearchHistoryRowDto
+    {
+        public long trncode { get; set; }
+        public long invcode { get; set; }
+        public int Itemcode { get; set; }
+        public string? StockID { get; set; }
+        public string? TrnDate { get; set; }
+        public string? TrnType { get; set; }
+        public string? Particulars { get; set; }
+        public string? PartyName { get; set; }
+        public string? AccName { get; set; }
+        public string? RelatedRemark { get; set; }
+        public string? Perticulors { get; set; }
+        public decimal StockIn { get; set; }
+        public decimal StockInPrice { get; set; }
+        public decimal StockInAmount { get; set; }
+        public decimal StockOut { get; set; }
+        public decimal StockOutPrice { get; set; }
+        public decimal StockOutAmount { get; set; }
+        public decimal COGS { get; set; }
+        public decimal BalanceStock { get; set; }
+        public decimal BalancePrice { get; set; }
+        public decimal BalanceAmount { get; set; }
+    }
 }

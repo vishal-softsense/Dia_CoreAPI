@@ -52,5 +52,12 @@ namespace Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports
         {
             return await _repo.GetEmailSettingsAsync(companyId);
         }
+
+        public async Task<IEnumerable<SolitaireStockSearchHistoryRowDto>> GetStockSearchHistoryAsync(
+            SolitaireStockSearchHistoryFilterDto filter,
+            string companyId)
+        {
+            return await _repo.GetStockSearchHistoryAsync(filter, companyId);
+        }
     }
 }

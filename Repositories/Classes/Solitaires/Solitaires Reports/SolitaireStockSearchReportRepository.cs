@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Dia_CoreAPI.DataAccess;
@@ -577,6 +578,188 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 Subject = "StockList as per Inquiry",
                 Body = body
             };
+        }
+
+        public async Task<IEnumerable<SolitaireStockSearchHistoryRowDto>> GetStockSearchHistoryAsync(
+            SolitaireStockSearchHistoryFilterDto filter,
+            string companyId)
+        {
+            var (stkInStr, stkOutStr) = BuildStockSearchHistoryTrnTypes(ResolveSelectedTypes(filter));
+            var whereNew = BuildStockSearchHistoryWhere(filter);
+
+            var fromDate = DateTime.Parse(filter.FromDate ?? "2020-01-01").ToString("yyyy-MM-dd");
+            var toDate = DateTime.Parse(filter.ToDate ?? "2026-12-31").ToString("yyyy-MM-dd");
+
+            // MVC ReportProcessor.ParcelGetStockRegisterReport — inline EXEC with doubled-quote params
+            var sql =
+                " EXEC [SP_StockRegisterReport] @Type = 'SalePurAvgPrice', @StkIn = '" + stkInStr +
+                "', @StkOut = '" + stkOutStr +
+                "', @WhereNew = '" + whereNew +
+                "', @FromDate= '" + fromDate +
+                "',@ToDate= '" + toDate + "'";
+
+            var rows = await _db.SelectDataDapperDynamic(sql, companyId);
+            return rows.Select(MapStockSearchHistoryRow);
+        }
+
+        private static List<string> ResolveSelectedTypes(SolitaireStockSearchHistoryFilterDto filter)
+        {
+            if (filter.SelectedTypes != null && filter.SelectedTypes.Count > 0)
+                return filter.SelectedTypes;
+
+            return new List<string> { "ALL" };
+        }
+
+        private static SolitaireStockSearchHistoryRowDto MapStockSearchHistoryRow(dynamic row)
+        {
+            var dict = (IDictionary<string, object>)row;
+
+            string GetString(params string[] keys)
+            {
+                foreach (var key in keys)
+                {
+                    foreach (var pair in dict)
+                    {
+                        if (!string.Equals(pair.Key, key, StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        if (pair.Value == null || pair.Value == DBNull.Value)
+                            continue;
+
+                        return Convert.ToString(pair.Value, CultureInfo.InvariantCulture) ?? "";
+                    }
+                }
+
+                return "";
+            }
+
+            decimal GetDecimal(params string[] keys)
+            {
+                foreach (var key in keys)
+                {
+                    foreach (var pair in dict)
+                    {
+                        if (!string.Equals(pair.Key, key, StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        if (pair.Value == null || pair.Value == DBNull.Value)
+                            continue;
+
+                        return Convert.ToDecimal(pair.Value, CultureInfo.InvariantCulture);
+                    }
+                }
+
+                return 0;
+            }
+
+            var trnType = GetString("TrnType");
+            var particulars = GetString(
+                "Particulars",
+                "PartyName",
+                "AccName",
+                "RelatedRemark",
+                "Perticulors");
+
+            if (string.IsNullOrWhiteSpace(particulars) && trnType == "OpStk")
+                particulars = "OpStk";
+
+            return new SolitaireStockSearchHistoryRowDto
+            {
+                TrnDate = GetString("TrnDate"),
+                TrnType = trnType,
+                Particulars = particulars,
+                StockIn = GetDecimal("StockIn"),
+                StockInPrice = GetDecimal("StockInPrice"),
+                StockInAmount = GetDecimal("StockInAmount"),
+                StockOut = GetDecimal("StockOut"),
+                StockOutPrice = GetDecimal("StockOutPrice"),
+                StockOutAmount = GetDecimal("StockOutAmount"),
+                BalanceStock = GetDecimal("BalanceStock"),
+                BalancePrice = GetDecimal("BalancePrice"),
+                BalanceAmount = GetDecimal("BalanceAmount")
+            };
+        }
+
+        private static string BuildStockSearchHistoryWhere(SolitaireStockSearchHistoryFilterDto filter)
+        {
+            var strWhere = " ";
+
+            if (!string.IsNullOrWhiteSpace(filter.LotNo))
+            {
+                var lotList = filter.LotNo
+                    .Replace("\r\n", ",")
+                    .Replace("\n", ",")
+                    .Replace("'", "''")
+                    .Replace(",", "'',''");
+
+                strWhere += " AND (v.StockID IN (''" + lotList + "''))";
+            }
+
+            if (filter.StkEff == false)
+                strWhere += " AND StockEffected = 1 ";
+
+            return strWhere;
+        }
+
+        private static (string stkInStr, string stkOutStr) BuildStockSearchHistoryTrnTypes(List<string>? selectedTypes)
+        {
+            var stkIn = new List<string> { "OpStk" };
+            var stkOut = new List<string>();
+
+            if (selectedTypes == null || selectedTypes.Count == 0)
+                selectedTypes = new List<string> { "ALL" };
+
+            foreach (var type in selectedTypes)
+            {
+                switch (type)
+                {
+                    case "ALL":
+                        stkIn.AddRange(new[]
+                        {
+                            "OpStk", "PPUR", "CPUR", "PSaleRtn", "CSaleRtn",
+                            "PMemoIn", "CMemoIn", "MemoRtnP", "StkTrn", "MixMemoRtnP"
+                        });
+                        stkOut.AddRange(new[]
+                        {
+                            "PSALE", "CSALE", "PPurRtn", "CPurrtn",
+                            "PMemoOut", "CMemoOut", "MemoInRtnP", "StkTrn", "MixMemoInRtn"
+                        });
+                        break;
+
+                    case "PUR": stkIn.Add("PPUR"); break;
+                    case "PURRTN": stkOut.Add("PPurRtn"); break;
+                    case "SALE": stkOut.Add("PSALE"); break;
+                    case "SALERTN": stkIn.Add("PSaleRtn"); break;
+                    case "MEMOIN": stkIn.Add("PMemoIn"); break;
+                    case "MEMOINRTN": stkOut.Add("MemoInRtnP"); break;
+                    case "MEMOOUT": stkOut.Add("PMemoOut"); break;
+                    case "MEMOOUTRTN": stkIn.Add("MemoRtnP"); break;
+                    case "GPUR": stkIn.Add("CPUR"); break;
+                    case "GPURRTN": stkOut.Add("CPurrtn"); break;
+                    case "GSALE": stkOut.Add("CSALE"); break;
+                    case "GSALERTN": stkIn.Add("CSaleRtn"); break;
+                    case "GMEMOIN": stkIn.Add("CMemoIn"); break;
+                    case "GMEMOOUT": stkOut.Add("CMemoOut"); break;
+                    case "GMEMOINRTN": stkOut.Add("MixMemoInRtn"); break;
+                    case "GMEMOOUTRTN": stkIn.Add("MixMemoRtnP"); break;
+                    case "STKTRN":
+                        stkIn.Add("StkTrn");
+                        stkOut.Add("StkTrn");
+                        break;
+                }
+            }
+
+            if (!stkIn.Any())
+                stkIn.Add("__NA__");
+            if (!stkOut.Any())
+                stkOut.Add("__NA__");
+
+            stkIn = stkIn.Distinct().ToList();
+            stkOut = stkOut.Distinct().ToList();
+
+            var stkInStr = string.Join(", ", stkIn.Select(x => $"''{x}''"));
+            var stkOutStr = string.Join(", ", stkOut.Select(x => $"''{x}''"));
+            return (stkInStr, stkOutStr);
         }
     }
 }

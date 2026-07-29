@@ -142,5 +142,20 @@ namespace Dia_CoreAPI.Controllers.Solitaires.Solitaires_Reports
                 return BadRequest(new { Success = false, Message = ex.Message });
             }
         }
+
+        [HttpPost("stock-history")]
+        public async Task<IActionResult> GetStockHistory([FromBody] SolitaireStockSearchHistoryFilterDto filter)
+        {
+            try
+            {
+                var companyId = GetCompanyId();
+                var data = await _service.GetStockSearchHistoryAsync(filter, companyId);
+                return Ok(new { Success = true, Data = data });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Success = false, Message = ex.Message });
+            }
+        }
     }
 }

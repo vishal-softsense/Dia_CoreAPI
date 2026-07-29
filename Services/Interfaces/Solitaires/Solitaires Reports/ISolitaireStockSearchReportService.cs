@@ -14,5 +14,8 @@ namespace Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports
         Task<bool> UpdateBoxAndGroupAsync(BoxGroupUpdateDTO dto, string companyId);
         Task<bool> SendStockListEmailAsync(SendSolitaireStockEmailDTO dto, string companyId);
         Task<EmailSettingsDTO> GetEmailSettingsAsync(string companyId);
+        Task<IEnumerable<SolitaireStockSearchHistoryRowDto>> GetStockSearchHistoryAsync(
+            SolitaireStockSearchHistoryFilterDto filter,
+            string companyId);
     }
 }

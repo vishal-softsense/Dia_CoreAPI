@@ -257,5 +257,24 @@ namespace Dia_CoreAPI.DataAccess
             var list = await SelectRawSql<T>(sql, companyId);
             return list.FirstOrDefault();
         }
+
+        // Matches MVC SqlDataAccess.SelectData<T> — Dapper maps SP result columns flexibly
+        public async Task<IEnumerable<T>> SelectDataDapper<T>(string sql, string companyId)
+        {
+            var connString = await GetClientConnectionString(companyId);
+            using var connection = new SqlConnection(connString);
+            await connection.OpenAsync();
+            var result = await connection.QueryAsync<T>(sql, commandTimeout: 180);
+            return result.ToList();
+        }
+
+        public async Task<IEnumerable<dynamic>> SelectDataDapperDynamic(string sql, string companyId)
+        {
+            var connString = await GetClientConnectionString(companyId);
+            using var connection = new SqlConnection(connString);
+            await connection.OpenAsync();
+            var result = await connection.QueryAsync(sql, commandTimeout: 180);
+            return result.ToList();
+        }
     }
 }

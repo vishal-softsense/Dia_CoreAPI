@@ -15,5 +15,7 @@ namespace Dia_CoreAPI.DataAccess
         Task<T> GetScalarDataFromSP<T>(string storedProcedure, Dictionary<string, object> parameters, string companyId);
         Task<IEnumerable<T>> SelectRawSql<T>(string sql, string companyId);
         Task<T?> SelectRawSqlSingle<T>(string sql, string companyId);
+        Task<IEnumerable<T>> SelectDataDapper<T>(string sql, string companyId);
+        Task<IEnumerable<dynamic>> SelectDataDapperDynamic(string sql, string companyId);
     }
 }
