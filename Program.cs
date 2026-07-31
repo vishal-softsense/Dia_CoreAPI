@@ -174,9 +174,17 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitaireMemoOutReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitaireMemoOutReportRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports.ISolitaireMemoOutReportService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports.SolitaireMemoOutReportService>();
 
+// Solitaire Party Hold Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitairePartyHoldReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitairePartyHoldReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports.ISolitairePartyHoldReportService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports.SolitairePartyHoldReportService>();
+
 // Solitaire Sale Report
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitaireSaleReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitaireSaleReportRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports.ISolitaireSaleReportService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports.SolitaireSaleReportService>();
+
+// Solitaire Sale Performance Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitaireSalePerformanceReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitaireSalePerformanceReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports.ISolitaireSalePerformanceReportService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports.SolitaireSalePerformanceReportService>();
 
 builder.Services.AddScoped<IMonthAnalysisReportRepository, MonthAnalysisReportRepository>();
 builder.Services.AddScoped<IMonthAnalysisReportService, MonthAnalysisReportService>();
