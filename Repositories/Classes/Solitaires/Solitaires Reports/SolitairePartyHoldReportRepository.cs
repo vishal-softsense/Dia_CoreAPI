@@ -56,7 +56,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                         strWhere += " AND   convert(date,tmtran.MemoReturnDate)  BETWEEN ''" + filter.FromRtnDate + "'' And ''" + filter.ToRtnDate + "''";
                 }
 
-                // MVC Party Hold uses tcur.Id (not CurCode like Memo Out)
+                // Currency dropdown value = TabCurrencyMaster.Id (same as Memo/Consignment/Jew reports)
                 if (!string.IsNullOrWhiteSpace(filter.Currency))
                     strWhere += " AND tcur.Id IN (''" + filter.Currency + "'')";
 

@@ -68,8 +68,10 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                         strWhere += " AND   convert(date,tmtran.MemoReturnDate)  BETWEEN ''" + filter.FromRtnDate + "'' And ''" + filter.ToRtnDate + "''";
                 }
 
+                // Currency dropdown value = TabCurrencyMaster.Id (BasicData.ID).
+                // MCA Jew reports + Party Hold use tcur.Id / tcur.ID — tcur has no CurCode column.
                 if (!string.IsNullOrWhiteSpace(filter.Currency))
-                    strWhere += " AND tcur.CurCode IN (''" + filter.Currency + "'')";
+                    strWhere += " AND tcur.Id IN (''" + filter.Currency + "'')";
 
                 if (!string.IsNullOrWhiteSpace(filter.InvNo))
                     strWhere += " AND tm.InvNo IN (''" + filter.InvNo + "'')";
