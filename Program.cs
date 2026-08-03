@@ -201,9 +201,12 @@ builder.Services.AddScoped<ISaleAnalysisReportService, SaleAnalysisReportService
 builder.Services.AddScoped<IStockAnalysisReportRepository, StockAnalysisReportRepository>();
 builder.Services.AddScoped<IStockAnalysisReportService, StockAnalysisReportService>();
 
+
+// Parcel StockSearch Report
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Reports.IParcelStockSearchReportRepository, Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Reports.ParcelStockSearchReportRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Reports.IParcelStockSearchReportService, Dia_CoreAPI.Services.Classes.Parcel.Parcel_Reports.ParcelStockSearchReportService>();
 
+// Parcel StockHistory Report
 builder.Services.AddScoped<IParcelStockRegisterReportRepository, ParcelStockRegisterReportRepository>();
 builder.Services.AddScoped<IParcelStockRegisterReportService, ParcelStockRegisterReportService>();
 
