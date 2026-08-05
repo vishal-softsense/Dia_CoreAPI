@@ -74,7 +74,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Reports
             string companyId)
         {
             var sql = $"EXEC [GetGeneralSaleReportData] @where = '{whereClause}'";
-            var rows = await _db.SelectDataDapperDynamic(sql, companyId);
+            var rows = await _db.SelectDataAdoDynamic(sql, companyId);
             return rows.Select(MapReportRow).ToList();
         }
         #endregion
