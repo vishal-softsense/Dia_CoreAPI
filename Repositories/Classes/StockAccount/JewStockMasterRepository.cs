@@ -325,6 +325,7 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             param.Add("@Description", model.Description ?? "");
             param.Add("@MountCategory", model.MountCategory ?? "");
             param.Add("@UseMounting", model.UseMounting ?? "");
+            param.Add("@costamount", model.costamount ?? "");
             param.Add("@ActionType", actionType);
 
             int result = await _sqlDataAccess.ExecuteSP("SP_JewStockMaster", param, companyId);

@@ -43,9 +43,13 @@ namespace Dia_CoreAPI.DTOs
 
     public class BasicDataDto
     {
-        public string Id { get; set; }
-        public string Name { get; set; }
+        public string ID { get; set; }
+
         public string Type { get; set; }
+        public int Priority { get; set; }
+        public string Name { get; set; }
+        public string TextName { get; set; }
+        public object CityName { get; internal set; }
     }
 
     public class PermissionCheck

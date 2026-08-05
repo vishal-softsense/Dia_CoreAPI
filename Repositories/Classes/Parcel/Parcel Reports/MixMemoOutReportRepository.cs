@@ -1,0 +1,196 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
+using Dia_CoreAPI.DataAccess;
+using Dia_CoreAPI.DTOs;
+using Dia_CoreAPI.DTOs.Parcel.Parcel_Reports;
+using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Reports;
+using BasicDataDto = Dia_CoreAPI.DTOs.StockAccount.BasicDataDto;
+
+namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Reports
+{
+    public class MixMemoOutReportRepository : IMixMemoOutReportRepository
+    {
+        private readonly ISqlDataAccess _db;
+
+        public MixMemoOutReportRepository(ISqlDataAccess db)
+        {
+            _db = db;
+        }
+
+        #region Permission
+        public async Task<int> CheckUserPermissionAsync(
+            string userTypeId,
+            string formName,
+            string actionType,
+            string companyId)
+        {
+            string where = string.Empty;
+
+            if (actionType == "insert")
+                where = " InsertData = 1 ";
+            else if (actionType == "edit")
+                where = " EditData = 1 ";
+            else if (actionType == "delete")
+                where = " DeleteData = 1 ";
+            else if (actionType == "navigate")
+                where = " NavigateData = 1 ";
+            else if (actionType == "select")
+                where = " SelectData = 1 ";
+
+            var parameters = new Dictionary<string, object>
+            {
+                { "@UserTypeId", "'" + userTypeId + "'" },
+                { "@FormName", "'" + formName + "'" },
+                { "@Where", where }
+            };
+
+            var result = await _db.SelectDataFromSP<PermissionCheck>(
+                "GetUserPermission",
+                parameters,
+                companyId);
+
+            return result.Count();
+        }
+        #endregion
+
+        #region Dropdowns
+        public Task<IEnumerable<BasicDataDto>> GetPurchaseReportDropDownAsync(string companyId)
+        {
+            return _db.SelectDataFromSP<BasicDataDto>(
+                "AllMasterDataForPurchaseReport",
+                new Dictionary<string, object>(),
+                companyId);
+        }
+        #endregion
+
+        
+
+        #region Report Data
+        public async Task<IEnumerable<MixMemoOutReportResultDTO>> GetMixMemoReportAsync(
+            string whereClause,
+            string action,
+            string companyId)
+        {
+            var sql = $"EXEC [GetMixMemoReportData] @Where = '{whereClause}', @Type = '{action}'";
+            var rows = await _db.SelectDataDapperDynamic(sql, companyId);
+            return rows.Select(MapReportRow).ToList();
+        }
+        #endregion
+
+        #region Mapping Helpers
+        private static MixMemoOutReportResultDTO MapReportRow(dynamic row)
+        {
+            return new MixMemoOutReportResultDTO
+            {
+                RowIndex = GetInt(row, "RowIndex", "rowIndex"),
+                RoundDate = GetString(row, "RoundDate", "roundDate"),
+                ConDATE = GetString(row, "ConDATE", "conDATE", "Date", "date"),
+                DateDiff = GetDecimal(row, "DateDiff", "dateDiff"),
+                MemoNo = GetDecimal(row, "MemoNo", "memoNo"),
+                BillNo = GetString(row, "BillNo", "billNo"),
+                Party = GetString(row, "Party", "party"),
+                DueDays = GetString(row, "DueDays", "dueDays"),
+                AddressLine1 = GetString(row, "AddressLine1", "addressLine1"),
+                AddressLine2 = GetString(row, "AddressLine2", "addressLine2"),
+                AddressLine3 = GetString(row, "AddressLine3", "addressLine3"),
+                Code = GetLong(row, "Code", "code"),
+                Pcs = GetInt(row, "Pcs", "pcs"),
+                Lotno = GetString(row, "Lotno", "lotno", "LOTNO"),
+                ItemName = GetString(row, "ItemName", "itemName"),
+                Discount = GetDecimal(row, "Discount", "discount"),
+                Price = GetDecimal(row, "Price", "price"),
+                Amount = GetDecimal(row, "Amount", "amount"),
+                Return = GetDecimal(row, "Return", "return"),
+                ReturnDate = GetString(row, "ReturnDate", "returnDate"),
+                Balance = GetDecimal(row, "Balance", "balance"),
+                BalanceAmt = GetDecimal(row, "BalanceAmt", "balanceAmt"),
+                Broker = GetString(row, "Broker", "broker"),
+                Carats = GetDecimal(row, "Carats", "carats"),
+                IssUser = GetString(row, "IssUser", "issUser"),
+                Seller = GetString(row, "Seller", "seller"),
+                RtnUser = GetString(row, "RtnUser", "rtnUser"),
+                Remarks = GetString(row, "Remarks", "remarks"),
+                BalanceCarats3Dec = GetString(row, "BalanceCarats3Dec", "balanceCarats3Dec"),
+                Estimate = GetDecimal(row, "Estimate", "estimate"),
+                MRP = GetDecimal(row, "MRP", "mrp"),
+                Symbol = GetString(row, "Symbol", "symbol"),
+                ShapeId = GetString(row, "ShapeId", "shapeId"),
+                ColorId = GetString(row, "ColorId", "colorId"),
+                ClarityId = GetString(row, "ClarityId", "clarityId"),
+                PropId = GetString(row, "PropId", "propId"),
+                PolishId = GetString(row, "PolishId", "polishId"),
+                SymId = GetString(row, "SymId", "symId"),
+                FLId = GetString(row, "FLId", "flId"),
+                CertId = GetString(row, "CertId", "certId"),
+                CertificateNo = GetString(row, "CertificateNo", "certificateNo"),
+                Invtype = GetString(row, "Invtype", "invtype"),
+                MemoTime = GetString(row, "MemoTime", "memoTime"),
+                MemoReturnDate = GetString(row, "MemoReturnDate", "memoReturnDate"),
+                MemoReturnTime = GetString(row, "MemoReturnTime", "memoReturnTime"),
+                SizeId = GetString(row, "SizeId", "sizeId"),
+                SieveId = GetString(row, "SieveId", "sieveId"),
+                TrnDate = GetString(row, "TrnDate", "trnDate"),
+                DueDate = GetString(row, "DueDate", "dueDate"),
+                SubType = GetString(row, "SubType", "subType"),
+                Category = GetString(row, "Category", "category"),
+                Stock_ID = GetString(row, "Stock_ID", "stock_ID", "Stock_Id"),
+                StockType = GetString(row, "StockType", "stockType"),
+                Status = GetString(row, "Status", "status"),
+                AdjustmentType = GetString(row, "AdjustmentType", "adjustmentType"),
+                Purchase = GetDecimal(row, "Purchase", "purchase"),
+                MemoOut = GetDecimal(row, "MemoOut", "memoOut"),
+                Sale = GetDecimal(row, "Sale", "sale"),
+                ItemCode = GetInt(row, "ItemCode", "itemCode"),
+                ImagePath = GetString(row, "ImagePath", "imagePath")
+            };
+        }
+
+        private static object? GetRawValue(dynamic row, params string[] keys)
+        {
+            if (row is IDictionary<string, object> dict)
+            {
+                foreach (var key in keys)
+                {
+                    var match = dict.Keys.FirstOrDefault(k => string.Equals(k, key, StringComparison.OrdinalIgnoreCase));
+                    if (match != null)
+                    {
+                        var value = dict[match];
+                        if (value != null && value != DBNull.Value) return value;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private static string? GetString(dynamic row, params string[] keys)
+        {
+            var v = GetRawValue(row, keys);
+            return v?.ToString();
+        }
+
+        private static int GetInt(dynamic row, params string[] keys)
+        {
+            var v = GetRawValue(row, keys);
+            if (v == null) return 0;
+            return int.TryParse(Convert.ToString(v, CultureInfo.InvariantCulture), out int result) ? result : 0;
+        }
+
+        private static long GetLong(dynamic row, params string[] keys)
+        {
+            var v = GetRawValue(row, keys);
+            if (v == null) return 0;
+            return long.TryParse(Convert.ToString(v, CultureInfo.InvariantCulture), out long result) ? result : 0;
+        }
+
+        private static decimal? GetDecimal(dynamic row, params string[] keys)
+        {
+            var v = GetRawValue(row, keys);
+            if (v == null) return null;
+            return decimal.TryParse(Convert.ToString(v, CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal n) ? n : null;
+        }
+        #endregion
+    }
+}
