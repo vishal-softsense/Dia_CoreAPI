@@ -210,6 +210,10 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Reports
 builder.Services.AddScoped<IParcelStockRegisterReportRepository, ParcelStockRegisterReportRepository>();
 builder.Services.AddScoped<IParcelStockRegisterReportService, ParcelStockRegisterReportService>();
 
+// Jewellery Stock Search Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewelleryStockReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewelleryStockReportRepositories>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewelleryStockReportServices, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewelleryStockReportServices>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
