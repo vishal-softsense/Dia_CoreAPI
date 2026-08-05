@@ -64,6 +64,7 @@ namespace Dia_CoreAPI.DTOs.StockAccount
 
         public string? TrnDate { get; set; }
         public string? UseMounting { get; set; }
+        public string? costamount { get; set; }
         public string? UseMountingId { get; set; }
         public string? MountCategory { get; set; }
 

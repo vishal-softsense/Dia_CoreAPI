@@ -3,6 +3,7 @@ using Dia_CoreAPI.Repositories;
 using Dia_CoreAPI.Repositories.Classes;
 using Dia_CoreAPI.Repositories.Classes.Dashboard;
 using Dia_CoreAPI.Repositories.Classes.Masters;
+using Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Reports;
 using Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Classes.ParcelDashboard;
 using Dia_CoreAPI.Repositories.Classes.StockAccount;
@@ -17,6 +18,7 @@ using Dia_CoreAPI.Services;
 using Dia_CoreAPI.Services.Classes;
 using Dia_CoreAPI.Services.Classes.Dashboard;
 using Dia_CoreAPI.Services.Classes.Masters;
+using Dia_CoreAPI.Services.Classes.Parcel.Parcel_Reports;
 using Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Services.Classes.ParcelDashboard;
 using Dia_CoreAPI.Services.Classes.StockAccount;
@@ -209,6 +211,22 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Reports
 // Parcel StockHistory Report
 builder.Services.AddScoped<IParcelStockRegisterReportRepository, ParcelStockRegisterReportRepository>();
 builder.Services.AddScoped<IParcelStockRegisterReportService, ParcelStockRegisterReportService>();
+
+// Mix Purchase Report
+builder.Services.AddScoped<IMixPurchaseReportRepository, MixPurchaseReportRepository>();
+builder.Services.AddScoped<IMixPurchaseReportService, MixPurchaseReportService>();
+
+// Mix MemoOut Report
+builder.Services.AddScoped<IMixMemoOutReportRepository, MixMemoOutReportRepository>();
+builder.Services.AddScoped<IMixMemoOutReportService, MixMemoOutReportService>();
+
+// Mix Sale Report
+builder.Services.AddScoped<IMixSaleReportRepository, MixSaleReportRepository>();
+builder.Services.AddScoped<IMixSaleReportService, MixSaleReportService>();
+
+// Mix ConsignmentIn Report
+builder.Services.AddScoped<IMixConsignmentInReportRepository, MixConsignmentInReportRepository>();
+builder.Services.AddScoped<IMixConsignmentInReportService, MixConsignmentInReportService>();
 
 builder.Services.AddCors(options =>
 {
