@@ -598,7 +598,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 "', @FromDate= '" + fromDate +
                 "',@ToDate= '" + toDate + "'";
 
-            var rows = await _db.SelectDataDapperDynamic(sql, companyId);
+            var rows = await _db.SelectDataAdoDynamic(sql, companyId);
             return rows.Select(MapStockSearchHistoryRow);
         }
 

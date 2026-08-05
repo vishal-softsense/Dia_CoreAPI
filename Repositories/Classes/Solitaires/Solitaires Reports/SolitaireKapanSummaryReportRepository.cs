@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -25,7 +25,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             var where = BuildKapanWhere(filter);
             // MVC: ReportProcessor.GetKapanSummaryReport => EXEC [sp_KapanSummary] @Where
             var sql = $"EXEC [sp_KapanSummary] @Where = '{where}'";
-            var rows = await _db.SelectDataDapperDynamic(sql, companyId);
+            var rows = await _db.SelectDataAdoDynamic(sql, companyId);
             return rows.Select(MapRow).ToList();
         }
 

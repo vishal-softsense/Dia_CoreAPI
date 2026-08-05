@@ -1,4 +1,4 @@
-using Dapper;
+using System.Dynamic;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Caching.Memory;
 using System;
@@ -216,26 +216,23 @@ namespace Dia_CoreAPI.DataAccess
         }
 
         public async Task<T> GetScalarDataFromSP<T>(
-    string storedProcedure,
-    Dictionary<string, object> parameters,
-    string companyId)
+            string storedProcedure,
+            Dictionary<string, object> parameters,
+            string companyId)
         {
             var connString = await GetClientConnectionString(companyId);
             using var connection = (SqlConnection)_connectionFactory.CreateConnectionWithConnectionString(connString);
-            var dynamicParameters = new DynamicParameters();
+            await connection.OpenAsync();
+            using var cmd = new SqlCommand(storedProcedure, connection);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.CommandTimeout = 180;
+            AddParametersToCommand(cmd, parameters);
 
-            if (parameters != null)
-            {
-                foreach (var item in parameters)
-                {
-                    dynamicParameters.Add(item.Key, item.Value);
-                }
-            }
+            var result = await cmd.ExecuteScalarAsync();
+            if (result == null || result == DBNull.Value)
+                return default(T)!;
 
-            return await connection.ExecuteScalarAsync<T>(
-                storedProcedure,
-                dynamicParameters,
-                commandType: CommandType.StoredProcedure);
+            return (T)ConvertValue(result, typeof(T));
         }
 
         // Executes raw SQL text (EXEC SP with inline string-quoted params, matching MVC pattern)
@@ -258,23 +255,39 @@ namespace Dia_CoreAPI.DataAccess
             return list.FirstOrDefault();
         }
 
-        // Matches MVC SqlDataAccess.SelectData<T> — Dapper maps SP result columns flexibly
-        public async Task<IEnumerable<T>> SelectDataDapper<T>(string sql, string companyId)
+        public async Task<IEnumerable<T>> SelectDataAdo<T>(string sql, string companyId)
         {
             var connString = await GetClientConnectionString(companyId);
-            using var connection = new SqlConnection(connString);
+            using var connection = (SqlConnection)_connectionFactory.CreateConnectionWithConnectionString(connString);
             await connection.OpenAsync();
-            var result = await connection.QueryAsync<T>(sql, commandTimeout: 180);
-            return result.ToList();
+            using var cmd = new SqlCommand(sql, connection);
+            cmd.CommandType = CommandType.Text;
+            cmd.CommandTimeout = 180;
+            using var reader = await cmd.ExecuteReaderAsync();
+            return MapReaderToList<T>(reader);
         }
 
-        public async Task<IEnumerable<dynamic>> SelectDataDapperDynamic(string sql, string companyId)
+        public async Task<IEnumerable<dynamic>> SelectDataAdoDynamic(string sql, string companyId)
         {
             var connString = await GetClientConnectionString(companyId);
-            using var connection = new SqlConnection(connString);
+            using var connection = (SqlConnection)_connectionFactory.CreateConnectionWithConnectionString(connString);
             await connection.OpenAsync();
-            var result = await connection.QueryAsync(sql, commandTimeout: 180);
-            return result.ToList();
+            using var cmd = new SqlCommand(sql, connection);
+            cmd.CommandType = CommandType.Text;
+            cmd.CommandTimeout = 180;
+            using var reader = await cmd.ExecuteReaderAsync();
+            
+            var list = new List<dynamic>();
+            while (await reader.ReadAsync())
+            {
+                var row = new ExpandoObject() as IDictionary<string, object>;
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                }
+                list.Add(row);
+            }
+            return list;
         }
     }
 }

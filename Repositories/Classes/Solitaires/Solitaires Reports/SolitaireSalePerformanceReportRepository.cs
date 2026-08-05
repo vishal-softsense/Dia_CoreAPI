@@ -49,7 +49,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 sql = $"EXEC [GetSalePerformanceReportData]@Type = 'SalePerformanceReport', @Where = '{where}',@StockPrice = '{stockPrice}' ";
             }
 
-            var rows = await _db.SelectDataDapperDynamic(sql, companyId);
+            var rows = await _db.SelectDataAdoDynamic(sql, companyId);
             return rows.Select(MapReportRow).ToList();
         }
 

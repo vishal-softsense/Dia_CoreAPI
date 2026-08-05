@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -33,7 +33,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
         {
             var where = BuildSaleWhere(filter);
             var sql = $"EXEC [GetSaleReportData] @Where = '{where}'";
-            var rows = await _db.SelectDataDapperDynamic(sql, companyId);
+            var rows = await _db.SelectDataAdoDynamic(sql, companyId);
             return rows.Select(MapSaleRow).ToList();
         }
 

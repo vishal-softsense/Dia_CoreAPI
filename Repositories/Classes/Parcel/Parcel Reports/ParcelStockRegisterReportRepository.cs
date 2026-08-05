@@ -1,4 +1,4 @@
-﻿using Dia_CoreAPI.DataAccess;
+using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Reports;
 using System;
@@ -93,7 +93,7 @@ namespace Dia_CoreAPI.Repositories
             }
 
             var sql = " EXEC [GetDiamondLotDropdown] @strWhere = '" + strWhere + "'";
-            return await _sqlDataAccess.SelectDataDapper<BasicDataDto>(sql, companyId);
+            return await _sqlDataAccess.SelectDataAdo<BasicDataDto>(sql, companyId);
         }
 
         /// <summary>
@@ -117,7 +117,7 @@ namespace Dia_CoreAPI.Repositories
                 "', @FromDate= '" + FromDate +
                 "',@ToDate= '" + ToDate + "'";
 
-            var rows = await _sqlDataAccess.SelectDataDapperDynamic(sql, companyId);
+            var rows = await _sqlDataAccess.SelectDataAdoDynamic(sql, companyId);
             return rows.Select(MapSpRow).ToList();
         }
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -35,7 +35,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             // MVC uses ReportProcessor.GetMemoReport => EXEC [GetMemoReportData] @Where, @Type
             // @Type carries the specific report action name (NormalConsignment).
             var sql = $"EXEC [GetMemoReportData] @Where = '{where}',@Type = 'NormalConsignment'";
-            var rows = await _db.SelectDataDapperDynamic(sql, companyId);
+            var rows = await _db.SelectDataAdoDynamic(sql, companyId);
             return rows.Select(MapReportRow).ToList();
         }
 
@@ -47,7 +47,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             // MVC uses ReportProcessor.ConsignmentSummaryReport => EXEC [GetMemoReportData] @Where, @Type
             // @Type carries the summary action name (FinalConsignSummary).
             var sql = $"EXEC [GetMemoReportData] @Where = '{where}',@Type = 'FinalConsignSummary'";
-            var rows = await _db.SelectDataDapperDynamic(sql, companyId);
+            var rows = await _db.SelectDataAdoDynamic(sql, companyId);
             return rows.Select(MapSummaryRow).ToList();
         }
 
