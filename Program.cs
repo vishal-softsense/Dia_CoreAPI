@@ -139,6 +139,9 @@ builder.Services.AddScoped<IParcelDashboardService, ParcelDashboardService>();
 builder.Services.AddScoped<IJewStockMasterRepository, JewStockMasterRepository>();
 builder.Services.AddScoped<IJewStockMasterService, JewStockMasterService>();
 
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.DiaAnalytics.IStockAnalyzeRepository, Dia_CoreAPI.Repositories.Classes.DiaAnalytics.StockAnalyzeRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.DiaAnalytics.IStockAnalyzeService, Dia_CoreAPI.Services.Classes.DiaAnalytics.StockAnalyzeService>();
+
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitaireStockSearchReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitaireStockSearchReportRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports.ISolitaireStockSearchReportService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports.SolitaireStockSearchReportService>();
 
@@ -169,6 +172,23 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires
 // Solitaire Purchase Report
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitairePurchaseReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitairePurchaseReportRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports.ISolitairePurchaseReportService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports.SolitairePurchaseReportService>();
+
+// Solitaire Purchase Return Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitairePurchaseReturnReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitairePurchaseReturnReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports.ISolitairePurchaseReturnReportService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports.SolitairePurchaseReturnReportService>();
+
+// Solitaire Sale Return Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitaireSaleReturnReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitaireSaleReturnReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports.ISolitaireSaleReturnReportService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports.SolitaireSaleReturnReportService>();
+
+// Solitaire Consignment Return Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitaireConsignmentReturnReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitaireConsignmentReturnReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports.ISolitaireConsignmentReturnReportService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports.SolitaireConsignmentReturnReportService>();
+
+// Solitaire Memo Return Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitaireMemoReturnReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitaireMemoReturnReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports.ISolitaireMemoReturnReportService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports.SolitaireMemoReturnReportService>();
+
 
 // Solitaire Consignment In Report
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitaireConsignmentInReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitaireConsignmentInReportRepository>();
@@ -205,6 +225,10 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires
 // Solitaire Stock Consumption Report
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitaireConsumptionReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitaireConsumptionReportRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports.ISolitaireConsumptionReportService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports.SolitaireConsumptionReportService>();
+
+// Solitaire Fast Moving Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitaireFastMovingReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitaireFastMovingReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports.ISolitaireFastMovingReportService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports.SolitaireFastMovingReportService>();
 
 builder.Services.AddScoped<IMonthAnalysisReportRepository, MonthAnalysisReportRepository>();
 builder.Services.AddScoped<IMonthAnalysisReportService, MonthAnalysisReportService>();
