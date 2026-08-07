@@ -244,6 +244,22 @@ builder.Services.AddScoped<IMixSaleReportService, MixSaleReportService>();
 builder.Services.AddScoped<IMixConsignmentInReportRepository, MixConsignmentInReportRepository>();
 builder.Services.AddScoped<IMixConsignmentInReportService, MixConsignmentInReportService>();
 
+// MixPurchseReturn Report
+builder.Services.AddScoped<IMixPurRtnReportRepository, MixPurRtnReportRepository>();
+builder.Services.AddScoped<IMixPurRtnReportService, MixPurRtnReportService>();
+
+// MixMemoOutReturn Report
+builder.Services.AddScoped<IMixMemoOutRtnReportRepository, MixMemoOutRtnReportRepository>();
+builder.Services.AddScoped<IMixMemoOutRtnReportService, MixMemoOutRtnReportService>();
+
+// Mix SaleReturn Report
+builder.Services.AddScoped<IMixSaleRtnReportRepository, MixSaleRtnReportRepository>();
+builder.Services.AddScoped<IMixSaleRtnReportService, MixSaleRtnReportService>();
+
+// Mix ConsignmentInRtn Report
+builder.Services.AddScoped<IMixConsignmentInRtnReportRepository, MixConsignmentInRtnReportRepository>();
+builder.Services.AddScoped<IMixConsignmentInRtnReportService, MixConsignmentInRtnReportService>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
