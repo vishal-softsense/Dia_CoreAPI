@@ -43,9 +43,12 @@ namespace Dia_CoreAPI.Controllers.StockAccount
                 });
             }
 
+            var result = await _service.GetMountingStockAsync(GetCompanyId(), "");
+
             return Ok(new
             {
-                Success = true
+                Success = true,
+                Data = result
             });
         }
 
@@ -321,7 +324,8 @@ namespace Dia_CoreAPI.Controllers.StockAccount
                 }
 
                 var result = await _service.GetAddMountingStockDataAsync(GetCompanyId());
-                var stockData = await _service.GetMountingStockByIdAsync(id, GetCompanyId());
+                (JewStockMasterDto? stockData, List<DiamondDetails> diamondList) =
+                    await _service.GetAllMountingDetailsAsync(id, GetCompanyId());
 
                 return Ok(new
                 {
@@ -329,7 +333,8 @@ namespace Dia_CoreAPI.Controllers.StockAccount
                     Data = new
                     {
                         Dropdowns = result,
-                        StockData = stockData
+                        StockData = stockData,
+                        DiamondList = diamondList
                     }
                 });
             }
@@ -507,6 +512,15 @@ namespace Dia_CoreAPI.Controllers.StockAccount
         {
             try
             {
+                // Same as MVC: CreatedBy / ModifyBy = logged-in user
+                var userId = GetUserId();
+                if (request.Model != null)
+                {
+                    if (string.IsNullOrWhiteSpace(request.Model.CreatedBy))
+                        request.Model.CreatedBy = userId;
+                    request.Model.ModifyBy = userId;
+                }
+
                 (bool success, string message) = await _service.SaveMountingStockAsync(
                     request.Model,
                     request.Diamond,

@@ -535,6 +535,7 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             diamondParam.Add("@Where", $" AND JewCode = {id} ");
             diamondParam.Add("@Type", "GetJewStockDiamond");
 
+            // Match MVC GetAllmountDetails — only JewStock diamond rows (not setting rows)
             var dbDiamondData = await _sqlDataAccess.SelectDataFromSP<GetJewDiamond>("GetALLMasterList", diamondParam, companyId);
             var diamondList = dbDiamondData.Select(row => new DiamondDetails
             {
@@ -551,30 +552,6 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
                 Amount = row.DiamondAmount,
                 Lab = row.DiamondLab
             }).ToList();
-
-            // Get setting details
-            var settingParam = new Dictionary<string, object>();
-            settingParam.Add("@Where", $" AND JewCode = {id} ");
-            settingParam.Add("@Type", "GetJewStockSetting");
-
-            var dbSettingData = await _sqlDataAccess.SelectDataFromSP<GetJewSetting>("GetALLMasterList", settingParam, companyId);
-            var settingList = dbSettingData.Select(row => new DiamondDetails
-            {
-                StockID = "", // Setting doesn't have LotNo usually
-                Type = row.Type,
-                Shape = row.Shape,
-                Size = row.Size,
-                Sieve = "", // Not applicable
-                Color = "", // Not applicable
-                Clarity = "", // Not applicable
-                Pcs = row.Pcs,
-                Carat = 0, // Setting doesn't have Carats
-                Price = row.Price,
-                Amount = row.Amount,
-                Lab = row.SettingType // SettingType is mapped to lab in frontend
-            }).ToList();
-
-            diamondList.AddRange(settingList);
 
             return (data, diamondList);
         }
