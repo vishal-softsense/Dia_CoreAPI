@@ -46,7 +46,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             string dateVal = string.IsNullOrEmpty(filter.Date) ? DateTime.Now.ToString("yyyy-MM-dd") : filter.Date;
             string where = "";
 
-            // Show Filter
             string? show = filter.Show;
             if (!string.IsNullOrEmpty(show) && show != "All")
             {
@@ -60,7 +59,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 }
             }
 
-            // Hold/Unhold Filter
             string? holdUnHold = filter.HoldUnHold;
             if (!string.IsNullOrEmpty(holdUnHold) && holdUnHold != "All")
             {
@@ -74,7 +72,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 }
             }
 
-            // StoneTypes Filter
             string? stoneTypes = filter.StoneTypes;
             if (!string.IsNullOrEmpty(stoneTypes) && stoneTypes != "All")
             {
@@ -88,7 +85,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 }
             }
 
-            // Status Filter
             string? status = filter.Status;
             if (!string.IsNullOrEmpty(status) && status != "All")
             {
@@ -126,7 +122,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 }
             }
 
-            // Asking Query Construction
             float backPer = filter.BackPer;
             float backPlusMinus = filter.BackPlusMinus;
             float ratePer = filter.RatePer;
@@ -154,7 +149,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 askingQry = " Rate AS AskingRate,Back As AskingBack,Round((CONVERT(decimal(18, 2), Round((CONVERT(decimal(18, 2), TotCarats + MemoIn)), 3, 1) * ISNULL(Rate, 0))), 2, 1) AS AskingAmount ";
             }
 
-            // Multi-Select In Clause Builders
             AddInClause(ref where, "ShapeGroupId", filter.ShapeGroup);
             AddInClause(ref where, "Shp", filter.Shape);
             AddInClause(ref where, "ColorGroupId", filter.ColorGroup);
@@ -168,7 +162,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             AddInClause(ref where, "HA", filter.HA);
             AddInClause(ref where, "City", filter.Location);
 
-            // Fluorescence Special Handling
             if (filter.Fluorescence != null && filter.Fluorescence.Count > 0)
             {
                 if (filter.Fluorescence.Contains("IS_NULL"))
@@ -193,7 +186,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             AddInClause(ref where, "ItemgroupId", filter.ItemGroup);
             AddInClause(ref where, "BoxName", filter.BoxNm);
 
-            // Numeric Ranges
             if (filter.CtsFrm != 0 && filter.CtsTo != 0)
             {
                 where += " And Round((CONVERT(decimal(9,3),TotCarats + MemoIn )),3,1) between " + filter.CtsFrm + " And " + filter.CtsTo + "";
@@ -235,7 +227,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 where += " And (PA between " + filter.PAFrm + " And " + filter.PATo + ")";
             }
 
-            // Date Ranges
             if (filter.PurchaseChkBox)
             {
                 where += " And (convert(date,PDate,111) Between ''" + filter.FrmPurchaseDate + "'' And ''" + filter.ToPurchaseDate + "'' ) ";
@@ -261,7 +252,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 where += " And (convert(date,GRecDate,111) Between ''" + filter.FrmLabDate + "'' And ''" + filter.ToLabDate + "'' ) ";
             }
 
-            // Text LotNo / CertNo Filters
             if (!string.IsNullOrEmpty(filter.LotNo))
             {
                 string lotNoClean = filter.LotNo.Replace("\r\n", ",").Replace("\n", ",").Trim();
@@ -320,7 +310,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 }
             }
 
-            // Ordering / Sorting Wise
             string? filterSize = filter.FilterSize;
             if (!string.IsNullOrEmpty(filterSize))
             {
@@ -590,7 +579,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             var fromDate = DateTime.Parse(filter.FromDate ?? "2020-01-01").ToString("yyyy-MM-dd");
             var toDate = DateTime.Parse(filter.ToDate ?? "2026-12-31").ToString("yyyy-MM-dd");
 
-            // MVC ReportProcessor.ParcelGetStockRegisterReport — inline EXEC with doubled-quote params
             var sql =
                 " EXEC [SP_StockRegisterReport] @Type = 'SalePurAvgPrice', @StkIn = '" + stkInStr +
                 "', @StkOut = '" + stkOutStr +

@@ -4,9 +4,6 @@ using Microsoft.Extensions.Configuration;
 
 namespace Dia_CoreAPI.Repositories.Classes.DiaAnalytics
 {
-    /// <summary>
-    /// Reads Diasense Stock Analyze settings from appsettings (same values as MVC StockAnalyze.cshtml).
-    /// </summary>
     public class StockAnalyzeRepository : IStockAnalyzeRepository
     {
         private readonly IConfiguration _configuration;

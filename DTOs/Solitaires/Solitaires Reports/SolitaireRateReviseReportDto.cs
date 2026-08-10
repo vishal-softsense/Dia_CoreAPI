@@ -38,7 +38,6 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
 
         public int TotalItems { get; set; }
 
-        // Not shown in the MVC DataTable UI, but returned by the underlying SP.
         public decimal? MSP { get; set; }
         public decimal? Oldback { get; set; }
         public decimal? NewBack { get; set; }

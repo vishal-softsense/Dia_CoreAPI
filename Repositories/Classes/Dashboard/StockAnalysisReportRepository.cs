@@ -9,10 +9,6 @@ using Dia_CoreAPI.Repositories.Interfaces.Dashboard;
 
 namespace Dia_CoreAPI.Repositories.Classes.Dashboard
 {
-    /// <summary>
-    /// Port of MVC ChartsReportController.ChartData, StockAnalysisReport, and StockSearchController.GetPivotData.
-    /// SPs: AllMasterDataForAdminStockSearch, GetSolitaireStockAnalysisData, SP_StockAnalysisReport, GetStockReportData.
-    /// </summary>
     public class StockAnalysisReportRepository : IStockAnalysisReportRepository
     {
         private readonly ISqlDataAccess _sqlDataAccess;
@@ -80,10 +76,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Dashboard
             var data = await _sqlDataAccess.SelectRawSql<StockAnalysisPivotFixedDto>(sql, companyId);
             return data.ToList();
         }
-
-        // ─────────────────────────────────────────────────────────────────────────
-        // WHERE builders
-        // ─────────────────────────────────────────────────────────────────────────
 
         private static (string dateVal, string where, string askingQry) BuildBaseWhere(StockAnalysisRequestDto filter, bool forChartReport)
         {

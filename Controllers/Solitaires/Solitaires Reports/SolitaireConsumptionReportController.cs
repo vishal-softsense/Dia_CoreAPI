@@ -26,10 +26,6 @@ namespace Dia_CoreAPI.Controllers.Solitaires.Solitaires_Reports
                 ?? throw new UnauthorizedAccessException("CompanyID missing from token.");
         }
 
-        /// <summary>
-        /// POST api/SolitaireConsumptionReport/search
-        /// Ported from MVC POST report/stock-consumption-report-List
-        /// </summary>
         [HttpPost("search")]
         public async Task<IActionResult> Search([FromBody] SolitaireConsumptionReportFilterDto filter)
         {
@@ -45,10 +41,6 @@ namespace Dia_CoreAPI.Controllers.Solitaires.Solitaires_Reports
             }
         }
 
-        /// <summary>
-        /// GET api/SolitaireConsumptionReport/dropdowns
-        /// Ported from MVC GET — AdminStockSearchDropDown / AllMasterDataForAdminStockSearch
-        /// </summary>
         [HttpGet("dropdowns")]
         public async Task<IActionResult> GetDropdowns()
         {

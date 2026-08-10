@@ -16,7 +16,6 @@ namespace Dia_CoreAPI.Controllers.ParcelDashboard
     {
         private readonly IParcelStockAnalysisService _service;
 
-        /// <summary>Match MVC Newtonsoft PascalCase so Syncfusion field names align with dataSourceSettings.</summary>
         private static readonly JsonSerializerOptions PascalCaseJson = new()
         {
             PropertyNamingPolicy = null
@@ -48,7 +47,6 @@ namespace Dia_CoreAPI.Controllers.ParcelDashboard
                     return Ok(new { error = false, message = "" });
                 }
 
-                // Return PascalCase Data (which the frontend resolver handles perfectly)
                 return Ok(new { success = true, Data = data });
             }
             catch (ArgumentException ex)
@@ -61,10 +59,6 @@ namespace Dia_CoreAPI.Controllers.ParcelDashboard
             }
         }
 
-        /// <summary>
-        /// Pivot data — mirrors MVC POST /ParcelStock/parcelstock-search-pivotdata
-        /// Returns PascalCase field names (Shape, Color, Clarity, Size, Pcs, Carats, Amount).
-        /// </summary>
         [HttpPost("parcelstock-pivotdata")]
         public async Task<IActionResult> GetParcelPivotData([FromBody] ParcelStockAnalysisRequestDto filter)
         {
@@ -76,7 +70,6 @@ namespace Dia_CoreAPI.Controllers.ParcelDashboard
                 var companyId = GetCompanyId();
                 var data = await _service.GetParcelPivotDataAsync(filter, companyId);
 
-                // Project only pivot-relevant fields with stable PascalCase names (MVC-compatible)
                 var rows = data.Select(r => new
                 {
                     r.LotNo,

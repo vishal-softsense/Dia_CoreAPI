@@ -4,9 +4,6 @@ using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace Dia_CoreAPI.DTOs.Dashboard
 {
-    /// <summary>
-    /// Matches MVC PurAnaDataModel (StockSearch.cs) — column names must map to GetPurchaseAnalysisData SP output.
-    /// </summary>
     public class PurchaseAnalysisReportDto
     {
         public string Shape { get; set; }
@@ -81,10 +78,6 @@ namespace Dia_CoreAPI.DTOs.Dashboard
         public float BaseRate { get; set; }
     }
 
-    /// <summary>
-    /// Exact match of MVC PurchaseRptFilter (ReportModel.cs).
-    /// [ValidateNever] = no required-field validation (MVC never required these filters).
-    /// </summary>
 #nullable disable
     [ValidateNever]
     public class PurchaseAnalysisRequestDto
@@ -110,7 +103,6 @@ namespace Dia_CoreAPI.DTOs.Dashboard
         public List<string> Polish { get; set; }
         public List<string> Symmetry { get; set; }
 
-        // React/JSON sends "lab"; MVC property name is LAB
         [JsonPropertyName("lab")]
         public List<string> LAB { get; set; }
 

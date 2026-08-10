@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
 {
-    // Request model for Solitaire Stock History (MVC: Stock Register Report)
     public class SolitaireStockHistoryReportDto
     {
         public List<string>? Shape { get; set; }
@@ -15,19 +14,14 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
 
         public string? LotNo { get; set; }
 
-        // Date range (yyyy-MM-dd)
         public string? FromDate { get; set; }
         public string? ToDate { get; set; }
 
-        // Pricing mode
         public bool SalpurAvg { get; set; }
         public bool PurAvg { get; set; }
         public bool MarketAvg { get; set; }
     }
 
-    // Direct mapping of GetStockRegister result-set columns.
-    // Column names are based on MVC's ReportController StockRegisterssrs row mapping:
-    // Trndate, Lotnosearch, RelatedRemark, InCts, InRate, InAmount, OutCts, OutRate, OutAmount, BalCts, BalRate, BalAmount, Trntype, invcode
     public class SolitaireStockHistoryReportSpRowDto
     {
         public DateTime? Trndate { get; set; }
@@ -50,7 +44,6 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
         public string? Invcode { get; set; }
     }
 
-    // Response model returned to React UI.
     public class SolitaireStockHistoryReportResponseDTO
     {
         public string? TrnDate { get; set; }

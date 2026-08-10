@@ -4,10 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Dia_CoreAPI.Controllers.DiaAnalytics
 {
-    /// <summary>
-    /// MVC equivalent: StockAnalyzeController → View with Diasense iframe.
-    /// Route in MVC: data/StockAnalyze
-    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
@@ -20,9 +16,6 @@ namespace Dia_CoreAPI.Controllers.DiaAnalytics
             _service = service;
         }
 
-        /// <summary>
-        /// Returns iframe URL config for Diasense Stock Analyze AI.
-        /// </summary>
         [HttpGet("config")]
         public IActionResult GetConfig()
         {

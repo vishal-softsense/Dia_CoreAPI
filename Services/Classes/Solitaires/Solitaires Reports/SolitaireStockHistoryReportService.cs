@@ -22,7 +22,6 @@ namespace Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports
         {
             var spRows = await _repo.GetStockHistoryReportAsync(filter, companyId);
 
-            // MVC formatting: TrnDate is dd-MM-yyyy
             return spRows.Select(row => new SolitaireStockHistoryReportResponseDTO
             {
                 TrnDate = row.Trndate.HasValue ? row.Trndate.Value.ToString("dd-MM-yyyy") : null,

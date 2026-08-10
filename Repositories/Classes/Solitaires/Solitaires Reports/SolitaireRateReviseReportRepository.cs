@@ -32,7 +32,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
         {
             var where = BuildRateReviseWhere(filter);
 
-            // MVC builds Where using doubled single-quotes; normalize for SP parameter usage.
             var dbParams = new Dictionary<string, object>
             {
                 { "@Where", where.Replace("''", "'") }
@@ -44,7 +43,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 companyId);
         }
 
-        // Ported from MVC ReportController.RateReviseReportFilter
         private static string BuildRateReviseWhere(SolitaireRateReviseReportFilterDto filter)
         {
             string strWhere = "";
@@ -82,7 +80,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             }
             catch
             {
-                // MVC swallows exceptions and returns partial where.
             }
 
             return strWhere;

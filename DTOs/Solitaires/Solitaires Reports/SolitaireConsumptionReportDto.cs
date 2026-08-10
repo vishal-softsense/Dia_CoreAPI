@@ -2,9 +2,6 @@
 
 namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
 {
-    /// <summary>
-    /// Filter DTO — ported from MVC StockConsumptionFilter
-    /// </summary>
     public class SolitaireConsumptionReportFilterDto
     {
         public string? FromDate { get; set; }
@@ -22,9 +19,6 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
         public bool FromDueChkBox { get; set; }
     }
 
-    /// <summary>
-    /// Row DTO — ported from MVC StcokConsumptionReport (SP_StockConsumptionReport)
-    /// </summary>
     public class SolitaireConsumptionReportRowDto
     {
         public string? LotNo { get; set; }

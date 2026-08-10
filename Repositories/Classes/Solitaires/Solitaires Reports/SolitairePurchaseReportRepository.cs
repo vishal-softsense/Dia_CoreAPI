@@ -37,7 +37,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             return rows.Select(MapPurchaseRow).ToList();
         }
 
-        // Ported from MVC: ReportController.PurchaseReportFilter
         private static string BuildPurchaseWhere(SolitairePurchaseReportFilterDto filter)
         {
             string strWhere = "";
@@ -82,7 +81,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                     strTmpNewLine = strTmpNewLine.Replace("\n", ",");
                     strTmpNewLine = strTmpNewLine.Replace(",", "'',''");
 
-                    // MVC: AND Item IN (''<comma-separated values>'')
                     strWhere += " AND Item IN (''" + strTmpNewLine + "'')";
                 }
 
@@ -111,7 +109,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             }
             catch
             {
-                // MVC swallows exceptions and returns partial where.
             }
 
             return strWhere;
@@ -134,7 +131,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
 
             if (joined.Length <= 0) return;
 
-            // Keep MVC-ish formatting where it matters (e.g., Luster has a slightly different spacing).
             if (column == "Cert" || isCert)
                 strWhere += " And Cert In (" + joined + ")";
             else if (column == "LusterId" && lusterHasExtraSpace)

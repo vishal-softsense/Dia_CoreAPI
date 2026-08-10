@@ -4,13 +4,8 @@ using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace Dia_CoreAPI.DTOs.Dashboard
 {
-    /// <summary>
-    /// Matches MVC ShapeAnaDataModel (StockSearch.cs) — column names must map to
-    /// GetSaleAnalysisData SP output.
-    /// </summary>
     public class SaleAnalysisReportDto
     {
-        // Grouping dimension fields (each SP returns one of these as the label column)
         public string Shape { get; set; }
         public string Color { get; set; }
         public string Size { get; set; }
@@ -35,7 +30,6 @@ namespace Dia_CoreAPI.DTOs.Dashboard
         public string StockID { get; set; }
         public string Month { get; set; }
 
-        // Measure columns (mirrors ShapeAnaDataModel in StockSearch.cs exactly)
         public int Pcs { get; set; }
         public float PcsPer { get; set; }
         public double Amount { get; set; }
@@ -63,9 +57,6 @@ namespace Dia_CoreAPI.DTOs.Dashboard
         public float PLperOnCOGSAmtINR { get; set; }
     }
 
-    /// <summary>
-    /// Matches MVC SaleRptFilter (SaleReportModel.cs) for the /Group-by/sale-data endpoint.
-    /// </summary>
 #nullable disable
     [ValidateNever]
     public class SaleAnalysisRequestDto
@@ -92,7 +83,6 @@ namespace Dia_CoreAPI.DTOs.Dashboard
         public List<string> Polish { get; set; }
         public List<string> Symmetry { get; set; }
 
-        // React/JSON sends "lab"
         [JsonPropertyName("lab")]
         public List<string> LAB { get; set; }
 
@@ -104,11 +94,6 @@ namespace Dia_CoreAPI.DTOs.Dashboard
         public List<string> ProductType { get; set; }
         public List<string> Sieve { get; set; }
 
-        /// <summary>
-        /// Grouping dimension: Lab, Shape, Size, Color, Clarity, Prop, Polish,
-        /// Symmertry, CPS, FL, Series, Location, YearMonth, Aging, PriceRevision,
-        /// PartyLocation, StockID
-        /// </summary>
         public string SaleAna { get; set; }
     }
 #nullable restore

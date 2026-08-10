@@ -185,8 +185,7 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
         public string? PDays { get; set; }
         public string? MemoPartyName { get; set; }
         public string? HoldPartyName { get; set; }
-        
-        // Pivot/Analysis specific properties if needed
+
         public string? Sieve { get; set; }
     }
 
@@ -223,7 +222,6 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
         public string? Body { get; set; }
     }
 
-    // MVC: StockSearch Show History popup (SP_StockRegisterReport)
     public class SolitaireStockSearchHistoryFilterDto
     {
         public string? LotNo { get; set; }

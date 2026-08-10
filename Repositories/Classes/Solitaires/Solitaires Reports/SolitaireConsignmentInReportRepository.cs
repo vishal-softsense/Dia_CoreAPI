@@ -32,8 +32,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             string companyId)
         {
             var where = BuildConsignmentWhere(filter);
-            // MVC uses ReportProcessor.GetMemoReport => EXEC [GetMemoReportData] @Where, @Type
-            // @Type carries the specific report action name (NormalConsignment).
             var sql = $"EXEC [GetMemoReportData] @Where = '{where}',@Type = 'NormalConsignment'";
             var rows = await _db.SelectDataAdoDynamic(sql, companyId);
             return rows.Select(MapReportRow).ToList();
@@ -44,14 +42,11 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             string companyId)
         {
             var where = BuildConsignmentWhere(filter);
-            // MVC uses ReportProcessor.ConsignmentSummaryReport => EXEC [GetMemoReportData] @Where, @Type
-            // @Type carries the summary action name (FinalConsignSummary).
             var sql = $"EXEC [GetMemoReportData] @Where = '{where}',@Type = 'FinalConsignSummary'";
             var rows = await _db.SelectDataAdoDynamic(sql, companyId);
             return rows.Select(MapSummaryRow).ToList();
         }
 
-        // Ported from MVC: ReportController.ConsignmentReportFilter
         private static string BuildConsignmentWhere(SolitaireConsignmentInReportFilterDto filter)
         {
             string strWhere = "";
@@ -68,8 +63,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                         strWhere += " AND   convert(date,tmtran.MemoReturnDate)  BETWEEN ''" + filter.FromRtnDate + "'' And ''" + filter.ToRtnDate + "''";
                 }
 
-                // Currency dropdown value = TabCurrencyMaster.Id (BasicData.ID).
-                // MCA Jew reports + Party Hold use tcur.Id / tcur.ID — tcur has no CurCode column.
                 if (!string.IsNullOrWhiteSpace(filter.Currency))
                     strWhere += " AND tcur.Id IN (''" + filter.Currency + "'')";
 
@@ -112,7 +105,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
 
                 if (filter.Clear)
                 {
-                    // Show clear consignment — no live balance filter
                 }
                 else
                 {
@@ -126,7 +118,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             }
             catch
             {
-                // Swallow like MVC does — return partial where
             }
 
             return strWhere;

@@ -21,7 +21,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
 
         public Task<IEnumerable<BasicDataDto>> GetDropdownsAsync(string companyId)
         {
-            // Reuses the same SP since dropdown data fields are identical to purchase report dropdowns
             return _db.SelectDataFromSP<BasicDataDto>(
                 "AllMasterDataForPurchaseReport",
                 new Dictionary<string, object>(),
@@ -38,7 +37,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             return rows.Select(MapPurchaseReturnRow).ToList();
         }
 
-        // Ported from MVC: JewReportController.PurchaseRetReportFilter
         private static string BuildPurchaseReturnWhere(SolitairePurchaseReturnReportFilterDto filter)
         {
             string strWhere = "";
@@ -103,12 +101,10 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 AppendInClause(ref strWhere, filter.ProductType, "ProductType");
                 AppendInClause(ref strWhere, filter.Sieve, "Sieve");
 
-                // Strictly Purchase Return report transaction type
                 strWhere += " and trntype=''PurRtn''";
             }
             catch
             {
-                // MVC swallows exceptions and returns partial where.
             }
 
             return strWhere;

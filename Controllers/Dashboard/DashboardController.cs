@@ -8,7 +8,7 @@ namespace Dia_CoreAPI.Controllers.Dashboard
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // Requires JWT Token
+    [Authorize]
     public class DashboardController : ControllerBase
     {
         private readonly IDashboardService _dashboardService;

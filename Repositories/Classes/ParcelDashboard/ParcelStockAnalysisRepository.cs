@@ -137,7 +137,6 @@ namespace Dia_CoreAPI.Repositories.Classes.ParcelDashboard
                 AskingQry = " SUM(Rate) AS AskingRate,SUM(Back) AS AskingBack,ROUND(CONVERT(DECIMAL(18, 2), SUM((TotCarats + MemoIn) * ISNULL(Rate, 0))), 2,1) AS AskingAmount";
             }
 
-            // Append List Filters
             AppendListFilter(ref Where, filter.ShapeGroup, "ShapeGroupId");
             AppendListFilter(ref Where, filter.Shape, "Shp");
             AppendListFilter(ref Where, filter.ColorGroup, "ColorGroupId");
@@ -149,19 +148,16 @@ namespace Dia_CoreAPI.Repositories.Classes.ParcelDashboard
             AppendListFilter(ref Where, filter.ItemGroup, "ItemgroupId");
             AppendListFilter(ref Where, filter.BoxNm, "BoxName");
 
-            // CtsFrom And CtsTo
             if (filter.CtsFrm != 0 && filter.CtsTo != 0)
             {
                 Where += " And Round((CONVERT(decimal(9,3),TotCarats + MemoIn )),3,1) between " + filter.CtsFrm + " And " + filter.CtsTo + "";
             }
 
-            // PriceFrom And PriceTo
             if (filter.PriceFrm != 0 && filter.PriceTo != 0)
             {
                 Where += " And (Rate between " + filter.PriceFrm + " And " + filter.PriceTo + ")";
             }
 
-            // LotFrom And LotTo
             if (filter.LotFrm != 0 && filter.LotTo != 0)
             {
                 Where += " And (ItemSrno between " + filter.LotFrm + " And " + filter.LotTo + ")";
@@ -177,7 +173,6 @@ namespace Dia_CoreAPI.Repositories.Classes.ParcelDashboard
                 Where += " AND (LotNo IN (''" + strTmpNewLine + "''))";
             }
 
-            // GROUP BY logic
             string stockAna = HasText(filter.StockAna) ? filter.StockAna! : string.Empty;
             if (string.Equals(stockAna, "Shape", StringComparison.OrdinalIgnoreCase))
             {
@@ -236,10 +231,6 @@ namespace Dia_CoreAPI.Repositories.Classes.ParcelDashboard
             return data.ToList();
         }
 
-        /// <summary>
-        /// Pivot row data — exact port of MVC ParcelStockSearchController.GetPivotDataParcel
-        /// → ReportProcessor.GetParcelStockSearchDataPivot → EXEC [ParcelGetStockReportData]
-        /// </summary>
         public async Task<List<ParcelStockPivotDto>> GetParcelPivotDataAsync(ParcelStockAnalysisRequestDto filter, string companyId)
         {
             if (filter == null)
@@ -301,7 +292,6 @@ namespace Dia_CoreAPI.Repositories.Classes.ParcelDashboard
             float RatePer = filter.RatePer;
             float RatePlusMinus = filter.RatePlusMinus;
 
-            // Pivot AskingQry is row-level (no SUM) — matches MVC GetPivotDataParcel
             string AskingQry;
             if (BackPer != 0)
             {
@@ -403,12 +393,8 @@ namespace Dia_CoreAPI.Repositories.Classes.ParcelDashboard
                 Where += " AND (LotNo IN (''" + strTmpNewLine + "''))";
             }
 
-            // Same SP call as MVC — executed via ADO.NET (SqlCommand + SqlDataReader), not Dapper.
-            // No stored-procedure changes; existing ParcelGetStockReportData is called as-is.
             string sql = @" EXEC [ParcelGetStockReportData] @Date = '''" + Date + "''',@AskingQry = '" + AskingQry + "',@Where = '" + Where + "' ";
 
-            // Read via raw DTO (string carats/Amount like Parcelsalerpt / stock-search grid),
-            // then convert with ADO.NET-mapped columns → pivot DTO.
             var rawRows = (await _sqlDataAccess.SelectRawSql<ParcelStockPivotRawDto>(sql, companyId)).ToList();
             return rawRows.Select(MapRawToPivotDto).ToList();
         }
@@ -452,7 +438,6 @@ namespace Dia_CoreAPI.Repositories.Classes.ParcelDashboard
                 Kapan = r.Kapan,
                 FLColor = r.FLColor,
                 Pcs = r.Pcs,
-                // SP column is lowercase "carats" (varchar) — same as Parcel-stock-search.js
                 Carats = ParseFloat(r.carats),
                 Amount = ParseFloat(r.Amount),
                 Rate = ParseFloat(r.Rate),

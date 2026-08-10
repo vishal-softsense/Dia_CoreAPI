@@ -284,6 +284,16 @@ builder.Services.AddScoped<IMixSaleRtnReportService, MixSaleRtnReportService>();
 builder.Services.AddScoped<IMixConsignmentInRtnReportRepository, MixConsignmentInRtnReportRepository>();
 builder.Services.AddScoped<IMixConsignmentInRtnReportService, MixConsignmentInRtnReportService>();
 
+// Outstanding Report (Payable Receivables)
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Payable_Receivables.IOutstandingReportRepository, Dia_CoreAPI.Repositories.Classes.Reports.Payable_Receivables.OutstandingReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Payable_Receivables.IOutstandingReportService, Dia_CoreAPI.Services.Classes.Reports.Payable_Receivables.OutstandingReportService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Payable_Receivables.ILoanOutstandingReportRepository, Dia_CoreAPI.Repositories.Classes.Reports.Payable_Receivables.LoanOutstandingReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Payable_Receivables.ILoanOutstandingReportService, Dia_CoreAPI.Services.Classes.Reports.Payable_Receivables.LoanOutstandingReportService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Payable_Receivables.IBrokerageOutstandingReportRepository, Dia_CoreAPI.Repositories.Classes.Reports.Payable_Receivables.BrokerageOutstandingReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Payable_Receivables.IBrokerageOutstandingReportService, Dia_CoreAPI.Services.Classes.Reports.Payable_Receivables.BrokerageOutstandingReportService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Payable_Receivables.ICommissionOutstandingReportRepository, Dia_CoreAPI.Repositories.Classes.Reports.Payable_Receivables.CommissionOutstandingReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Payable_Receivables.ICommissionOutstandingReportService, Dia_CoreAPI.Services.Classes.Reports.Payable_Receivables.CommissionOutstandingReportService>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>

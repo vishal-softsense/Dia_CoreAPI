@@ -32,13 +32,11 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             string companyId)
         {
             var where = BuildMemoWhere(filter);
-            // MVC: GetMemoReport(strWhere, "") => EXEC [GetMemoReportData] @Where, @Type=''
             var sql = $"EXEC [GetMemoReportData] @Where = '{where}',@Type = ''";
             var rows = await _db.SelectDataAdoDynamic(sql, companyId);
             return rows.Select(MapReportRow).ToList();
         }
 
-        // Ported from MVC: ReportController.MemoReportFilter
         private static string BuildMemoWhere(SolitaireMemoOutReportFilterDto filter)
         {
             string strWhere = "";
@@ -55,8 +53,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                         strWhere += " AND   convert(date,tmtran.MemoReturnDate)  BETWEEN ''" + filter.FromRtnDate + "'' And ''" + filter.ToRtnDate + "''";
                 }
 
-                // Currency dropdown value = TabCurrencyMaster.Id (BasicData.ID).
-                // MCA Jew reports + Party Hold use tcur.Id / tcur.ID — tcur has no CurCode column.
                 if (!string.IsNullOrWhiteSpace(filter.Currency))
                     strWhere += " AND tcur.Id IN (''" + filter.Currency + "'')";
 
@@ -99,7 +95,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
 
                 if (filter.Clear)
                 {
-                    // Show clear memo — no live balance filter
                 }
                 else
                 {
@@ -110,7 +105,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             }
             catch
             {
-                // Swallow like MVC does — return partial where
             }
 
             return strWhere;

@@ -8,7 +8,7 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
         public string? FromDate { get; set; }
         public string? ToDate { get; set; }
         public string? Currency { get; set; }
-        public string? InvNo { get; set; } // memo number
+        public string? InvNo { get; set; }
         public string? Type { get; set; }
         public string? Party { get; set; }
         public string? Broker { get; set; }

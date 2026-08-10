@@ -19,7 +19,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
 
         public Task<IEnumerable<BasicDataDto>> GetDropdownsAsync(string companyId)
         {
-            // Same as MVC AdminStockSearchDropDown()
             return _db.SelectDataFromSP<BasicDataDto>(
                 "AllMasterDataForAdminStockSearch",
                 new Dictionary<string, object>(),
@@ -32,7 +31,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
         {
             var (where, date, saleWhere) = BuildFilterParams(filter);
 
-            // Ported from MVC ReportProcessor.GetStockConsumptionReport — ADO.NET (no Dapper)
             string sql =
                 " EXEC [SP_StockConsumptionReport]  @Where = '" + where +
                 "' ,@Date ='" + date +
@@ -41,9 +39,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             return await _db.SelectRawSql<SolitaireConsumptionReportRowDto>(sql, companyId);
         }
 
-        /// <summary>
-        /// Ported from MVC ReportController.StockConsumptionReport(StockConsumptionFilter)
-        /// </summary>
         private static (string where, string date, string saleWhere) BuildFilterParams(
             SolitaireConsumptionReportFilterDto filter)
         {
@@ -87,7 +82,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             }
             catch
             {
-                // MVC swallows exceptions and returns partial where
             }
 
             return (where, date, saleWhere);
@@ -110,7 +104,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             }
             catch
             {
-                // MVC swallows
             }
         }
     }
