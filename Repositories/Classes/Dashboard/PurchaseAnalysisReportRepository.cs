@@ -9,10 +9,6 @@ using Dia_CoreAPI.Repositories.Interfaces.Dashboard;
 
 namespace Dia_CoreAPI.Repositories.Classes.Dashboard
 {
-    /// <summary>
-    /// Exact port of MVC ChartsReportController.PurAnaData + ReportProcessor Pur*AnaReport.
-    /// SPs: AllMasterDataForPurchaseReport, GetPurchaseAnalysisData (no new SPs).
-    /// </summary>
     public class PurchaseAnalysisReportRepository : IPurchaseAnalysisReportRepository
     {
         private readonly ISqlDataAccess _sqlDataAccess;
@@ -22,7 +18,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Dashboard
             _sqlDataAccess = sqlDataAccess;
         }
 
-        // Matches MVC ReportProcessor.PurchaseReportDropDown()
         public async Task<List<BasicData>> GetDropdownDataAsync(string companyId)
         {
             var result = await _sqlDataAccess.SelectDataFromSP<BasicData>(
@@ -32,7 +27,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Dashboard
             return result.ToList();
         }
 
-        // Matches MVC ChartsReportController.PurAnaData(PurchaseRptFilter filter) line-for-line
         public async Task<List<PurchaseAnalysisReportDto>> GetPurchaseAnalysisReportAsync(PurchaseAnalysisRequestDto filter, string companyId)
         {
             if (filter == null)
@@ -40,11 +34,9 @@ namespace Dia_CoreAPI.Repositories.Classes.Dashboard
 
             string strWhere = "";
 
-            // MVC: if (filter.FromDate != null && filter.ToDate != null)
             if (HasText(filter.FromDate) && HasText(filter.ToDate))
                 strWhere += " AND TrnDate BETWEEN ''" + filter.FromDate + "'' And ''" + filter.ToDate + "''";
 
-            // MVC: if (filter.Currency != null)
             if (HasText(filter.Currency))
                 strWhere += " AND CurCode IN (''" + filter.Currency + "'')";
 
@@ -81,7 +73,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Dashboard
                 strWhere += " AND ViewItem.LotNo IN (''" + strTmpNewLine + "'')";
             }
 
-            // Multi-selects — exact MVC column names from PurAnaData
             AppendListFilter(ref strWhere, filter.Shape, "ViewItem.Shp");
             AppendListFilter(ref strWhere, filter.Color, "ViewItem.Col");
             AppendListFilter(ref strWhere, filter.Clarity, "ViewItem.Cla");
@@ -98,7 +89,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Dashboard
             AppendListFilter(ref strWhere, filter.ProductType, "ProductType");
             AppendListFilter(ref strWhere, filter.Sieve, "Sieve");
 
-            // GROUP BY — exact MVC text (leading space kept so date-only WHERE stays valid)
             if (filter.PurAna == "Lab")
                 strWhere += " GROUP BY ViewItem.LAB,ViewItem.CertPriority ";
             if (filter.PurAna == "Shape")
@@ -134,7 +124,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Dashboard
             if (filter.PurAna == "StockID")
                 strWhere += " GROUP BY ViewItem.LotNo  ";
 
-            // Order By — exact MVC text
             if (filter.PurAna == "Lab")
                 strWhere += "Order By ViewItem.CertPriority ";
             if (filter.PurAna == "Shape")
@@ -170,7 +159,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Dashboard
             if (filter.PurAna == "StockID")
                 strWhere += "  Order By ViewItem.LotNo ";
 
-            // ReportProcessor.Pur*AnaReport @Type
             string typeName = filter.PurAna switch
             {
                 "Lab" => "PurLabAnalysis",
@@ -199,9 +187,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Dashboard
             return data.ToList();
         }
 
-        /// <summary>
-        /// MVC skips null. Also skip empty and Swagger example placeholder "string".
-        /// </summary>
         private static bool HasText(string value)
         {
             if (string.IsNullOrWhiteSpace(value)) return false;
@@ -211,7 +196,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Dashboard
 
         private static void AppendListFilter(ref string strWhere, List<string> list, string columnName, bool spaceAfterParen = false)
         {
-            // MVC: if (filter.X != null) then build; empty select2 = null so skipped
             if (list == null || list.Count == 0) return;
 
             string joined = "";
@@ -225,7 +209,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Dashboard
 
             if (joined.Length == 0) return;
 
-            // MVC Luster uses " In ( " with space after (
             string open = spaceAfterParen ? " ( " : " (";
             strWhere += " And " + columnName + " In" + open + joined + ")";
         }

@@ -7,16 +7,16 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
         public string? FromDate { get; set; }
         public string? ToDate { get; set; }
         public string? Currency { get; set; }
-        public string? InvNo { get; set; }       // MemoNo
-        public string? Type { get; set; }         // ALL | External | Internal | Local | LAB | Pend Sale
+        public string? InvNo { get; set; }
+        public string? Type { get; set; }
         public string? Party { get; set; }
         public string? Broker { get; set; }
         public string? Seller { get; set; }
         public bool ChkRtnDate { get; set; }
         public string? FromRtnDate { get; set; }
         public string? ToRtnDate { get; set; }
-        public bool Clear { get; set; }           // Show Clear Consignment
-        public bool Summary { get; set; }         // Consignment Summary mode
+        public bool Clear { get; set; }
+        public bool Summary { get; set; }
         public string? LotNo { get; set; }
 
         public List<string>? Shape { get; set; }
@@ -36,7 +36,6 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
         public List<string>? Sieve { get; set; }
     }
 
-    // Row returned by NormalConsignment / GetMemoReport SP
     public class SolitaireConsignmentInReportRowDto
     {
         public long Code { get; set; }
@@ -82,7 +81,6 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
         public double BalanceCarats3Dec { get; set; }
     }
 
-    // Row returned by FinalConsignSummary SP
     public class SolitaireConsignmentInSummaryRowDto
     {
         public double Carats { get; set; }

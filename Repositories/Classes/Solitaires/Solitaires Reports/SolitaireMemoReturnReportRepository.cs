@@ -78,7 +78,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             }
             catch
             {
-                // MVC swallows exceptions and returns partial where.
             }
 
             return strWhere;

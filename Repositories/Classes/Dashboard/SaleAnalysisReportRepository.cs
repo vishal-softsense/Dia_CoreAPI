@@ -9,11 +9,6 @@ using Dia_CoreAPI.Repositories.Interfaces.Dashboard;
 
 namespace Dia_CoreAPI.Repositories.Classes.Dashboard
 {
-    /// <summary>
-    /// Exact port of MVC ChartsReportController.SaleAnaData + ChartsReportController.GetPivotData
-    /// (sale-data and sale-pivotdata endpoints).
-    /// SP used: GetSaleAnalysisData — no new SPs needed.
-    /// </summary>
     public class SaleAnalysisReportRepository : ISaleAnalysisReportRepository
     {
         private readonly ISqlDataAccess _sqlDataAccess;
@@ -23,7 +18,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Dashboard
             _sqlDataAccess = sqlDataAccess;
         }
 
-        // Matches MVC ReportProcessor.PurchaseReportDropDown() — same SP as Purchase/Parcel reports
         public async Task<List<BasicData>> GetDropdownDataAsync(string companyId)
         {
             var result = await _sqlDataAccess.SelectDataFromSP<BasicData>(
@@ -33,14 +27,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Dashboard
             return result.ToList();
         }
 
-        // Matches MVC ChartsReportController.SaleAnaData (Group-by/sale-data)
         public async Task<List<SaleAnalysisReportDto>> GetSaleAnalysisReportAsync(SaleAnalysisRequestDto filter, string companyId)
         {
             if (filter == null) throw new ArgumentNullException(nameof(filter));
 
             string strWhere = BuildWhereClause(filter, forPivot: false);
 
-            // Add GROUP BY + ORDER BY exactly as MVC does
             AppendGroupAndOrder(ref strWhere, filter.SaleAna);
 
             string typeName = GetTypeName(filter.SaleAna);
@@ -50,7 +42,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Dashboard
             return data.ToList();
         }
 
-        // Matches MVC ChartsReportController.GetPivotData (Group-by/sale-pivotdata)
         public async Task<List<SaleAnalysisReportDto>> GetSaleAnalysisPivotDataAsync(SaleAnalysisRequestDto filter, string companyId)
         {
             if (filter == null) throw new ArgumentNullException(nameof(filter));
@@ -63,9 +54,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Dashboard
             return data.ToList();
         }
 
-        // ─────────────────────────────────────────────────────────────────────────
-        // WHERE clause builder — mirrors MVC SaleAnaData line-for-line
-        // ─────────────────────────────────────────────────────────────────────────
         private static string BuildWhereClause(SaleAnalysisRequestDto filter, bool forPivot)
         {
             string strWhere = "";
@@ -121,7 +109,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Dashboard
                     : " AND LotNo IN (''" + tmp + "'')";
             }
 
-            // MVC pivot uses ViewItem.* prefixed columns; report uses bare column names
             string pfx = forPivot ? "ViewItem." : "";
 
             AppendListFilter(ref strWhere, filter.Shape, pfx + "Shp");
@@ -143,7 +130,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Dashboard
             return strWhere;
         }
 
-        // GROUP BY + ORDER BY — exact MVC ChartsReportController.SaleAnaData logic
         private static void AppendGroupAndOrder(ref string strWhere, string saleAna)
         {
             switch (saleAna)

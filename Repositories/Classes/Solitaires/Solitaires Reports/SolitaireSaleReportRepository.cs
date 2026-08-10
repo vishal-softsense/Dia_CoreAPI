@@ -37,7 +37,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             return rows.Select(MapSaleRow).ToList();
         }
 
-        // Ported from MVC: ReportController.SaleReportFilter
         private static string BuildSaleWhere(SolitaireSaleReportFilterDto filter)
         {
             string strWhere = "";
@@ -107,7 +106,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             }
             catch
             {
-                // Swallow like MVC does — return partial where
             }
 
             return strWhere;

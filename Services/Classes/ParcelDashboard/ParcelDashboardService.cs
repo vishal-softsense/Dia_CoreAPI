@@ -30,7 +30,6 @@ namespace Dia_CoreAPI.Services.Classes.ParcelDashboard
                 }
                 catch
                 {
-                    // Fallback to empty where if deserialization fails
                 }
             }
 
@@ -108,7 +107,6 @@ namespace Dia_CoreAPI.Services.Classes.ParcelDashboard
 
         public async Task<List<ParcelTopPayableDto>> GetTopPayableAsync(string month, string year, string tdate, string companyId)
         {
-            // TopPayable did not receive date filters in legacy MVC, but we pass empty string as standard
             return await _repository.GetTopPayableAsync("", companyId);
         }
 
@@ -119,7 +117,6 @@ namespace Dia_CoreAPI.Services.Classes.ParcelDashboard
 
         public async Task<List<ParcelTopCustomerDto>> GetTopOutstandingAsync(string month, string year, string tdate, string companyId)
         {
-            // TopOutstanding did not receive date filters in legacy MVC, pass empty string
             return await _repository.GetTopOutstandingAsync("", companyId);
         }
 
@@ -142,7 +139,6 @@ namespace Dia_CoreAPI.Services.Classes.ParcelDashboard
 
         public async Task<List<ParcelOverDueSaleDetailDto>> GetTopOverdueSalesAsync(string month, string year, string tdate, string companyId)
         {
-            // TopOverdue sale did not receive date filters in legacy MVC, pass empty string
             return await _repository.GetTopOverdueSalesAsync("", companyId);
         }
 

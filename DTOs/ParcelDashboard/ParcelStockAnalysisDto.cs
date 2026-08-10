@@ -112,10 +112,6 @@ namespace Dia_CoreAPI.DTOs.ParcelDashboard
         public string? ItemGroup { get; set; }
     }
 
-    /// <summary>
-    /// Row-level pivot data — mirrors MVC StockSearchDisplayReportPivot
-    /// from ParcelGetStockReportData (ParcelStock/parcelstock-search-pivotdata).
-    /// </summary>
     public class ParcelStockPivotDto
     {
         public string? LotNo { get; set; }
@@ -160,10 +156,6 @@ namespace Dia_CoreAPI.DTOs.ParcelDashboard
         public string? Sieve { get; set; }
     }
 
-    /// <summary>
-    /// Intermediate row matching Parcel stock search SP columns (Parcelsalerpt):
-    /// carats/Amount/Rate come as varchar from ParcelGetStockReportData.
-    /// </summary>
     public class ParcelStockPivotRawDto
     {
         public string? LotNo { get; set; }

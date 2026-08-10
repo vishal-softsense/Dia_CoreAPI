@@ -9,8 +9,7 @@ namespace Dia_CoreAPI.DTOs.Dashboard
 
         public double? TotalPayable { get; set; }
         public double? TotalReceivable { get; set; }
-        
-        // Purchase/Sale details
+
         public int? Pcs { get; set; }
         public decimal? Cts { get; set; }
         public decimal? Amt { get; set; }

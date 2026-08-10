@@ -2,13 +2,11 @@ using System.Collections.Generic;
 
 namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
 {
-    // Matches MVC: LotAssortFilter
     public class SolitaireLotAssortmentReportFilterDto
     {
         public List<string>? FLotList { get; set; }
     }
 
-    // Matches MVC: LotAssortReport (SP: SP_LotAssortmentReport)
     public class SolitaireLotAssortmentReportRowDto
     {
         public string? LotNo { get; set; }
@@ -25,7 +23,6 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
         public double AmountCl { get; set; }
     }
 
-    // Matches MVC response shape: { LotNo, Data }
     public class SolitaireLotAssortmentLotGroupDto
     {
         public string LotNo { get; set; } = "Unknown";

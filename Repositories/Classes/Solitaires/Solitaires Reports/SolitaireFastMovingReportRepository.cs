@@ -103,7 +103,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             }
             catch
             {
-                // Swallow
             }
         }
 

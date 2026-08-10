@@ -32,13 +32,11 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             string companyId)
         {
             var where = BuildPartyHoldWhere(filter);
-            // MVC: GetMemoReport(strWhere, "") => EXEC [GetMemoReportData] @Where, @Type=''
             var sql = $"EXEC [GetMemoReportData] @Where = '{where}',@Type = ''";
             var rows = await _db.SelectDataAdoDynamic(sql, companyId);
             return rows.Select(MapReportRow).ToList();
         }
 
-        // Ported from MVC: ReportController.PartyHoldReportFilter
         private static string BuildPartyHoldWhere(SolitairePartyHoldReportFilterDto filter)
         {
             string strWhere = "";
@@ -56,7 +54,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                         strWhere += " AND   convert(date,tmtran.MemoReturnDate)  BETWEEN ''" + filter.FromRtnDate + "'' And ''" + filter.ToRtnDate + "''";
                 }
 
-                // Currency dropdown value = TabCurrencyMaster.Id (same as Memo/Consignment/Jew reports)
                 if (!string.IsNullOrWhiteSpace(filter.Currency))
                     strWhere += " AND tcur.Id IN (''" + filter.Currency + "'')";
 
@@ -97,7 +94,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 AppendInClause(ref strWhere, filter.ProductType, "ProductType");
                 AppendInClause(ref strWhere, filter.Sieve, "Sieve");
 
-                // MVC: only apply balance filter when NOT filtering by return date
                 if (!chkRtnDate)
                 {
                     if (filter.Clear)
@@ -110,7 +106,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             }
             catch
             {
-                // Swallow like MVC does — return partial where
             }
 
             return strWhere;

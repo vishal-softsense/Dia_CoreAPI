@@ -43,7 +43,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 companyId);
         }
 
-        // Ported from MVC ReportController.GradingComparisionReportFilter
         private static string BuildGradingComparisonWhere(GradingComparisonReportFilterDto filter)
         {
             string strWhere = "";
@@ -84,7 +83,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             }
             catch
             {
-                // Match MVC: swallow and return partial where.
             }
 
             return strWhere;

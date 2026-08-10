@@ -40,12 +40,10 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             if (stockPrice == "Base Price" || stockPrice == "Asking Price")
             {
                 var baseRate = await GetSBaseRateAsync(companyId);
-                // MVC: GetSalePerformanceReporWithBaseRate
                 sql = $"EXEC [GetSalePerformanceReportData]@Type = 'SalePerformanceReport', @Where = '{where}',@StockPrice = '{stockPrice}',@BaseRate = '{baseRate}' ";
             }
             else
             {
-                // MVC: GetSalePerformanceRepor (Purchase Price)
                 sql = $"EXEC [GetSalePerformanceReportData]@Type = 'SalePerformanceReport', @Where = '{where}',@StockPrice = '{stockPrice}' ";
             }
 
@@ -53,7 +51,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             return rows.Select(MapReportRow).ToList();
         }
 
-        // Ported from MVC: ReportController.SalePerformanceReportFilter
         private static string BuildSalePerformanceWhere(SolitaireSalePerformanceReportFilterDto filter)
         {
             string where = "";
@@ -114,14 +111,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                     else if (string.Equals(show, "UnSold", StringComparison.OrdinalIgnoreCase)
                           || string.Equals(show, "Unsold", StringComparison.OrdinalIgnoreCase))
                     {
-                        // MVC checks "UnSold"; UI option value is "Unsold" — accept both
                         where += " And Status <> ''Sold'' ";
                     }
                 }
             }
             catch
             {
-                // Swallow like MVC
             }
 
             return where;
@@ -149,7 +144,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 where += " And " + column + " In (" + joined + ")";
         }
 
-        // MVC page: Session["SBaseRate"] = SqlDataAccess.GetScurBaseRate(DefaultCurrency)
         private async Task<string> GetSBaseRateAsync(string companyId)
         {
             try

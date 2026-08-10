@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace Dia_CoreAPI.DTOs.Dashboard
 {
-    /// <summary>Chart/table row — matches MVC ChartDataModel (GetSolitaireStockAnalysisData output).</summary>
     public class StockAnalysisReportDto
     {
         public string Shape { get; set; }
@@ -35,7 +34,6 @@ namespace Dia_CoreAPI.DTOs.Dashboard
         public float AmountPer { get; set; }
     }
 
-    /// <summary>Pivot (By Filter) row — matches MVC StcokAnalysisReport (SP_StockAnalysisReport).</summary>
     public class StockAnalysisPivotByFilterDto
     {
         public string Id { get; set; }
@@ -66,7 +64,6 @@ namespace Dia_CoreAPI.DTOs.Dashboard
         public float Total_AvgPercent { get; set; }
     }
 
-    /// <summary>Pivot (Fixed) row — matches MVC StockSearchDisplayReportPivot (GetStockReportData StockReportPivot).</summary>
     public class StockAnalysisPivotFixedDto
     {
         public string LotNo { get; set; }
@@ -93,7 +90,6 @@ namespace Dia_CoreAPI.DTOs.Dashboard
         public string Sieve { get; set; }
     }
 
-    /// <summary>Exact match of MVC StockSearchFilter fields used by chart/pivot endpoints.</summary>
 #nullable disable
     [ValidateNever]
     public class StockAnalysisRequestDto

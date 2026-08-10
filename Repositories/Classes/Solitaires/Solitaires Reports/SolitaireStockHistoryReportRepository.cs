@@ -36,7 +36,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 companyId);
         }
 
-        // Ported from MVC ReportController.StockRegisterReportFilter + StockRegisterReportActionTypeFilter
         private static string BuildStockRegisterWhere(SolitaireStockHistoryReportDto filter)
         {
             string strWhere = "";
@@ -100,7 +99,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 if (!string.IsNullOrWhiteSpace(filter.FromDate) && !string.IsNullOrWhiteSpace(filter.ToDate))
                     strWhere += " AND Trndate BETWEEN ''" + filter.FromDate + "'' And ''" + filter.ToDate + "''";
 
-                // Transaction type mapping (MVC uses OpStk as default stock-in)
                 List<string> stkIn = new List<string> { "OpStk" };
                 List<string> stkOut = new List<string>();
 
@@ -161,7 +159,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             }
             catch
             {
-                // Keep parity with MVC: fail open and return whatever was built so far.
             }
 
             return strWhere;
@@ -181,10 +178,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             }
             catch
             {
-                // Swallow to match MVC behavior.
             }
 
-            // MVC UI default is SalpurAvg=true.
             if (string.IsNullOrWhiteSpace(actionType))
                 actionType = "Salepuravg";
 

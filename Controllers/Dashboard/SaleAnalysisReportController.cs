@@ -26,9 +26,6 @@ namespace Dia_CoreAPI.Controllers.Dashboard
                 ?? throw new UnauthorizedAccessException("CompanyID missing from token.");
         }
 
-        /// <summary>
-        /// Report data — mirrors MVC /Group-by/sale-data
-        /// </summary>
         [HttpPost("report")]
         public async Task<IActionResult> GetReport([FromBody] SaleAnalysisRequestDto filter)
         {
@@ -49,9 +46,6 @@ namespace Dia_CoreAPI.Controllers.Dashboard
             }
         }
 
-        /// <summary>
-        /// Pivot data — mirrors MVC /Group-by/sale-pivotdata
-        /// </summary>
         [HttpPost("pivotdata")]
         public async Task<IActionResult> GetPivotData([FromBody] SaleAnalysisRequestDto filter)
         {
@@ -70,9 +64,6 @@ namespace Dia_CoreAPI.Controllers.Dashboard
             }
         }
 
-        /// <summary>
-        /// Dropdown lists — same SP as Purchase/Parcel analysis (AllMasterDataForPurchaseReport)
-        /// </summary>
         [HttpGet("dropdowns")]
         public async Task<IActionResult> GetDropdowns()
         {

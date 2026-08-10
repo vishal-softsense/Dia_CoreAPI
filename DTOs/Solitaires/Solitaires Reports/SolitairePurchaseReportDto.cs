@@ -34,8 +34,6 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
         public List<string>? ProductType { get; set; }
         public List<string>? Sieve { get; set; }
 
-        // MVC uses PrintName for server-side PR generation (Excel with formatting).
-        // For React, we can default it, but keep it for compatibility.
         public string? PrintName { get; set; }
     }
 

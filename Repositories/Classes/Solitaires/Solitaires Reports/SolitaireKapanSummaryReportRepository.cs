@@ -23,13 +23,11 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             string companyId)
         {
             var where = BuildKapanWhere(filter);
-            // MVC: ReportProcessor.GetKapanSummaryReport => EXEC [sp_KapanSummary] @Where
             var sql = $"EXEC [sp_KapanSummary] @Where = '{where}'";
             var rows = await _db.SelectDataAdoDynamic(sql, companyId);
             return rows.Select(MapRow).ToList();
         }
 
-        // Ported from MVC: ReportController.KapanSummaryReportFilter
         private static string BuildKapanWhere(SolitaireKapanSummaryReportFilterDto filter)
         {
             string strWhere = "";
@@ -56,7 +54,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             }
             catch
             {
-                // Swallow like MVC — return partial where
             }
 
             return strWhere;

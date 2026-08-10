@@ -36,13 +36,11 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 ? "InvWise"
                 : "PartyWise";
 
-            // MVC: ReportProcessor.GetAgingReport => EXEC [SP_AgingReport] @Where, @Type
             var sql = $"EXEC [SP_AgingReport]  @Where = '{where}',@Type ='{type}' ";
             var rows = await _db.SelectDataAdoDynamic(sql, companyId);
             return rows.Select(MapReportRow).ToList();
         }
 
-        // Ported from MVC: ReportController.AgingReport(AgingFilter)
         private static string BuildAgingWhere(SolitaireAgingReportFilterDto filter)
         {
             var where = "";
@@ -73,7 +71,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             }
             catch
             {
-                // Swallow like other migrated reports — return partial where
             }
 
             return where;

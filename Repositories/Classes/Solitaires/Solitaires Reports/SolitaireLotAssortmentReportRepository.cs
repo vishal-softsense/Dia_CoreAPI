@@ -18,7 +18,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             _db = db;
         }
 
-        // Ported from MVC: ReportController.lotAssortmentReport(LotAssortFilter)
         public async Task<IEnumerable<SolitaireLotAssortmentLotGroupDto>> GetReportAsync(
             SolitaireLotAssortmentReportFilterDto filter,
             string companyId)
@@ -72,7 +71,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             return allData;
         }
 
-        // MVC: ReportProcessor.GetLotAssortReport => EXEC [SP_LotAssortmentReport] @where
         private async Task<IEnumerable<SolitaireLotAssortmentReportRowDto>> GetLotAssortReportAsync(
             string where,
             string companyId)
@@ -83,7 +81,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             return rows.Select(MapRow).ToList();
         }
 
-        // MVC: SqlTempAccess.GetMaxItemCode => EXEC [GetAllCommonData] @Type='ItemCode', @Where
         private async Task<string> GetMaxItemCodeAsync(string lotNo, string companyId)
         {
             var safeLot = (lotNo ?? "").Replace("'", "''");

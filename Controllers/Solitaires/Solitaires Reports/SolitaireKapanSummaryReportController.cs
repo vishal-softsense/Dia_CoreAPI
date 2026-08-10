@@ -13,7 +13,6 @@ namespace Dia_CoreAPI.Controllers.Solitaires.Solitaires_Reports
     [Authorize]
     public class SolitaireKapanSummaryReportController : ControllerBase
     {
-        // Keep MVC property names (OP_Pcs, Sale_Amount, …) — default camelCase breaks OP_* keys.
         private static readonly JsonSerializerOptions PascalCaseJson = new()
         {
             PropertyNamingPolicy = null

@@ -60,7 +60,6 @@ namespace Dia_CoreAPI.Controllers.Dashboard
                 return Ok(new
                 {
                     success = true,
-                    // Same dropdown groups as MVC PurChartReports ViewBag
                     data = new
                     {
                         currency = helper("Currency"),
