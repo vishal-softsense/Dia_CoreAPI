@@ -283,7 +283,17 @@ namespace Dia_CoreAPI.DataAccess
                 var row = new ExpandoObject() as IDictionary<string, object>;
                 for (int i = 0; i < reader.FieldCount; i++)
                 {
-                    row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                    // Match MVC DataTable.Load: duplicate SP column names become Date, Date1, Account, Account1, etc.
+                    // Without this, credit-side dual-ledger fields overwrite debit-side fields.
+                    string baseName = reader.GetName(i) ?? $"Column{i}";
+                    string uniqueName = baseName;
+                    int suffix = 1;
+                    while (row.ContainsKey(uniqueName))
+                    {
+                        uniqueName = baseName + suffix;
+                        suffix++;
+                    }
+                    row[uniqueName] = reader.IsDBNull(i) ? null : reader.GetValue(i);
                 }
                 list.Add(row);
             }

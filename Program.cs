@@ -6,6 +6,7 @@ using Dia_CoreAPI.Repositories.Classes.Masters;
 using Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Reports;
 using Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Classes.ParcelDashboard;
+using Dia_CoreAPI.Repositories.Classes.Reports.Financial_Reports;
 using Dia_CoreAPI.Repositories.Classes.StockAccount;
 using Dia_CoreAPI.Repositories.Interfaces;
 using Dia_CoreAPI.Repositories.Interfaces.Dashboard;
@@ -13,6 +14,7 @@ using Dia_CoreAPI.Repositories.Interfaces.Masters;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Reports;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.ParcelDashboard;
+using Dia_CoreAPI.Repositories.Interfaces.Reports.Financial_Reports;
 using Dia_CoreAPI.Repositories.Interfaces.StockAccount;
 using Dia_CoreAPI.Services;
 using Dia_CoreAPI.Services.Classes;
@@ -21,6 +23,7 @@ using Dia_CoreAPI.Services.Classes.Masters;
 using Dia_CoreAPI.Services.Classes.Parcel.Parcel_Reports;
 using Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Services.Classes.ParcelDashboard;
+using Dia_CoreAPI.Services.Classes.Reports.Financial_Reports;
 using Dia_CoreAPI.Services.Classes.StockAccount;
 using Dia_CoreAPI.Services.Interfaces;
 using Dia_CoreAPI.Services.Interfaces.Dashboard;
@@ -28,6 +31,7 @@ using Dia_CoreAPI.Services.Interfaces.Masters;
 using Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Reports;
 using Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Services.Interfaces.ParcelDashboard;
+using Dia_CoreAPI.Services.Interfaces.Reports.Financial_Reports;
 using Dia_CoreAPI.Services.Interfaces.StockAccount;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.FileProviders;
@@ -283,6 +287,19 @@ builder.Services.AddScoped<IMixSaleRtnReportService, MixSaleRtnReportService>();
 // Mix ConsignmentInRtn Report
 builder.Services.AddScoped<IMixConsignmentInRtnReportRepository, MixConsignmentInRtnReportRepository>();
 builder.Services.AddScoped<IMixConsignmentInRtnReportService, MixConsignmentInRtnReportService>();
+
+// Account Ledger Report
+builder.Services.AddScoped<ILedgerReportRepository, LedgerReportRepository>();
+builder.Services.AddScoped<ILedgerReportService, LedgerReportService>();
+
+// Month Expense Report
+builder.Services.AddScoped<IMonthExpenseReportRepository, MonthExpenseReportRepository>();
+builder.Services.AddScoped<IMonthExpenseReportService, MonthExpenseReportService>();
+
+// Cash Flow Report
+builder.Services.AddScoped<ICashFlowReportRepository, CashFlowReportRepository>();
+builder.Services.AddScoped<ICashFlowReportService, CashFlowReportService>();
+
 
 builder.Services.AddCors(options =>
 {
