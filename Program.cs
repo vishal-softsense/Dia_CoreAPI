@@ -310,6 +310,41 @@ builder.Services.AddScoped<IMonthExpenseReportService, MonthExpenseReportService
 builder.Services.AddScoped<ICashFlowReportRepository, CashFlowReportRepository>();
 builder.Services.AddScoped<ICashFlowReportService, CashFlowReportService>();
 
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewelleryPurchaseReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewelleryPurchaseReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewelleryPurchaseReportService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewelleryPurchaseReportService>();
+
+// Jewellery Purchase Return Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewelleryPurchaseRetunReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewelleryPurchaseRetunReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewelleryPurchaseRetunReportService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewelleryPurchaseRetunReportService>();
+
+// Jewellery Sale Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewellerySaleReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewellerySaleReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewellerySaleReportService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewellerySaleReportService>();
+
+// Jewellery Sale Return Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewellerySaleReturnReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewellerySaleReturnReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewellerySaleReturnReportService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewellerySaleReturnReportService>();
+
+// Jewellery MemoOut Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewelleryMemoOutReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewelleryMemoOutReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewelleryMemoOutReportService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewelleryMemoOutReportService>();
+
+// Jewellery MemoIn Return Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewelleryMemoInReturnReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewelleryMemoInReturnReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewelleryMemoInReturnReportService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewelleryMemoInReturnReportService>();
+
+// Jewellery MemoOut Return Report (MVC: jewreport/JewMemoOut-return-report → GetJewMemoOutRtnReportData)
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewelleryMemoOutReturnReporteRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewelleryMemoOutReturnReporteRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewelleryMemoOutReturnReporteService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewelleryMemoOutReturnReporteService>();
+
+// Jewellery ConsignMent In Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewelleryConsignMentInReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewelleryConsignMentInReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewelleryConsignMentInReportService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewelleryConsignMentInReportService>();
+
+// Jewellery Stock History Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewelleryStockHistoryReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewelleryStockHistoryReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewelleryStockHistoryReportService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewelleryStockHistoryReportService>();
+
 
 builder.Services.AddCors(options =>
 {
