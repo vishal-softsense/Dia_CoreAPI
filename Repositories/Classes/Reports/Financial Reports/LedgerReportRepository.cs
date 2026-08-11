@@ -70,13 +70,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Reports.Financial_Reports
         public async Task<int> GetAccountCodeAsync(string whereClause, string companyId)
         {
             // SelectDataFromSP<dynamic> does not map columns — use ADO dynamic (ExpandoObject) like other reports
-            var escapedWhere = (whereClause ?? string.Empty).Replace("'", "''");
-            var sql = $"EXEC [GetAccountCode] @Where = '{escapedWhere}'";
+            var escapedWhere = (whereClause ?? string.Empty).Replace("'", "'");
+            var sql = $"EXEC [GetAllCommonData] @Type='Party', @Where = '{escapedWhere}'";
             var result = await _db.SelectDataAdoDynamic(sql, companyId);
             var firstRow = result.FirstOrDefault();
             if (firstRow != null)
             {
-                var val = GetRawValue(firstRow, "AccCode", "accCode", "Code", "code");
+                var val = GetRawValue(firstRow, "AccGrpCode", "accgrpCode", "Code", "code");
                 if (val != null)
                 {
                     int.TryParse(Convert.ToString(val, CultureInfo.InvariantCulture), out int code);

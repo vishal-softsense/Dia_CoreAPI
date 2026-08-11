@@ -7,6 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="ExcelDataReader" Version="3.7.0" />
+    <PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.8" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
@@ -20,21 +23,33 @@
 
   <ItemGroup>
     <Folder Include="Controllers\Jewellery\JewelleryTransaction\" />
+    <Folder Include="Controllers\Parcel\Parcel Transaction\" />
+    <Folder Include="Controllers\Solitaires\Solitaires Transaction\" />
     <Folder Include="Controllers\Reports\Financial Reports\" />
     <Folder Include="Controllers\Reports\Utility\" />
     <Folder Include="DTOs\Jewellery\JewelleryTransaction\" />
+    <Folder Include="DTOs\Parcel\Parcel_Transaction\" />
+    <Folder Include="DTOs\Solitaires\Solitaires Transaction\" />
     <Folder Include="DTOs\Reports\Financial Reports\" />
     <Folder Include="DTOs\Reports\Utility\" />
     <Folder Include="Repositories\Classes\Jewellery\JewelleryTransaction\" />
+    <Folder Include="Repositories\Classes\Parcel\Parcel_Transaction\" />
+    <Folder Include="Repositories\Classes\Solitaires\Solitaires Transaction\" />
     <Folder Include="Repositories\Classes\Reports\Financial Reports\" />
     <Folder Include="Repositories\Classes\Reports\Utility\" />
     <Folder Include="Repositories\Interfaces\Jewellery\JewelleryTransaction\" />
+    <Folder Include="Repositories\Interfaces\Parcel\Parcel_Transaction\" />
+    <Folder Include="Repositories\Interfaces\Solitaires\Solitaires Transaction\" />
     <Folder Include="Repositories\Interfaces\Reports\Financial Reports\" />
     <Folder Include="Repositories\Interfaces\Reports\Utility\" />
     <Folder Include="Services\Classes\Jewellery\JewelleryTransaction\" />
+    <Folder Include="Services\Classes\Parcel\Parcel_Transaction\" />
+    <Folder Include="Services\Classes\Solitaires\Solitaires Transaction\" />
     <Folder Include="Services\Classes\Reports\Financial Reports\" />
     <Folder Include="Services\Classes\Reports\Utility\" />
     <Folder Include="Services\Interfaces\Jewellery\JewelleryTransaction\" />
+    <Folder Include="Services\Interfaces\Parcel\Parcel_Transaction\" />
+    <Folder Include="Services\Interfaces\Solitaires\Solitaires Transaction\" />
     <Folder Include="Services\Interfaces\Reports\Financial Reports\" />
     <Folder Include="Services\Interfaces\Reports\Utility\" />
     <Folder Include="wwwroot\css\" />

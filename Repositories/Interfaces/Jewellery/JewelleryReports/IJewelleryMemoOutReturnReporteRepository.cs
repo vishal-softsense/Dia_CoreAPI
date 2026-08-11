@@ -1,0 +1,16 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Dia_CoreAPI.DTOs.Jewellery.JewelleryReports;
+using Dia_CoreAPI.DTOs.StockAccount;
+
+namespace Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports
+{
+    public interface IJewelleryMemoOutReturnReporteRepository
+    {
+        Task<IEnumerable<BasicDataDto>> GetDropdownsAsync(string companyId);
+
+        Task<IEnumerable<JewelleryMemoOutReturnReporteRowDto>> GetReportAsync(
+            JewelleryMemoOutReturnReporteFilterDto filter,
+            string companyId);
+    }
+}

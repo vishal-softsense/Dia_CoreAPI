@@ -184,6 +184,7 @@ namespace Dia_CoreAPI.DataAccess
             await connection.OpenAsync();
             using var cmd = new SqlCommand(spName, connection);
             cmd.CommandType = CommandType.StoredProcedure;
+            cmd.CommandTimeout = 180;
             AddParametersToCommand(cmd, parameters);
 
             return await cmd.ExecuteNonQueryAsync();
@@ -210,6 +211,7 @@ namespace Dia_CoreAPI.DataAccess
             await connection.OpenAsync();
             using var cmd = new SqlCommand(query, connection);
             cmd.CommandType = CommandType.Text;
+            cmd.CommandTimeout = 180;
             AddParametersToCommand(cmd, parameters);
 
             return await cmd.ExecuteNonQueryAsync();

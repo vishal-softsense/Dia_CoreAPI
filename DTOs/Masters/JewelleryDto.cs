@@ -139,6 +139,16 @@ namespace Dia_CoreAPI.DTOs.Masters
     }
     #endregion
 
+    #region Jewellery Design Master
+    public class JewDesignMaster
+    {
+        public int ID { get; set; }
+        public string? DesignID { get; set; }
+        public string? DesignName { get; set; }
+        public float DesignPriority { get; set; }
+    }
+    #endregion
+
     #region Helper DTOs
     public class GetJewPurity
     {

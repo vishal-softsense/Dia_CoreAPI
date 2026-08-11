@@ -4,7 +4,6 @@ using Dia_CoreAPI.Repositories.Classes;
 using Dia_CoreAPI.Repositories.Classes.Dashboard;
 using Dia_CoreAPI.Repositories.Classes.Masters;
 using Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Reports;
-using Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Classes.ParcelDashboard;
 using Dia_CoreAPI.Repositories.Classes.Reports.Financial_Reports;
 using Dia_CoreAPI.Repositories.Classes.StockAccount;
@@ -12,7 +11,6 @@ using Dia_CoreAPI.Repositories.Interfaces;
 using Dia_CoreAPI.Repositories.Interfaces.Dashboard;
 using Dia_CoreAPI.Repositories.Interfaces.Masters;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Reports;
-using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.ParcelDashboard;
 using Dia_CoreAPI.Repositories.Interfaces.Reports.Financial_Reports;
 using Dia_CoreAPI.Repositories.Interfaces.StockAccount;
@@ -21,7 +19,6 @@ using Dia_CoreAPI.Services.Classes;
 using Dia_CoreAPI.Services.Classes.Dashboard;
 using Dia_CoreAPI.Services.Classes.Masters;
 using Dia_CoreAPI.Services.Classes.Parcel.Parcel_Reports;
-using Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Services.Classes.ParcelDashboard;
 using Dia_CoreAPI.Services.Classes.Reports.Financial_Reports;
 using Dia_CoreAPI.Services.Classes.StockAccount;
@@ -29,7 +26,6 @@ using Dia_CoreAPI.Services.Interfaces;
 using Dia_CoreAPI.Services.Interfaces.Dashboard;
 using Dia_CoreAPI.Services.Interfaces.Masters;
 using Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Reports;
-using Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Services.Interfaces.ParcelDashboard;
 using Dia_CoreAPI.Services.Interfaces.Reports.Financial_Reports;
 using Dia_CoreAPI.Services.Interfaces.StockAccount;
@@ -92,6 +88,7 @@ builder.Services.AddScoped<IPurchaseParcelRepository, PurchaseParcelRepository>(
 builder.Services.AddScoped<IPurchaseParcelService, PurchaseParcelService>();
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction.ISolitairePurchaseRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction.SolitairePurchaseRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction.ISolitairePurchaseService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction.SolitairePurchaseService>();
+
 
 // Stock & Account
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.StockAccount.IParcelItemMasterRepository, Dia_CoreAPI.Repositories.Classes.StockAccount.ParcelItemMasterRepository>();
@@ -313,6 +310,67 @@ builder.Services.AddScoped<IMonthExpenseReportService, MonthExpenseReportService
 // Cash Flow Report
 builder.Services.AddScoped<ICashFlowReportRepository, CashFlowReportRepository>();
 builder.Services.AddScoped<ICashFlowReportService, CashFlowReportService>();
+
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewelleryPurchaseReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewelleryPurchaseReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewelleryPurchaseReportService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewelleryPurchaseReportService>();
+
+// Jewellery Purchase Return Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewelleryPurchaseRetunReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewelleryPurchaseRetunReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewelleryPurchaseRetunReportService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewelleryPurchaseRetunReportService>();
+
+// Jewellery Sale Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewellerySaleReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewellerySaleReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewellerySaleReportService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewellerySaleReportService>();
+
+// Jewellery Sale Return Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewellerySaleReturnReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewellerySaleReturnReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewellerySaleReturnReportService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewellerySaleReturnReportService>();
+
+// Jewellery MemoOut Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewelleryMemoOutReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewelleryMemoOutReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewelleryMemoOutReportService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewelleryMemoOutReportService>();
+
+// Jewellery MemoIn Return Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewelleryMemoInReturnReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewelleryMemoInReturnReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewelleryMemoInReturnReportService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewelleryMemoInReturnReportService>();
+
+// Jewellery MemoOut Return Report (MVC: jewreport/JewMemoOut-return-report → GetJewMemoOutRtnReportData)
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewelleryMemoOutReturnReporteRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewelleryMemoOutReturnReporteRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewelleryMemoOutReturnReporteService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewelleryMemoOutReturnReporteService>();
+
+// Jewellery ConsignMent In Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewelleryConsignMentInReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewelleryConsignMentInReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewelleryConsignMentInReportService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewelleryConsignMentInReportService>();
+
+// Jewellery Stock History Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewelleryStockHistoryReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewelleryStockHistoryReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewelleryStockHistoryReportService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewelleryStockHistoryReportService>();
+
+// Profit and Loss Report (MVC: /Account/TradingAccount)
+builder.Services.AddScoped<IProfitLossReportRepository, ProfitLossReportRepository>();
+builder.Services.AddScoped<IProfitLossReportService, ProfitLossReportService>();
+
+// Trial Balance Sheet Report (MVC: /Account/TrialBalSheet)
+builder.Services.AddScoped<ITrialBalanceSheetReportRepository, TrialBalanceSheetReportRepository>();
+builder.Services.AddScoped<ITrialBalanceSheetReportService, TrialBalanceSheetReportService>();
+
+// Balance Sheet Report (MVC: /Account/BalanceSheet)
+builder.Services.AddScoped<IBalanceSheetReportRepository, BalanceSheetReportRepository>();
+builder.Services.AddScoped<IBalanceSheetReportService, BalanceSheetReportService>();
+
+// Invoice Ledger Report (MVC: /report/invoice-ledger-report)
+builder.Services.AddScoped<IInvoiceLedgerReportRepository, InvoiceLedgerReportRepository>();
+builder.Services.AddScoped<IInvoiceLedgerReportService, InvoiceLedgerReportService>();
+
+// Download MRP (MVC: /data/downloadMRP)
+builder.Services.AddHttpClient<Dia_CoreAPI.Services.Helpers.RapaportPricesSoapClient>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Utility.IDownloadMRPRepository, Dia_CoreAPI.Repositories.Classes.Reports.Utility.DownloadMRPRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IDownloadMRPService, Dia_CoreAPI.Services.Classes.Reports.Utility.DownloadMRPService>();
+
+// Import Grading (MVC: /data/importgrading)
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Utility.IImportGradingRepository, Dia_CoreAPI.Repositories.Classes.Reports.Utility.ImportGradingRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Helpers.ImportGradingProcessor>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IImportGradingService, Dia_CoreAPI.Services.Classes.Reports.Utility.ImportGradingService>();
 
 
 builder.Services.AddCors(options =>
