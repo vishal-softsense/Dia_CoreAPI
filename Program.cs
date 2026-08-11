@@ -4,7 +4,6 @@ using Dia_CoreAPI.Repositories.Classes;
 using Dia_CoreAPI.Repositories.Classes.Dashboard;
 using Dia_CoreAPI.Repositories.Classes.Masters;
 using Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Reports;
-using Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Classes.ParcelDashboard;
 using Dia_CoreAPI.Repositories.Classes.Reports.Financial_Reports;
 using Dia_CoreAPI.Repositories.Classes.StockAccount;
@@ -12,7 +11,6 @@ using Dia_CoreAPI.Repositories.Interfaces;
 using Dia_CoreAPI.Repositories.Interfaces.Dashboard;
 using Dia_CoreAPI.Repositories.Interfaces.Masters;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Reports;
-using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.ParcelDashboard;
 using Dia_CoreAPI.Repositories.Interfaces.Reports.Financial_Reports;
 using Dia_CoreAPI.Repositories.Interfaces.StockAccount;
@@ -21,7 +19,6 @@ using Dia_CoreAPI.Services.Classes;
 using Dia_CoreAPI.Services.Classes.Dashboard;
 using Dia_CoreAPI.Services.Classes.Masters;
 using Dia_CoreAPI.Services.Classes.Parcel.Parcel_Reports;
-using Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Services.Classes.ParcelDashboard;
 using Dia_CoreAPI.Services.Classes.Reports.Financial_Reports;
 using Dia_CoreAPI.Services.Classes.StockAccount;
@@ -29,7 +26,6 @@ using Dia_CoreAPI.Services.Interfaces;
 using Dia_CoreAPI.Services.Interfaces.Dashboard;
 using Dia_CoreAPI.Services.Interfaces.Masters;
 using Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Reports;
-using Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Services.Interfaces.ParcelDashboard;
 using Dia_CoreAPI.Services.Interfaces.Reports.Financial_Reports;
 using Dia_CoreAPI.Services.Interfaces.StockAccount;
@@ -88,8 +84,7 @@ builder.Services.AddScoped<IAllMasterService, AllMasterService>();
 builder.Services.AddScoped<I4CMasterRepository, _4CMasterRepository>();
 builder.Services.AddScoped<I4CMasterService, _4CMasterService>();
 
-builder.Services.AddScoped<IPurchaseParcelRepository, PurchaseParcelRepository>();
-builder.Services.AddScoped<IPurchaseParcelService, PurchaseParcelService>();
+
 
 // Stock & Account
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.StockAccount.IParcelItemMasterRepository, Dia_CoreAPI.Repositories.Classes.StockAccount.ParcelItemMasterRepository>();
@@ -309,6 +304,32 @@ builder.Services.AddScoped<IMonthExpenseReportService, MonthExpenseReportService
 // Cash Flow Report
 builder.Services.AddScoped<ICashFlowReportRepository, CashFlowReportRepository>();
 builder.Services.AddScoped<ICashFlowReportService, CashFlowReportService>();
+
+// Profit and Loss Report (MVC: /Account/TradingAccount)
+builder.Services.AddScoped<IProfitLossReportRepository, ProfitLossReportRepository>();
+builder.Services.AddScoped<IProfitLossReportService, ProfitLossReportService>();
+
+// Trial Balance Sheet Report (MVC: /Account/TrialBalSheet)
+builder.Services.AddScoped<ITrialBalanceSheetReportRepository, TrialBalanceSheetReportRepository>();
+builder.Services.AddScoped<ITrialBalanceSheetReportService, TrialBalanceSheetReportService>();
+
+// Balance Sheet Report (MVC: /Account/BalanceSheet)
+builder.Services.AddScoped<IBalanceSheetReportRepository, BalanceSheetReportRepository>();
+builder.Services.AddScoped<IBalanceSheetReportService, BalanceSheetReportService>();
+
+// Invoice Ledger Report (MVC: /report/invoice-ledger-report)
+builder.Services.AddScoped<IInvoiceLedgerReportRepository, InvoiceLedgerReportRepository>();
+builder.Services.AddScoped<IInvoiceLedgerReportService, InvoiceLedgerReportService>();
+
+// Download MRP (MVC: /data/downloadMRP)
+builder.Services.AddHttpClient<Dia_CoreAPI.Services.Helpers.RapaportPricesSoapClient>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Utility.IDownloadMRPRepository, Dia_CoreAPI.Repositories.Classes.Reports.Utility.DownloadMRPRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IDownloadMRPService, Dia_CoreAPI.Services.Classes.Reports.Utility.DownloadMRPService>();
+
+// Import Grading (MVC: /data/importgrading)
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Utility.IImportGradingRepository, Dia_CoreAPI.Repositories.Classes.Reports.Utility.ImportGradingRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Helpers.ImportGradingProcessor>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IImportGradingService, Dia_CoreAPI.Services.Classes.Reports.Utility.ImportGradingService>();
 
 
 builder.Services.AddCors(options =>
