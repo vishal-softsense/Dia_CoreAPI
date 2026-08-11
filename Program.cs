@@ -84,8 +84,7 @@ builder.Services.AddScoped<IAllMasterService, AllMasterService>();
 builder.Services.AddScoped<I4CMasterRepository, _4CMasterRepository>();
 builder.Services.AddScoped<I4CMasterService, _4CMasterService>();
 
-builder.Services.AddScoped<IPurchaseParcelRepository, PurchaseParcelRepository>();
-builder.Services.AddScoped<IPurchaseParcelService, PurchaseParcelService>();
+
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction.ISolitairePurchaseRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction.SolitairePurchaseRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction.ISolitairePurchaseService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction.SolitairePurchaseService>();
 
