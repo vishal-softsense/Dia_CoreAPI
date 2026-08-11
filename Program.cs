@@ -90,6 +90,8 @@ builder.Services.AddScoped<I4CMasterService, _4CMasterService>();
 
 builder.Services.AddScoped<IPurchaseParcelRepository, PurchaseParcelRepository>();
 builder.Services.AddScoped<IPurchaseParcelService, PurchaseParcelService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction.ISolitairePurchaseRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction.SolitairePurchaseRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction.ISolitairePurchaseService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction.SolitairePurchaseService>();
 
 // Stock & Account
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.StockAccount.IParcelItemMasterRepository, Dia_CoreAPI.Repositories.Classes.StockAccount.ParcelItemMasterRepository>();
@@ -297,6 +299,8 @@ builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Payable_R
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Payable_Receivables.IBrokerageOutstandingReportService, Dia_CoreAPI.Services.Classes.Reports.Payable_Receivables.BrokerageOutstandingReportService>();
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Payable_Receivables.ICommissionOutstandingReportRepository, Dia_CoreAPI.Repositories.Classes.Reports.Payable_Receivables.CommissionOutstandingReportRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Payable_Receivables.ICommissionOutstandingReportService, Dia_CoreAPI.Services.Classes.Reports.Payable_Receivables.CommissionOutstandingReportService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Payable_Receivables.ISalePurchaseSummaryReportRepository, Dia_CoreAPI.Repositories.Classes.Reports.Payable_Receivables.SalePurchaseSummaryReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Payable_Receivables.ISalePurchaseSummaryReportService, Dia_CoreAPI.Services.Classes.Reports.Payable_Receivables.SalePurchaseSummaryReportService>();
 
 // Account Ledger Report
 builder.Services.AddScoped<ILedgerReportRepository, LedgerReportRepository>();
