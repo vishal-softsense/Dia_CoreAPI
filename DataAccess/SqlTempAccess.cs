@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -33,7 +33,7 @@ namespace Dia_CoreAPI.DataAccess
             param.Add("@duedate", DueDate);
             param.Add("@DivideDays", DivideDays);
             param.Add("@partycode", Partycode);
-            param.Add("@sellercode", Sellercode);
+            param.Add("@SellerCode", Sellercode);
             param.Add("@countrycode", Countrycode);
             param.Add("@BrokerCode", BrokerCode);
             param.Add("@BrokerPer", BrokerPer);
@@ -606,7 +606,7 @@ namespace Dia_CoreAPI.DataAccess
             param.Add("@duedate", DueDate);
             param.Add("@DivideDays", DivideDays);
             param.Add("@partycode", Partycode);
-            param.Add("@sellercode", Sellercode);
+            param.Add("@SellerCode", Sellercode);
             param.Add("@countrycode", Countrycode);
             param.Add("@BrokerCode", BrokerCode);
             param.Add("@BrokerPer", BrokerPer);

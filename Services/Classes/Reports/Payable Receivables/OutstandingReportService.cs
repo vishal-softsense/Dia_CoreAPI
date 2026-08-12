@@ -189,14 +189,17 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Payable_Receivables
                     sb.Append(" AND Selleruser.AccGrpCode IN (''" + filter.Seller + "'')");
 
                 if (!string.IsNullOrEmpty(filter.SalesPerson))
-                {
-                    sb.Append(" AND (tsp.SalesPerson IN (''" + filter.SalesPerson + "'') OR Selleruser.AccGrpName IN (''" + filter.SalesPerson + "''))");
-                }
+                    sb.Append(" AND tsp1.SalesPerson IN (''" + filter.SalesPerson + "'')");
 
                 if (!string.IsNullOrEmpty(filter.Type))
                     sb.Append(" AND invtype IN (''" + filter.Type + "'')");
 
-                if (!string.IsNullOrEmpty(filter.ProductType))
+                if (!string.IsNullOrEmpty(filter.TrnType))
+                {
+                    string formattedTrnType = filter.TrnType.Replace(",", "'',''");
+                    sb.Append(" AND tsp.TrnType IN (''" + formattedTrnType + "'')");
+                }
+                else if (!string.IsNullOrEmpty(filter.ProductType))
                     sb.Append(" AND ProductType IN (''" + filter.ProductType + "'')");
 
                 if (!string.IsNullOrEmpty(filter.SubType))

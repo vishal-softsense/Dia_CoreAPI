@@ -21,6 +21,8 @@ namespace Dia_CoreAPI.DTOs.Reports.Payable_Receivables
         public string? SubType { get; set; }
         public string? Category { get; set; }
         public string? Type { get; set; }
+        /// <summary>MVC Outstanding #TrnType filter (comma-separated, e.g. PSale,PPur).</summary>
+        public string? TrnType { get; set; }
         public string? ProductType { get; set; }
         public string? InvNo { get; set; }
         public string? BillNo { get; set; }

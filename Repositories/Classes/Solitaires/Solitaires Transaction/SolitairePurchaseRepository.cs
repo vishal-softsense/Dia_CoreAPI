@@ -1,4 +1,4 @@
-﻿using Dia_CoreAPI.DataAccess;
+using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction;
@@ -804,9 +804,9 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 cmd.Parameters.Add(new SqlParameter("@duedays", salePur.DueDays));
                 cmd.Parameters.Add(new SqlParameter("@duedate", salePur.DueDate));
                 cmd.Parameters.Add(new SqlParameter("@partycode", salePur.PartyCode));
-                cmd.Parameters.Add(new SqlParameter("@sellercode", 0));
+                cmd.Parameters.Add(new SqlParameter("@SellerCode", (object)0));
                 cmd.Parameters.Add(new SqlParameter("@term", salePur.Term ?? ""));
-                cmd.Parameters.Add(new SqlParameter("@countrycode", 0));
+                cmd.Parameters.Add(new SqlParameter("@countrycode", (object)0));
                 cmd.Parameters.Add(new SqlParameter("@BrokerCode", salePur.BrokerCode ?? (object)DBNull.Value));
                 cmd.Parameters.Add(new SqlParameter("@BrokerPer", salePur.BrokerPer));
                 cmd.Parameters.Add(new SqlParameter("@BrokerAmount", salePur.BrokerAmount));
@@ -839,7 +839,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 cmd.Parameters.Add(new SqlParameter("@VatPer", salePur.VatPer));
                 cmd.Parameters.Add(new SqlParameter("@VatAmount", salePur.VatAmount));
                 cmd.Parameters.Add(new SqlParameter("@invdescription", salePur.InvDisc ?? ""));
-                cmd.Parameters.Add(new SqlParameter("@bankname", 0));
+                cmd.Parameters.Add(new SqlParameter("@bankname", (object)0));
                 cmd.Parameters.Add(new SqlParameter("@subtype", salePur.SubType ?? ""));
                 cmd.Parameters.Add(new SqlParameter("@ShipVia", salePur.ShipVia ?? ""));
                 cmd.Parameters.Add(new SqlParameter("@deliverto", salePur.DeliverTo ?? ""));
@@ -848,19 +848,19 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 cmd.Parameters.Add(new SqlParameter("@Attendee", ""));
                 cmd.Parameters.Add(new SqlParameter("@labcharges", salePur.LabCharges));
                 cmd.Parameters.Add(new SqlParameter("@freightcharges", salePur.FreightCharges));
-                cmd.Parameters.Add(new SqlParameter("@duedays1", 0));
-                cmd.Parameters.Add(new SqlParameter("@duedays2", 0));
+                cmd.Parameters.Add(new SqlParameter("@duedays1", (object)0));
+                cmd.Parameters.Add(new SqlParameter("@duedays2", (object)0));
                 cmd.Parameters.Add(new SqlParameter("@CGSTPer", salePur.CGSTPer));
-                cmd.Parameters.Add(new SqlParameter("@CGSTAmt", salePur.CGSTAmt));
+                cmd.Parameters.Add(new SqlParameter("@CGSTAmount", salePur.CGSTAmt));
                 cmd.Parameters.Add(new SqlParameter("@SGSTPer", salePur.SGSTPer));
-                cmd.Parameters.Add(new SqlParameter("@SGSTAmt", salePur.SGSTAmt));
+                cmd.Parameters.Add(new SqlParameter("@SGSTAmount", salePur.SGSTAmt));
                 cmd.Parameters.Add(new SqlParameter("@IGSTPer", salePur.IGSTPer));
-                cmd.Parameters.Add(new SqlParameter("@IGSTAmt", salePur.IGSTAmt));
+                cmd.Parameters.Add(new SqlParameter("@IGSTAmount", salePur.IGSTAmt));
                 cmd.Parameters.Add(new SqlParameter("@CreatedBy", userId ?? ""));
                 cmd.Parameters.Add(new SqlParameter("@CompanyID", int.Parse(companyId)));
                 cmd.Parameters.Add(new SqlParameter("@netMamount", salePur.NetMAmount));
                 cmd.Parameters.Add(new SqlParameter("@FinalPayRecAmount", salePur.FinalMPayRecAmount));
-                cmd.Parameters.Add(new SqlParameter("@Address", 1));
+                cmd.Parameters.Add(new SqlParameter("@Address", (object)1));
                 cmd.Parameters.Add(new SqlParameter("@ActionType", "insert"));
 
                 await cmd.ExecuteNonQueryAsync();
@@ -888,57 +888,57 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             using (var cmd = new SqlCommand("SP_UpdateSalePur", conn, trans))
             {
                 cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.Add(new SqlParameter("@Code", code));
+                cmd.Parameters.Add(new SqlParameter("@code", code));
                 cmd.Parameters.Add(new SqlParameter("@invno", invNo));
                 cmd.Parameters.Add(new SqlParameter("@ModifyBy", userId ?? ""));
-                cmd.Parameters.Add(new SqlParameter("@billno", salePur.BillNo ?? (object)DBNull.Value));
-                cmd.Parameters.Add(new SqlParameter("@trntype", "PUR"));
+                cmd.Parameters.Add(new SqlParameter("@BillNo", salePur.BillNo ?? (object)DBNull.Value));
+                cmd.Parameters.Add(new SqlParameter("@TrnType", "PUR"));
                 cmd.Parameters.Add(new SqlParameter("@invtype", salePur.InvType ?? (object)DBNull.Value));
-                cmd.Parameters.Add(new SqlParameter("@subtype", salePur.SubType ?? ""));
-                cmd.Parameters.Add(new SqlParameter("@BankID", 0));
-                cmd.Parameters.Add(new SqlParameter("@category", salePur.Category ?? (object)DBNull.Value));
-                cmd.Parameters.Add(new SqlParameter("@trndate", salePur.TrnDate));
+                cmd.Parameters.Add(new SqlParameter("@SubType", salePur.SubType ?? ""));
+                cmd.Parameters.Add(new SqlParameter("@BankID", (object)0));
+                cmd.Parameters.Add(new SqlParameter("@Category", salePur.Category ?? (object)DBNull.Value));
+                cmd.Parameters.Add(new SqlParameter("@Trndate", salePur.TrnDate));
                 cmd.Parameters.Add(new SqlParameter("@RoundDate", salePur.DueDate));
                 cmd.Parameters.Add(new SqlParameter("@duedays", salePur.DueDays));
                 cmd.Parameters.Add(new SqlParameter("@duedate", salePur.DueDate));
                 cmd.Parameters.Add(new SqlParameter("@DivideDays", salePur.DivideDays));
                 cmd.Parameters.Add(new SqlParameter("@partycode", salePur.PartyCode));
-                cmd.Parameters.Add(new SqlParameter("@sellercode", 0));
-                cmd.Parameters.Add(new SqlParameter("@countrycode", 0));
-                cmd.Parameters.Add(new SqlParameter("@BrokerCode", salePur.BrokerCode ?? (object)DBNull.Value));
-                cmd.Parameters.Add(new SqlParameter("@BrokerPer", salePur.BrokerPer));
+                cmd.Parameters.Add(new SqlParameter("@SellerCode", (object)0));
+                cmd.Parameters.Add(new SqlParameter("@countrycode", (object)0));
+                cmd.Parameters.Add(new SqlParameter("@brokercode", salePur.BrokerCode ?? (object)DBNull.Value));
+                cmd.Parameters.Add(new SqlParameter("@brokerper", salePur.BrokerPer));
                 cmd.Parameters.Add(new SqlParameter("@BrokerAmount", salePur.BrokerAmount));
-                cmd.Parameters.Add(new SqlParameter("@adatcode", salePur.AdatCode ?? (object)DBNull.Value));
-                cmd.Parameters.Add(new SqlParameter("@adatper", salePur.AdatPer));
-                cmd.Parameters.Add(new SqlParameter("@adatamount", salePur.AdatAmount));
+                cmd.Parameters.Add(new SqlParameter("@Adatcode", salePur.AdatCode ?? (object)DBNull.Value));
+                cmd.Parameters.Add(new SqlParameter("@Adatper", salePur.AdatPer));
+                cmd.Parameters.Add(new SqlParameter("@AdatAmount", salePur.AdatAmount));
                 cmd.Parameters.Add(new SqlParameter("@totcts", salePur.TotCts));
                 cmd.Parameters.Add(new SqlParameter("@totamount", Math.Round(salePur.TotAmount, 4)));
                 cmd.Parameters.Add(new SqlParameter("@netamount", Math.Round(salePur.NetAmount, 4)));
-                cmd.Parameters.Add(new SqlParameter("@netMamount", salePur.NetMAmount));
-                cmd.Parameters.Add(new SqlParameter("@PlusMinAmount", Math.Round(salePur.PlusMinusAmount, 4)));
+                cmd.Parameters.Add(new SqlParameter("@NetMAmount", salePur.NetMAmount));
+                cmd.Parameters.Add(new SqlParameter("@plusminamount", Math.Round(salePur.PlusMinusAmount, 4)));
                 cmd.Parameters.Add(new SqlParameter("@RoundAmount", Math.Round(salePur.RoundAmount, 4)));
-                cmd.Parameters.Add(new SqlParameter("@FinalAmount", Math.Round(finalMAmount, 4)));
+                cmd.Parameters.Add(new SqlParameter("@finalamount", Math.Round(finalMAmount, 4)));
                 cmd.Parameters.Add(new SqlParameter("@FinalPayRecAmount", salePur.FinalMPayRecAmount));
-                cmd.Parameters.Add(new SqlParameter("@BaseRate", Math.Round(salePur.BaseRate, 4)));
+                cmd.Parameters.Add(new SqlParameter("@baserate", Math.Round(salePur.BaseRate, 4)));
                 cmd.Parameters.Add(new SqlParameter("@ExpPartyCode", salePur.ExpPartyCode));
                 cmd.Parameters.Add(new SqlParameter("@ShipVia", salePur.ShipVia ?? ""));
                 cmd.Parameters.Add(new SqlParameter("@Tracking", salePur.Tracking ?? ""));
                 cmd.Parameters.Add(new SqlParameter("@SalesPerson", ""));
                 cmd.Parameters.Add(new SqlParameter("@Attendee", ""));
-                cmd.Parameters.Add(new SqlParameter("@Disc", salePur.InvDisc ?? ""));
+                cmd.Parameters.Add(new SqlParameter("@disc", salePur.InvDisc ?? ""));
                 cmd.Parameters.Add(new SqlParameter("@CurCode", curCode.ToString()));
-                cmd.Parameters.Add(new SqlParameter("@Outstanding", outstanding));
+                cmd.Parameters.Add(new SqlParameter("@OutStanding", outstanding));
                 cmd.Parameters.Add(new SqlParameter("@StockEffected", stockEffected));
                 cmd.Parameters.Add(new SqlParameter("@Brokerage", false));
                 cmd.Parameters.Add(new SqlParameter("@Commission", false));
                 cmd.Parameters.Add(new SqlParameter("@Cheque", false));
-                cmd.Parameters.Add(new SqlParameter("@usercode", usercode));
+                cmd.Parameters.Add(new SqlParameter("@UserCode", usercode));
                 cmd.Parameters.Add(new SqlParameter("@term", salePur.Term ?? ""));
                 cmd.Parameters.Add(new SqlParameter("@InterestPer", salePur.InterestPer));
-                cmd.Parameters.Add(new SqlParameter("@mastercurrencyrate", Math.Round(mCurBaseRate, 4)));
-                cmd.Parameters.Add(new SqlParameter("@mastercurrencyfinalamount", Math.Round(mCurFinalAmt, 4)));
-                cmd.Parameters.Add(new SqlParameter("@stockcurrencyrate", Math.Round(sCurBaseRate, 4)));
-                cmd.Parameters.Add(new SqlParameter("@stockcurrencyfinalamount", Math.Round(sCurFinalAmt, 4)));
+                cmd.Parameters.Add(new SqlParameter("@MasterCurrencyRate", Math.Round(mCurBaseRate, 4)));
+                cmd.Parameters.Add(new SqlParameter("@MasterCurrencyFinalAmount", Math.Round(mCurFinalAmt, 4)));
+                cmd.Parameters.Add(new SqlParameter("@StockCurrencyRate", Math.Round(sCurBaseRate, 4)));
+                cmd.Parameters.Add(new SqlParameter("@StockCurrencyFinalAmount", Math.Round(sCurFinalAmt, 4)));
                 cmd.Parameters.Add(new SqlParameter("@VatPer", salePur.VatPer));
                 cmd.Parameters.Add(new SqlParameter("@VatAmount", salePur.VatAmount));
                 cmd.Parameters.Add(new SqlParameter("@CGSTPer", salePur.CGSTPer));
@@ -1032,7 +1032,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                     using (var cmd = new SqlCommand("SP_ItemMaster", conn, trans))
                     {
                         cmd.CommandType = CommandType.StoredProcedure;
-                        cmd.Parameters.Add(new SqlParameter("@ItemCode", 0));
+                        cmd.Parameters.Add(new SqlParameter("@ItemCode", (object)0));
                         cmd.Parameters.Add(new SqlParameter("@ItemSrno", MaxItemSrno));
                         cmd.Parameters.Add(new SqlParameter("@LotNo", im.LotNo));
                         cmd.Parameters.Add(new SqlParameter("@ItemName", im.ItemName ?? ""));
@@ -1040,7 +1040,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                         cmd.Parameters.Add(new SqlParameter("@Category", salePur.Category ?? ""));
                         cmd.Parameters.Add(new SqlParameter("@ProductType", salePur.Category ?? ""));
                         cmd.Parameters.Add(new SqlParameter("@Pcs", im.Pcs));
-                        cmd.Parameters.Add(new SqlParameter("@Weight", 0));
+                        cmd.Parameters.Add(new SqlParameter("@Weight", (object)0));
                         cmd.Parameters.Add(new SqlParameter("@CaratCL", Convert.ToDouble(im.Weight.ToString("N3"))));
                         cmd.Parameters.Add(new SqlParameter("@SieveId", ""));
                         cmd.Parameters.Add(new SqlParameter("@ShapeId", im.Shape ?? ""));
@@ -1206,13 +1206,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                     cmd.Parameters.Add(new SqlParameter("@StockEffected", stockEffected));
                     cmd.Parameters.Add(new SqlParameter("@ExportDone", false));
                     cmd.Parameters.Add(new SqlParameter("@spcarats", 0f));
-                    cmd.Parameters.Add(new SqlParameter("@FItemCode", 0));
-                    cmd.Parameters.Add(new SqlParameter("@TItemCode", 0));
+                    cmd.Parameters.Add(new SqlParameter("@FItemCode", (object)0));
+                    cmd.Parameters.Add(new SqlParameter("@TItemCode", (object)0));
                     cmd.Parameters.Add(new SqlParameter("@FItemRate", 0.0));
                     cmd.Parameters.Add(new SqlParameter("@TItemRate", 0.0));
-                    cmd.Parameters.Add(new SqlParameter("@FromSuratCode", 0));
-                    cmd.Parameters.Add(new SqlParameter("@AssorterCode", 0));
-                    cmd.Parameters.Add(new SqlParameter("@RoughCode", 0));
+                    cmd.Parameters.Add(new SqlParameter("@FromSuratCode", (object)0));
+                    cmd.Parameters.Add(new SqlParameter("@AssorterCode", (object)0));
+                    cmd.Parameters.Add(new SqlParameter("@RoughCode", (object)0));
                     cmd.Parameters.Add(new SqlParameter("@MemoRemark", ""));
                     cmd.Parameters.Add(new SqlParameter("@UserCode", usercode));
                     cmd.Parameters.Add(new SqlParameter("@MasterCurrencyRate", Math.Round(mCurBaseRate, 4)));
@@ -1330,7 +1330,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                         cmd.Parameters.Add(new SqlParameter("@GerdlePer", im.GirdlePer));
                         cmd.Parameters.Add(new SqlParameter("@Comments", ""));
                         cmd.Parameters.Add(new SqlParameter("@ControlNo", ""));
-                        cmd.Parameters.Add(new SqlParameter("@CertExpense", 0));
+                        cmd.Parameters.Add(new SqlParameter("@CertExpense", (object)0));
                         cmd.Parameters.Add(new SqlParameter("@Remarks", im.LabComments ?? ""));
                         cmd.Parameters.Add(new SqlParameter("@Instruction", ""));
                         cmd.Parameters.Add(new SqlParameter("@SuratRemarks", ""));
@@ -1514,7 +1514,9 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             {
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.Add(new SqlParameter("@Type", type));
-                cmd.Parameters.Add(new SqlParameter("@Where", where ?? ""));
+                // Unescape double single-quotes since this is passed as a SqlParameter value to a dynamic SQL SP
+                string cleanedWhere = where?.Replace("''", "'") ?? "";
+                cmd.Parameters.Add(new SqlParameter("@Where", cleanedWhere));
                 var result = await cmd.ExecuteScalarAsync();
                 return result?.ToString() ?? string.Empty;
             }
@@ -1526,7 +1528,9 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             {
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.Add(new SqlParameter("@Type", type));
-                cmd.Parameters.Add(new SqlParameter("@Where", where ?? ""));
+                // Unescape double single-quotes since this is passed as a SqlParameter value to a dynamic SQL SP
+                string cleanedWhere = where?.Replace("''", "'") ?? "";
+                cmd.Parameters.Add(new SqlParameter("@Where", cleanedWhere));
                 var result = await cmd.ExecuteScalarAsync();
                 return result?.ToString() ?? string.Empty;
             }
@@ -1538,7 +1542,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             {
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.Add(new SqlParameter("@Type", "Setting"));
-                cmd.Parameters.Add(new SqlParameter("@Where", $" and Name=''{name}''"));
+                cmd.Parameters.Add(new SqlParameter("@Where", $" and Name='{name}'"));
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     if (await reader.ReadAsync())
