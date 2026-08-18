@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Reports.Utility;
+using Dia_CoreAPI.DTOs.StockAccount;
 using Dia_CoreAPI.Repositories.Interfaces.Reports.Utility;
 
 namespace Dia_CoreAPI.Repositories.Classes.Reports.Utility
@@ -65,6 +66,34 @@ namespace Dia_CoreAPI.Repositories.Classes.Reports.Utility
             return rows.FirstOrDefault() ?? string.Empty;
         }
 
+        public async Task<string> GetIgiParameterAsync(string parameter, string parameterValue, string usedFor, string companyId)
+        {
+            var sql = $" EXEC [GetParameterValue]  @Parameter = '{Esc(parameter)}',@ParameterValue = '{Esc(parameterValue)}',@UsedFor='{Esc(usedFor)}' ";
+            var rows = await _db.SelectRawSql<GetParameterValueDto>(sql, companyId);
+            return rows.FirstOrDefault()?.ParameterValue ?? string.Empty;
+        }
+
+        public async Task<long> GetCurCodeAsync(string where, string companyId)
+        {
+            var sql = $" EXEC [GetCurrencyDetail] @Type='ID',@Where = '{Esc(where)}' ";
+            var rows = await _db.SelectRawSql<long>(sql, companyId);
+            return rows.FirstOrDefault();
+        }
+
+        public async Task<long> GetJewCodeAsync(string where, string companyId)
+        {
+            var sql = $" EXEC [GetALLMasterList] @Type='GetJewCode',@Where = '{Esc(where)}' ";
+            var rows = await _db.SelectRawSql<long>(sql, companyId);
+            return rows.FirstOrDefault();
+        }
+
+        public async Task<int> GetJewStockMasterCountAsync(string where, string companyId)
+        {
+            var sql = $" EXEC [GetALLMasterList] @Type='JewStock', @Where = '{Esc(where)}' ";
+            var rows = await _db.SelectRawSql<JewStockMasterDto>(sql, companyId);
+            return rows.Count();
+        }
+
         public async Task<bool> UpdateImageVideoPathAsync(string lotNo, string imagePath, string videoPath, string pagePath, string action, string companyId)
         {
             var parameters = new Dictionary<string, object>
@@ -102,7 +131,9 @@ namespace Dia_CoreAPI.Repositories.Classes.Reports.Utility
                 { "@Value", value },
                 { "@Action", action }
             };
-            return await _db.ExecuteSP("SP_UpdateLogo", parameters, companyId) > 0;
+            // MVC SaveDataInTransaction always returns true when SP executes without error.
+            await _db.ExecuteSP("SP_UpdateLogo", parameters, companyId);
+            return true;
         }
 
         public async Task<string> GetLotExistAsync(string where, string companyId)
@@ -180,6 +211,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Reports.Utility
 
         public Task<bool> SaveAccGrpMasterData(int accGrpCode, string accGrpName, string sName, int uGrCode, int accTypeCode, int acLevel, string oDrCr, double oBalance, int curCode, float masterCurrencyRate, double masterCurrencyAmount, float stockCurrencyRate, double stockCurrencyAmount, string ag, string areaCode, string cityCode, string stateCode, string zipCode, string countryCode, string homePhone, string officePhone, string mobile, string email, string website, string remarks, string shipName, string shipStret, string shipAreaCode, string shipCityCode, string shipStateCode, string shipZipCode, string shipCountryCode, string shipPhone, string shipFax, int buyerCode, int salesMan1Code, float salesMan1Per, int salesMan2Code, double salesMan2Per, double interestPer, double discountPer, double creditLimit, int dueDays, int gracePeriod, string accEffCode, string accEffSide, int through, int broker, string executive, string termName, double termPer, string grNo, string pan, string cstNo, string bankAccNo, string bankAccDetail, string consigneeDetail, string tinNo, double brokerPer, double termValueBack, string fax, string skypeId, string contactPerson, string agent, string addressLine1, string addressLine2, string addressLine3, string refParty1, string refPhone1, string refComments1, string bankAccNo1, string bankRouting, string bankSwiftCode, string refParty2, string refPhone2, string refComments2, bool compilance, bool inactive, string localLangName, string localLangContactPerson, string localLangAddress, string customerType, string qqId, string cinNo, bool emailInventory, string websiteUserId, int companyId, string markup, string kam, string actionType, string companyIdStr = "")
             => ImportGradingLegacyDataHelper.SaveAccGrpMasterDataAsync(_db, accGrpCode, accGrpName, sName, uGrCode, accTypeCode, acLevel, oDrCr, oBalance, curCode, masterCurrencyRate, masterCurrencyAmount, stockCurrencyRate, stockCurrencyAmount, ag, areaCode, cityCode, stateCode, zipCode, countryCode, homePhone, officePhone, mobile, email, website, remarks, shipName, shipStret, shipAreaCode, shipCityCode, shipStateCode, shipZipCode, shipCountryCode, shipPhone, shipFax, buyerCode, salesMan1Code, salesMan1Per, salesMan2Code, salesMan2Per, interestPer, discountPer, creditLimit, dueDays, gracePeriod, accEffCode, accEffSide, through, broker, executive, termName, termPer, grNo, pan, cstNo, bankAccNo, bankAccDetail, consigneeDetail, tinNo, brokerPer, termValueBack, fax, skypeId, contactPerson, agent, addressLine1, addressLine2, addressLine3, refParty1, refPhone1, refComments1, bankAccNo1, bankRouting, bankSwiftCode, refParty2, refPhone2, refComments2, compilance, inactive, localLangName, localLangContactPerson, localLangAddress, customerType, qqId, cinNo, emailInventory, websiteUserId, companyId, markup, kam, actionType, string.IsNullOrEmpty(companyIdStr) ? companyId.ToString() : companyIdStr);
+
+        private static string Esc(string value) => (value ?? string.Empty).Replace("'", "''");
 
         private static string GetString(dynamic row, params string[] keys)
         {

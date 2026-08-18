@@ -434,12 +434,24 @@ if (!Directory.Exists(uploadPath))
     Directory.CreateDirectory(uploadPath);
 }
 
+var crReportPath = Path.Combine(builder.Environment.ContentRootPath, "CRreport");
+if (!Directory.Exists(crReportPath))
+{
+    Directory.CreateDirectory(crReportPath);
+}
+
 app.UseCors("AllowAll");
 
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadPath),
     RequestPath = "/Upload"
+});
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(crReportPath),
+    RequestPath = "/CRreport"
 });
 
 app.UseSession();
