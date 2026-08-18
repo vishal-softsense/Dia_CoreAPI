@@ -84,14 +84,16 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
         public Task<ImportGradingResult> UploadPurchaseDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
             => WithInsertPermissionAsync(userTypeId, companyId, () => _processor.UploadPurchaseDataAsync(dto, companyId, userId, userTypeId));
 
-        public Task<ImportGradingResult> ImportSaleDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
-            => WithInsertPermissionAsync(userTypeId, companyId, () => _processor.InsertSaleDataAsync(dto, companyId, userId, userTypeId));
+        // Disabled: Import Sale commented in MVC UI
+        //public Task<ImportGradingResult> ImportSaleDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
+        //    => WithInsertPermissionAsync(userTypeId, companyId, () => _processor.InsertSaleDataAsync(dto, companyId, userId, userTypeId));
 
         public Task<ImportGradingResult> UploadPurchaseDetailsAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
             => WithInsertPermissionAsync(userTypeId, companyId, () => _processor.UploadPurchaseDetailsDataAsync(dto, companyId, userId, userTypeId));
 
-        public Task<ImportGradingResult> UploadJewStockDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
-            => WithInsertPermissionAsync(userTypeId, companyId, () => _processor.UploadJewelleryStockAsync(dto, companyId, userId, userTypeId));
+        // Disabled: legacy UploadJewData() commented in MVC UI
+        //public Task<ImportGradingResult> UploadJewStockDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
+        //    => WithInsertPermissionAsync(userTypeId, companyId, () => _processor.UploadJewelleryStockAsync(dto, companyId, userId, userTypeId));
 
         public Task<ImportGradingResult> UploadJewStockDiamondDetailsAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
             => WithInsertPermissionAsync(userTypeId, companyId, () => _processor.UploadJewelleryDiamondStockAsync(dto, companyId, userId, userTypeId));

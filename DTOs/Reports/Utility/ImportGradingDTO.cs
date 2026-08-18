@@ -68,4 +68,9 @@
         public string Name { get; set; } = string.Empty;
         public string Value { get; set; } = string.Empty;
     }
+
+    public class GetParameterValueDto
+    {
+        public string ParameterValue { get; set; } = string.Empty;
+    }
 }

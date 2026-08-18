@@ -79,14 +79,16 @@ namespace Dia_CoreAPI.Controllers.Reports.Utility
         [HttpPost("upload-purchasedata")]
         public Task<IActionResult> UploadPurchaseData([FromForm] ImportGradingDTO importData) => PostImportAsync(importData, _service.UploadPurchaseDataAsync);
 
-        [HttpPost("import-sale-data")]
-        public Task<IActionResult> ImportSaleData([FromForm] ImportGradingDTO importData) => PostImportAsync(importData, _service.ImportSaleDataAsync);
+        // Disabled: Import Sale button is commented out in MVC ImportGradingData.cshtml
+        //[HttpPost("import-sale-data")]
+        //public Task<IActionResult> ImportSaleData([FromForm] ImportGradingDTO importData) => PostImportAsync(importData, _service.ImportSaleDataAsync);
 
         [HttpPost("upload-purchasedetails")]
         public Task<IActionResult> UploadPurchaseDetails([FromForm] ImportGradingDTO importData) => PostImportAsync(importData, _service.UploadPurchaseDetailsAsync);
 
-        [HttpPost("upload-jewstockdata")]
-        public Task<IActionResult> UploadJewStockData([FromForm] ImportGradingDTO importData) => PostImportAsync(importData, _service.UploadJewStockDataAsync);
+        // Disabled: legacy UploadJewData() / importjewexcel path commented out in MVC; active path uses upload-jewellery-full
+        //[HttpPost("upload-jewstockdata")]
+        //public Task<IActionResult> UploadJewStockData([FromForm] ImportGradingDTO importData) => PostImportAsync(importData, _service.UploadJewStockDataAsync);
 
         [HttpPost("upload-jewstockdiamonddetailsdata")]
         public Task<IActionResult> UploadJewStockDiamondDetails([FromForm] ImportGradingDTO importData) => PostImportAsync(importData, _service.UploadJewStockDiamondDetailsAsync);
@@ -125,7 +127,7 @@ namespace Dia_CoreAPI.Controllers.Reports.Utility
         {
             try
             {
-                var result = await _service.UploadLogoAsync(image, CompanyId, UserTypeId, _env.WebRootPath ?? string.Empty);
+                var result = await _service.UploadLogoAsync(image, CompanyId, UserTypeId, _env.ContentRootPath ?? string.Empty);
                 if (!string.IsNullOrEmpty(result.Path))
                     return new JsonResult(new { success = result.Success, message = result.Message, path = result.Path }, PascalCaseJson);
                 return new JsonResult(new { success = result.Success, message = result.Message ?? result.Data }, PascalCaseJson);

@@ -11,6 +11,10 @@ namespace Dia_CoreAPI.Repositories.Interfaces.Reports.Utility
         Task<bool> UpdateMultiGradingStatusAsync(string lotNo, string action, string companyId);
         Task<List<GradingListDto>> SelectMultiGradingAsync(string lotNo, string action, string companyId);
         Task<string> GetSizeAsync(string weight, string action, string companyId);
+        Task<string> GetIgiParameterAsync(string parameter, string parameterValue, string usedFor, string companyId);
+        Task<long> GetCurCodeAsync(string where, string companyId);
+        Task<long> GetJewCodeAsync(string where, string companyId);
+        Task<int> GetJewStockMasterCountAsync(string where, string companyId);
         Task<bool> UpdateImageVideoPathAsync(string lotNo, string imagePath, string videoPath, string pagePath, string action, string companyId);
         Task<bool> UpdateSizeIdsAsync(string companyId);
         Task<bool> DelRecordsAsync(string where, string companyId);

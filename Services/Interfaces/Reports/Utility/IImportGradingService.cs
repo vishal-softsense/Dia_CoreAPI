@@ -18,9 +18,11 @@ namespace Dia_CoreAPI.Services.Interfaces.Reports.Utility
         Task<ImportGradingResult> UpdateSolitaireItemDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId);
         Task<ImportGradingResult> UpdateAccountDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId);
         Task<ImportGradingResult> UploadPurchaseDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId);
-        Task<ImportGradingResult> ImportSaleDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId);
+        // Disabled: Import Sale commented in MVC UI
+        //Task<ImportGradingResult> ImportSaleDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId);
         Task<ImportGradingResult> UploadPurchaseDetailsAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId);
-        Task<ImportGradingResult> UploadJewStockDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId);
+        // Disabled: legacy UploadJewData() commented in MVC UI
+        //Task<ImportGradingResult> UploadJewStockDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId);
         Task<ImportGradingResult> UploadJewStockDiamondDetailsAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId);
         Task<ImportGradingResult> UpdateSizeIdsAsync(string companyId, string userTypeId);
         Task<ImportGradingResult> DeleteDeletedRecordsAsync(string companyId, string userTypeId);
