@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -22,36 +22,36 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Files\report_results.graphql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Controllers\Jewellery\JewelleryTransaction\" />
     <Folder Include="Controllers\Parcel\Parcel Transaction\" />
     <Folder Include="Controllers\Solitaires\Solitaires Transaction\" />
     <Folder Include="Controllers\Reports\Financial Reports\" />
-    <Folder Include="Controllers\Reports\Utility\" />
     <Folder Include="DTOs\Jewellery\JewelleryTransaction\" />
     <Folder Include="DTOs\Parcel\Parcel_Transaction\" />
     <Folder Include="DTOs\Solitaires\Solitaires Transaction\" />
     <Folder Include="DTOs\Reports\Financial Reports\" />
-    <Folder Include="DTOs\Reports\Utility\" />
     <Folder Include="Repositories\Classes\Jewellery\JewelleryTransaction\" />
     <Folder Include="Repositories\Classes\Parcel\Parcel_Transaction\" />
     <Folder Include="Repositories\Classes\Solitaires\Solitaires Transaction\" />
     <Folder Include="Repositories\Classes\Reports\Financial Reports\" />
-    <Folder Include="Repositories\Classes\Reports\Utility\" />
     <Folder Include="Repositories\Interfaces\Jewellery\JewelleryTransaction\" />
     <Folder Include="Repositories\Interfaces\Parcel\Parcel_Transaction\" />
     <Folder Include="Repositories\Interfaces\Solitaires\Solitaires Transaction\" />
     <Folder Include="Repositories\Interfaces\Reports\Financial Reports\" />
-    <Folder Include="Repositories\Interfaces\Reports\Utility\" />
     <Folder Include="Services\Classes\Jewellery\JewelleryTransaction\" />
     <Folder Include="Services\Classes\Parcel\Parcel_Transaction\" />
     <Folder Include="Services\Classes\Solitaires\Solitaires Transaction\" />
     <Folder Include="Services\Classes\Reports\Financial Reports\" />
-    <Folder Include="Services\Classes\Reports\Utility\" />
     <Folder Include="Services\Interfaces\Jewellery\JewelleryTransaction\" />
     <Folder Include="Services\Interfaces\Parcel\Parcel_Transaction\" />
     <Folder Include="Services\Interfaces\Solitaires\Solitaires Transaction\" />
     <Folder Include="Services\Interfaces\Reports\Financial Reports\" />
-    <Folder Include="Services\Interfaces\Reports\Utility\" />
     <Folder Include="wwwroot\css\" />
     <Folder Include="wwwroot\js\" />
     <Folder Include="wwwroot\images\" />

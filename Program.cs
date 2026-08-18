@@ -38,7 +38,11 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -370,6 +374,14 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IDown
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Utility.IImportGradingRepository, Dia_CoreAPI.Repositories.Classes.Reports.Utility.ImportGradingRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Helpers.ImportGradingProcessor>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IImportGradingService, Dia_CoreAPI.Services.Classes.Reports.Utility.ImportGradingService>();
+
+// Import Pricing (MVC: /data/import-pricing)
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Utility.IImportPricingRepository, Dia_CoreAPI.Repositories.Classes.Reports.Utility.ImportPricingRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IImportPricingService, Dia_CoreAPI.Services.Classes.Reports.Utility.ImportPricingService>();
+
+// Get Lab Data (MVC: /data/getlabdata)
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Utility.IGetLabDataRepository, Dia_CoreAPI.Repositories.Classes.Reports.Utility.GetLabDataRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IGetLabDataService, Dia_CoreAPI.Services.Classes.Reports.Utility.GetLabDataService>();
 
 
 builder.Services.AddCors(options =>

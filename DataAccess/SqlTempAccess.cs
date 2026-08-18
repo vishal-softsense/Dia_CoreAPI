@@ -1014,7 +1014,7 @@ namespace Dia_CoreAPI.DataAccess
             //string sql = @" SELECT Max(ItemCode) FROM TabItemMaster WHERE 1=1 " + Where;
 
             string sql = @" EXEC [GetAllCommonData] @Type='ItemCode',@Where = '" + Where + "' ";
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction).FirstOrDefault();
         }
 
         public string GetMaxItemSrnum(string Where)
@@ -1198,8 +1198,19 @@ namespace Dia_CoreAPI.DataAccess
 
         public void RollbackTransaction()
         {
-            _transaction?.Rollback();
-            _connection?.Close();
+            try
+            {
+                _transaction?.Rollback();
+            }
+            catch { }
+
+            try
+            {
+                _connection?.Close();
+            }
+            catch { }
+
+            isClosed = true;
         }
 
         public void Dispose()
