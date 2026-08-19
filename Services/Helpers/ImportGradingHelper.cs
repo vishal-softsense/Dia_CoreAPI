@@ -26,7 +26,7 @@ namespace Dia_CoreAPI.Services.Helpers
                 {
                     mCurAmt = amount;
                     if (sCurOperator == "*")
-                        sCurAmt = amount * sCurBaseRate;
+                        mCurAmt = amount * sCurBaseRate;
                     else
                         sCurAmt = sCurBaseRate != 0 ? amount / sCurBaseRate : 0f;
                 }

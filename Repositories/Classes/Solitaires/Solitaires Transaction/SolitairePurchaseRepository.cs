@@ -101,12 +101,18 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
 
             var list = transactionData.ToList();
 
+            var defaultCurrencyCode = await _sqlDataAccess.ExecuteQuerySingle<string>(
+                "SELECT Value FROM TabSettingMaster WHERE Name = 'DefaultCurrency'",
+                new { },
+                companyId);
+
             return new SolitairePurchasePageDataDto
             {
                 Type = MapBasic(list.Where(x => x.Type == "Type")),
                 SubType = MapBasic(list.Where(x => x.Type == "SubType")),
                 Category = MapBasic(list.Where(x => x.Type == "Category")),
-                CurrencyList = MapBasic(list.Where(x => x.Type == "Currency"))
+                CurrencyList = MapBasic(list.Where(x => x.Type == "Currency")),
+                DefaultCurrencyCode = defaultCurrencyCode
             };
         }
 

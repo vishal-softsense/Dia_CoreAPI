@@ -174,7 +174,22 @@ namespace Dia_CoreAPI.Controllers.StockAccount
                 var companyId = GetCompanyId();
                 var baseRate = await _service.GetMcurBaseRateAsync(code, companyId);
                 var sBaseRate = await _service.GetScurBaseRateAsync(code, companyId);
-                return Ok(new { Success = true, BaseRate = baseRate, SBaseRate = sBaseRate });
+
+                string mCurOperator = "*";
+                string sCurOperator = "*";
+                if (int.TryParse(code, out int curId))
+                {
+                    mCurOperator = await _service.GetMCurOperatorAsync(curId, companyId);
+                    sCurOperator = await _service.GetSCurOperatorAsync(curId, companyId);
+                }
+
+                return Ok(new { 
+                    Success = true, 
+                    BaseRate = baseRate, 
+                    SBaseRate = sBaseRate,
+                    MasterCurrencyOperator = mCurOperator,
+                    StockCurrencyOperator = sCurOperator
+                });
             }
             catch (Exception ex)
             {

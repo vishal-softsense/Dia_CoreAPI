@@ -51,6 +51,16 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
             return await _repository.GetDefaultCurrencyCodeAsync(companyId);
         }
 
+        public async Task<string> GetMCurOperatorAsync(int currencyId, string companyId)
+        {
+            return await _repository.GetMCurOperatorAsync(currencyId, companyId);
+        }
+
+        public async Task<string> GetSCurOperatorAsync(int currencyId, string companyId)
+        {
+            return await _repository.GetSCurOperatorAsync(currencyId, companyId);
+        }
+
         public async Task<(bool Success, string Message)> AddAccGrpMasterAsync(AccGrpMasterDto model, string companyId)
         {
             if (string.IsNullOrWhiteSpace(model.AccGrpName))

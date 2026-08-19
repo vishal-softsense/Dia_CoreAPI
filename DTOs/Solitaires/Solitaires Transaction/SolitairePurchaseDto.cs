@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction
@@ -33,6 +33,7 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction
         public List<BasicDataDto> SubType { get; set; } = new();
         public List<BasicDataDto> Category { get; set; } = new();
         public List<BasicDataDto> CurrencyList { get; set; } = new();
+        public string? DefaultCurrencyCode { get; set; }
     }
 
     public class SolitairePurchaseHeaderDto
