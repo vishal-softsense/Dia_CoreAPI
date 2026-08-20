@@ -91,6 +91,8 @@ builder.Services.AddScoped<I4CMasterService, _4CMasterService>();
 
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction.ISolitairePurchaseRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction.SolitairePurchaseRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction.ISolitairePurchaseService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction.SolitairePurchaseService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction.ISolitairePurchaseReturnRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction.SolitairePurchaseReturnRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction.ISolitairePurchaseReturnService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction.SolitairePurchaseReturnService>();
 
 
 // Stock & Account
