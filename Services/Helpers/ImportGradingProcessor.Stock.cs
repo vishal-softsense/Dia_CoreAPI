@@ -374,7 +374,7 @@ namespace Dia_CoreAPI.Services.Helpers
                     var accTypeCode = sql.GetAccountTypeCode("And AccDisc=''" + Cell(dt.Rows[i], 3).Replace("'", "''") + "''");
                     var aclevel = sql.GetAccountLevel("And AccGrpName=''" + Cell(dt.Rows[i], 2).Replace("'", "''") + "''");
                     int level = (int.TryParse(aclevel, out var lvl) ? lvl : 0) + 1;
-                    long curcode = await _repository.GetCurCodeAsync("Symbol=''" + Cell(dt.Rows[i], 6).Replace("'", "''") + "''", companyId);
+                    long curcode = await _repository.GetCurCodeAsync("Symbol='" + Cell(dt.Rows[i], 6).ToString() + "'", companyId);
                     var accountcode = sql.GetAccountCode(" And AccGrpName IN(''" + accName.Replace("'", "''") + "'')");
                     var action = string.IsNullOrEmpty(accountcode) ? "insert" : "update";
                     var code = string.IsNullOrEmpty(accountcode) ? 0 : Convert.ToInt32(accountcode);
@@ -741,7 +741,7 @@ namespace Dia_CoreAPI.Services.Helpers
                 {
                     var first = group.First();
                     string stockId = Col(first, "StockId");
-                    string stockWhere = " AND Stock_ID = ''" + stockId.Replace("'", "''") + "''";
+                    string stockWhere = " AND Stock_ID = '" + stockId.Replace("'", "''") + "'";
                     int existingCount = await _repository.GetJewStockMasterCountAsync(stockWhere, companyId);
                     long jewCode;
 
@@ -805,11 +805,11 @@ namespace Dia_CoreAPI.Services.Helpers
                             UseMounting: "",
                             costamount: 0,
                             ActionType: "insert");
-                        jewCode = await _repository.GetJewCodeAsync("and Stock_ID=''" + stockId.Replace("'", "''") + "''", companyId);
+                            jewCode = await _repository.GetJewCodeAsync("and Stock_ID='" + stockId.Replace("'", "''") + "'",companyId);
                     }
                     else
                     {
-                        jewCode = await _repository.GetJewCodeAsync("and Stock_ID=''" + stockId.Replace("'", "''") + "''", companyId);
+                        jewCode = await _repository.GetJewCodeAsync("and Stock_ID='" + stockId.Replace("'", "''") + "'",companyId);
                         sql.SaveJewStockMasterData(
                             id: Convert.ToInt32(jewCode),
                             Trndate: "",

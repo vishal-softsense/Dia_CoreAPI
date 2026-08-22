@@ -49,7 +49,7 @@ namespace Dia_CoreAPI.Controllers.Reports.Utility
         }
 
         /// <summary>Matches MVC POST /data/import-pricing Excel upload.</summary>
-        [HttpPost("import-pricing")]
+        [HttpPost("imports-pricing")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> ImportPricing([FromForm] ImportPricingDTO importData)
         {

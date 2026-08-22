@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -29,9 +29,9 @@ namespace Dia_CoreAPI.Controllers.Reports.Utility
             _env = env;
         }
 
-        private string UserTypeId => User.FindFirstValue("UserTypeId") ?? string.Empty;
-        private string CompanyId => User.FindFirstValue("CompanyID") ?? string.Empty;
-        private string UserId => User.FindFirstValue("UserID") ?? User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        private string UserTypeId => User.FindFirstValue("UserTypeId") ?? User.FindFirstValue("usertypeid") ?? string.Empty;
+        private string CompanyId => User.FindFirstValue("CompanyID") ?? User.FindFirstValue("CompanyId") ?? User.FindFirstValue("companyid") ?? string.Empty;
+        private string UserId => User.FindFirstValue("UserID") ?? User.FindFirstValue("UserId") ?? User.FindFirstValue("userid") ?? User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
 
         [HttpGet("importgrading")]
         public async Task<IActionResult> ImportGradingData()

@@ -60,7 +60,7 @@ namespace Dia_CoreAPI.Controllers.Reports.Utility
         /// <summary>
         /// Matches MVC POST data/downloadMRP → Json(new { success = true, Data = "MRP Download Succesfull." })
         /// </summary>
-        [HttpPost("downloadMRP")]
+        [HttpPost("downloadsMRP")]
         public async Task<IActionResult> DownloadMRP()
         {
             try

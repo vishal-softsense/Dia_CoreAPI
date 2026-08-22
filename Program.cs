@@ -48,7 +48,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Dia Core API", Version = "v1" });
+    c.CustomSchemaIds(type => type.FullName?.Replace('+', '.'));
+    c.MapType<IFormFile>(() => new OpenApiSchema { Type = JsonSchemaType.String, Format = "binary" });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+
     {
         Type = SecuritySchemeType.Http,
         Scheme = "bearer",
@@ -385,6 +388,29 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IImpo
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Utility.IGetLabDataRepository, Dia_CoreAPI.Repositories.Classes.Reports.Utility.GetLabDataRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IGetLabDataService, Dia_CoreAPI.Services.Classes.Reports.Utility.GetLabDataService>();
 
+// Convert Excel Utility (MVC: /dashbord/uploadexcel & /dashboard/Upload)
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Utility.IConvertExcelUtilityRepository, Dia_CoreAPI.Repositories.Classes.Reports.Utility.ConvertExcelUtilityRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IConvertExcelUtilityService, Dia_CoreAPI.Services.Classes.Reports.Utility.ConvertExcelUtilityService>();
+
+// Stock Telly (MVC: /data/stocktellydata)
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Utility.IStockTellyRepository, Dia_CoreAPI.Repositories.Classes.Reports.Utility.StockTellyRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IStockTellyService, Dia_CoreAPI.Services.Classes.Reports.Utility.StockTellyService>();
+
+// Master Price Comparison (MVC: /data/MasterPriceComparison)
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Utility.IMasterPriceComparisonRepository, Dia_CoreAPI.Repositories.Classes.Reports.Utility.MasterPriceComparisonRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IMasterPriceComparisonService, Dia_CoreAPI.Services.Classes.Reports.Utility.MasterPriceComparisonService>();
+
+// Stock Price Comparison (MVC: /data/StockPriceComparison)
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Utility.IStockPriceComparisonRepository, Dia_CoreAPI.Repositories.Classes.Reports.Utility.StockPriceComparisonRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IStockPriceComparisonService, Dia_CoreAPI.Services.Classes.Reports.Utility.StockPriceComparisonService>();
+
+// Missing Stock (MVC: /data/MissingStock)
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Utility.IMissingStockRepository, Dia_CoreAPI.Repositories.Classes.Reports.Utility.MissingStockRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IMissingStockService, Dia_CoreAPI.Services.Classes.Reports.Utility.MissingStockService>();
+
+// Stock Transfer (MVC: /Stock/Stock-transfer-list)
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Utility.IStockTransferRepository, Dia_CoreAPI.Repositories.Classes.Reports.Utility.StockTransferRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IStockTransferService, Dia_CoreAPI.Services.Classes.Reports.Utility.StockTransferService>();
 
 builder.Services.AddCors(options =>
 {
@@ -426,6 +452,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseDeveloperExceptionPage();
 }
 
 app.UseHttpsRedirection();

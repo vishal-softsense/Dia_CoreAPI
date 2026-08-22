@@ -585,7 +585,7 @@ namespace Dia_CoreAPI.Services.Helpers
                 if (!lotNumbers.Add(lotNumber))
                     return new ImportGradingResult(false, $"Duplicate Lot Number found: {lotNumber} in row {i + 1}.");
 
-                var lotExists = await _repository.GetLotExistAsync(" and LotNo=''" + lotNumber.Replace("'", "''") + "''", companyId);
+                var lotExists = await _repository.GetLotExistAsync(" and LotNo='" + lotNumber.Replace("'", "''") + "'",companyId);
                 if (lotExists == "0")
                     return new ImportGradingResult(false, $"Lot Number '{lotNumber}' in row {i + 1} is not valid.");
 
@@ -621,6 +621,17 @@ namespace Dia_CoreAPI.Services.Helpers
 
         private async Task SaveLabAsync(string companyId, LabSaveArgs a)
         {
+            string ReportDate = DateTime.Now.ToString();
+
+            if (a.GraderName == "IGI")
+            {
+                ReportDate = a.ReportDate;
+            }
+            else
+            {
+                ReportDate = "";
+            }
+
             using var sql = await CreateSqlTempAsync(companyId);
             sql.StartTransaction();
             sql.SaveGradingDataForPurchase(
@@ -630,7 +641,7 @@ namespace Dia_CoreAPI.Services.Helpers
                 a.GMax, a.GirdleMinMs, a.GirdleMaxMs, a.Culet, a.CuletCondition, a.StrLn, a.LrHalf, false, a.InscriptionText, "", a.KeyToSymbols,
                 a.LabComments, a.BrownId, "", a.MilkyId, a.LusterId, a.ButhId, a.NattsId, "", "", "", "", a.OIT, a.OIC, a.OIP, a.OIG, "",
                 "", "", "", "", "", "", 0, 0, 0, a.ActualBack, Math.Round(a.ActualRate, 4), Math.Round(a.ActualRate * a.Weight, 4),
-                a.MfgSeriesID, a.MfgPacketID, "", "", DateTime.Now, a.CompanyID, a.ReportDate, a.GraderName, a.Status);
+                a.MfgSeriesID, a.MfgPacketID, "", "", DateTime.Now, a.CompanyID, ReportDate, a.GraderName, a.Status);
 
             var itemSize = a.UseSizeOnItemMaster ? a.Size : "";
             var fancy = a.UseFancyOnItemMaster ? a.FancyColor : "";
