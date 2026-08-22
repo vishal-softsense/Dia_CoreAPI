@@ -92,7 +92,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
 
             var items = (await _sqlDataAccess.SelectDataFromSP<SolitairePurchaseReturnItemDto>(
                 "GetSalepurTran_Sale",
-                new Dictionary<string, object> { { "@Where", $" AND InvCode = {id}" } },
+                new Dictionary<string, object> { { "@Where", $" AND InvCode = {id} AND TrnType = 'PurRtn'" } },
                 companyId)).ToList();
 
             return new SolitairePurchaseReturnDetailDto { Header = header, Items = items };
@@ -838,10 +838,10 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             cmd.Parameters.Add(new SqlParameter("@vtype", vType ?? (object)DBNull.Value));
             cmd.Parameters.Add(new SqlParameter("@vcode", vCode));
             cmd.Parameters.Add(new SqlParameter("@disc", disc ?? (object)DBNull.Value));
-            cmd.Parameters.Add(new SqlParameter("@Adjustvtype", adjustVCode));
+            cmd.Parameters.Add(new SqlParameter("@Adjustvtype", (object)DBNull.Value));
             cmd.Parameters.Add(new SqlParameter("@Adjustvcode", adjustVCode));
             cmd.Parameters.Add(new SqlParameter("@BaseRate", baseRate));
-            cmd.Parameters.Add(new SqlParameter("@MasterCurrencyRate", baseRate));
+            cmd.Parameters.Add(new SqlParameter("@MasterCurrencyRate", masterCurrencyRate));
             cmd.Parameters.Add(new SqlParameter("@MasterCurrencyAmount", masterCurrencyAmount));
             cmd.Parameters.Add(new SqlParameter("@StockCurrencyRate", stockCurrencyRate));
             cmd.Parameters.Add(new SqlParameter("@StockCurrencyAmount", stockCurrencyAmount));

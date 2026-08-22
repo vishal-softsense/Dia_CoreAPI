@@ -24,8 +24,8 @@ namespace Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction
         public Task<SolitairePurchasePageDataDto> GetPageDataAsync(string companyId)
             => _repository.GetPageDataAsync(companyId);
 
-        public Task<SolitairePurchaseDetailDto?> GetDetailAsync(int id, string companyId)
-            => _repository.GetDetailAsync(id, companyId);
+        public Task<SolitairePurchaseDetailDto?> GetDetailAsync(int id, string companyId, string? mode = null)
+            => _repository.GetDetailAsync(id, companyId, mode);
 
         public Task<List<SolitairePurchaseLotDetailDto>> GetLotDetailAsync(string lotNo, string companyId)
             => _repository.GetLotDetailAsync(lotNo, companyId);

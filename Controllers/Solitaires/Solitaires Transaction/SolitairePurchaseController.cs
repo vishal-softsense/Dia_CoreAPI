@@ -66,7 +66,7 @@ namespace Dia_CoreAPI.Controllers.Solitaires.Solitaires_Transaction
         }
 
         [HttpGet("detail/{id:int}")]
-        public async Task<IActionResult> GetDetail(int id)
+        public async Task<IActionResult> GetDetail(int id, [FromQuery] string? mode = null)
         {
             try
             {
@@ -76,7 +76,7 @@ namespace Dia_CoreAPI.Controllers.Solitaires.Solitaires_Transaction
                 if (permission != 1)
                     return Ok(new { success = false, Data = "You are not authorized to perform this task." });
 
-                var data = await _service.GetDetailAsync(id, CompanyId);
+                var data = await _service.GetDetailAsync(id, CompanyId, mode);
                 if (data == null)
                     return Ok(new { success = false, Data = "Purchase not found." });
 
