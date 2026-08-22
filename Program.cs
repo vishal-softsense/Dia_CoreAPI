@@ -94,6 +94,11 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction.ISolitairePurchaseReturnRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction.SolitairePurchaseReturnRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction.ISolitairePurchaseReturnService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction.SolitairePurchaseReturnService>();
 
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction.IMixPurchaseRepository, Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction.MixPurchaseRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction.IMixPurchaseService, Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction.MixPurchaseService>();
+
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryTransaction.IJewelleryPurchaseRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryTransaction.JewelleryPurchaseRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryTransaction.IJewelleryPurchaseService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryTransaction.JewelleryPurchaseService>();
 
 // Stock & Account
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.StockAccount.IParcelItemMasterRepository, Dia_CoreAPI.Repositories.Classes.StockAccount.ParcelItemMasterRepository>();
