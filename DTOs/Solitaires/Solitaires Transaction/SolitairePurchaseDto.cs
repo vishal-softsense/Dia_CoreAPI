@@ -95,6 +95,7 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction
 
     public class SolitairePurchaseItemDto
     {
+        public int Code { get; set; }
         public int SrNo { get; set; }
         public string? LotNo { get; set; }
         public string? ItemName { get; set; }

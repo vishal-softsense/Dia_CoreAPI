@@ -9,7 +9,7 @@ namespace Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction
         Task<int> CheckUserPermissionAsync(string userTypeId, string formName, string actionType, string companyId);
         Task<List<SolitairePurchaseInvListDto>> GetListAsync(string companyId);
         Task<SolitairePurchasePageDataDto> GetPageDataAsync(string companyId);
-        Task<SolitairePurchaseDetailDto?> GetDetailAsync(int id, string companyId);
+        Task<SolitairePurchaseDetailDto?> GetDetailAsync(int id, string companyId, string? mode = null);
         Task<List<SolitairePurchaseLotDetailDto>> GetLotDetailAsync(string lotNo, string companyId);
         Task<List<SolitaireConsignmentRowDto>> GetConsignmentAsync(string? partyCode, string? memoNo, string companyId);
         Task<SolitairePurchaseGridViewDto> AddItemInGridAsync(SolitairePurchaseAddLotRequest request, string companyId);

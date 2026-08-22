@@ -459,7 +459,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                     if (items.Count == 1)
                     {
                         string safeItem = items[0].Replace("'", "''");
-                        strWhere += $" AND (Name LIKE ''%{safeItem}%'' OR TextName LIKE ''%{safeItem}%'') ";
+                        strWhere += $" AND (Name LIKE '%{safeItem}%' OR TextName LIKE '%{safeItem}%') ";
                     }
                     else
                     {

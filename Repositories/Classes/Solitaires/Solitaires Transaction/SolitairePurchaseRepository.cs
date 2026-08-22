@@ -128,11 +128,16 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             }).ToList();
         }
 
-        public async Task<SolitairePurchaseDetailDto?> GetDetailAsync(int id, string companyId)
+        public async Task<SolitairePurchaseDetailDto?> GetDetailAsync(int id, string companyId, string? mode = null)
         {
+            bool isConsignment = string.Equals(mode, "consignment", StringComparison.OrdinalIgnoreCase);
+
+            // MVC: Mode=consignment loads MemoIn header; otherwise PUR
             var headerParams = new Dictionary<string, object>
             {
-                { "@Where", $" tsp.TrnType = 'PUR' AND Code = {id}" }
+                { "@Where", isConsignment
+                    ? $" tsp.TrnType = 'MemoIn' AND Code = {id}"
+                    : $" tsp.TrnType = 'PUR' AND Code = {id}" }
             };
 
             var header = await _sqlDataAccess.SelectDataFromSPSingle<SolitairePurchaseHeaderDto>(
@@ -143,18 +148,41 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             if (header == null)
                 return null;
 
-            var itemParams = new Dictionary<string, object>
+            if (isConsignment)
+                header.Mode = "consignment";
+
+            List<SolitairePurchaseItemDto> items;
+            if (isConsignment)
             {
-                { "@Where", $" AND InvCode = {id}" }
-            };
+                // Match MVC PurchaseSaleProcessor: EXEC with quoted @Where (uses addition to avoid hyphens stripped by CorrectParameter)
+                string sql =
+                    $" EXEC [GetSalepurTranWithStatus] @Where = ' And carats > (ReturnCarats + SpCarats) AND  InvCode = {id}'";
 
-            var items = (await _sqlDataAccess.SelectDataFromSP<SolitairePurchaseItemDto>(
-                "GetSalepurTran",
-                itemParams,
-                companyId)).ToList();
+                items = (await _sqlDataAccess.SelectRawSql<SolitairePurchaseItemDto>(sql, companyId)).ToList();
 
-            foreach (var item in items)
-                NormalizePurchaseItem(item);
+                // MemoIn SalePurTran.Code becomes MemoTransCode when converting to purchase
+                foreach (var item in items)
+                {
+                    NormalizePurchaseItem(item);
+                    if (item.MemoTransCode == 0 && item.Code > 0)
+                        item.MemoTransCode = item.Code;
+                }
+            }
+            else
+            {
+                var itemParams = new Dictionary<string, object>
+                {
+                    { "@Where", $" AND InvCode = {id}" }
+                };
+
+                items = (await _sqlDataAccess.SelectDataFromSP<SolitairePurchaseItemDto>(
+                    "GetSalepurTran",
+                    itemParams,
+                    companyId)).ToList();
+
+                foreach (var item in items)
+                    NormalizePurchaseItem(item);
+            }
 
             return new SolitairePurchaseDetailDto
             {
@@ -734,7 +762,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
 
         public async Task<SolitairePurchaseStatusDto?> GetCurrentStatusAsync(string invNo, string companyId)
         {
-            string where = $"tsp.TrnType = ''Pur'' AND tsp.InvNo = {invNo}";
+            string where = $"tsp.TrnType = ''Pur'' AND tsp.InvNo = ''{invNo}''";
             string sql = $"EXEC [SoliPrintCurStatusInv] @Where = '{where}'";
 
             var rows = (await _sqlDataAccess.SelectRawSql<StatusInvRow>(sql, companyId)).ToList();
@@ -1648,10 +1676,10 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 cmd.Parameters.Add(new SqlParameter("@vtype", vType ?? (object)DBNull.Value));
                 cmd.Parameters.Add(new SqlParameter("@vcode", vCode));
                 cmd.Parameters.Add(new SqlParameter("@disc", disc ?? (object)DBNull.Value));
-                cmd.Parameters.Add(new SqlParameter("@Adjustvtype", adjustVCode));
+                cmd.Parameters.Add(new SqlParameter("@Adjustvtype", adjustVType ?? (object)DBNull.Value));
                 cmd.Parameters.Add(new SqlParameter("@Adjustvcode", adjustVCode));
                 cmd.Parameters.Add(new SqlParameter("@BaseRate", baseRate));
-                cmd.Parameters.Add(new SqlParameter("@MasterCurrencyRate", baseRate));
+                cmd.Parameters.Add(new SqlParameter("@MasterCurrencyRate", masterCurrencyRate));
                 cmd.Parameters.Add(new SqlParameter("@MasterCurrencyAmount", masterCurrencyAmount));
                 cmd.Parameters.Add(new SqlParameter("@StockCurrencyRate", stockCurrencyRate));
                 cmd.Parameters.Add(new SqlParameter("@StockCurrencyAmount", stockCurrencyAmount));
