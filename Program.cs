@@ -98,6 +98,8 @@ builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solita
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction.ISolitairePurchaseReturnService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction.SolitairePurchaseReturnService>();
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction.ISolitaireConsignmentInRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction.SolitaireConsignmentInRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction.ISolitaireConsignmentInService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction.SolitaireConsignmentInService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction.ISolitaireMemoOutRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction.SolitaireMemoOutRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction.ISolitaireMemoOutService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction.SolitaireMemoOutService>();
 
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction.IMixPurchaseRepository, Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction.MixPurchaseRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction.IMixPurchaseService, Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction.MixPurchaseService>();
