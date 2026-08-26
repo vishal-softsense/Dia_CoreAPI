@@ -30,7 +30,6 @@
 
   <ItemGroup>
     <Folder Include="Controllers\Jewellery\JewelleryTransaction\" />
-    <Folder Include="Controllers\Parcel\Parcel Transaction\" />
     <Folder Include="Controllers\Solitaires\Solitaires Transaction\" />
     <Folder Include="Controllers\Reports\Financial Reports\" />
     <Folder Include="DTOs\Jewellery\JewelleryTransaction\" />

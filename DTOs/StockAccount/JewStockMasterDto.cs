@@ -213,6 +213,7 @@ namespace Dia_CoreAPI.DTOs.StockAccount
     {
         public int JewCode { get; set; }
         public string Stock_ID { get; set; }
+        public double Pcs { get; set; }
         public string MountCategory { get; set; }
         public string MetalType { get; set; }
         public string Purity { get; set; }

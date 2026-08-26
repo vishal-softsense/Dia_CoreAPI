@@ -1786,6 +1786,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             string safe = searchBy.Trim().Replace("'", "''");
             string strWhere = $" AND (LotNo LIKE ''%{safe}%'' OR Itemname LIKE ''%{safe}%'') ";
             string sql = $"EXEC [GetMixlotDataForDropdown] @strWhere = '{strWhere}'";
+
             var rows = (await _sqlDataAccess.SelectRawSql<MixLotDropdownRow>(sql, companyId)).ToList();
 
             return rows.Select(r =>
@@ -1799,9 +1800,9 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
         private class MixLotDropdownRow
         {
             public string? ID { get; set; }
-            public string? Id { get; set; }
             public string? Name { get; set; }
             public string? TextName { get; set; }
+            public string? Type { get; set; }
             public string? LotNo { get; set; }
             public string? ItemName { get; set; }
         }

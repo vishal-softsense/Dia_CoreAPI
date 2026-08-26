@@ -111,6 +111,8 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires
 
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction.IMixPurchaseRepository, Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction.MixPurchaseRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction.IMixPurchaseService, Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction.MixPurchaseService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction.IMixMemoOutRepository, Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction.MixMemoOutRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction.IMixMemoOutService, Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction.MixMemoOutService>();
 
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryTransaction.IJewelleryPurchaseRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryTransaction.JewelleryPurchaseRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryTransaction.IJewelleryPurchaseService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryTransaction.JewelleryPurchaseService>();
@@ -388,13 +390,13 @@ builder.Services.AddScoped<IInvoiceLedgerReportRepository, InvoiceLedgerReportRe
 builder.Services.AddScoped<IInvoiceLedgerReportService, InvoiceLedgerReportService>();
 
 // Download MRP (MVC: /data/downloadMRP)
-builder.Services.AddHttpClient<Dia_CoreAPI.Services.Helpers.RapaportPricesSoapClient>();
+
+builder.Services.AddHttpClient(nameof(Dia_CoreAPI.Services.Classes.Reports.Utility.DownloadMRPService));
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Utility.IDownloadMRPRepository, Dia_CoreAPI.Repositories.Classes.Reports.Utility.DownloadMRPRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IDownloadMRPService, Dia_CoreAPI.Services.Classes.Reports.Utility.DownloadMRPService>();
 
 // Import Grading (MVC: /data/importgrading)
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Utility.IImportGradingRepository, Dia_CoreAPI.Repositories.Classes.Reports.Utility.ImportGradingRepository>();
-builder.Services.AddScoped<Dia_CoreAPI.Services.Helpers.ImportGradingProcessor>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IImportGradingService, Dia_CoreAPI.Services.Classes.Reports.Utility.ImportGradingService>();
 
 // Import Pricing (MVC: /data/import-pricing)
