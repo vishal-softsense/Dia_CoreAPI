@@ -159,15 +159,23 @@ namespace Dia_CoreAPI.Controllers.Parcel.Parcel_Transaction
             }
         }
 
+        /// <summary>MVC: POST Mix-Pur/consignment-to-Mixpurchase (PartyCode + MemoNo).</summary>
         [HttpPost("consignment")]
-        public async Task<IActionResult> Consignment([FromBody] MixConsignmentRequest request)
+        [HttpPost("consignment-to-Mixpurchase")]
+        public async Task<IActionResult> Consignment([FromBody] MixConsignmentRequest? request)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(request?.PartyCode) && string.IsNullOrWhiteSpace(request?.MemoNo))
+                var partyCode = request?.PartyCode?.Trim() ?? "";
+                var memoNo = request?.MemoNo?.Trim() ?? "";
+
+                if (string.IsNullOrWhiteSpace(partyCode) && string.IsNullOrWhiteSpace(memoNo))
                     return Ok(new { success = false, Data = "No consignment Found" });
 
-                var data = await _service.GetConsignmentAsync(request.PartyCode, request.MemoNo, CompanyId);
+                if (string.IsNullOrWhiteSpace(CompanyId))
+                    return Ok(new { success = false, Data = "Company not found. Please login again." });
+
+                var data = await _service.GetConsignmentAsync(partyCode, memoNo, CompanyId);
                 if (data == null || data.Count == 0)
                     return Ok(new { success = false, Data = "No consignment Found" });
 

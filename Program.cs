@@ -421,6 +421,10 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IMiss
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Utility.IStockTransferRepository, Dia_CoreAPI.Repositories.Classes.Reports.Utility.StockTransferRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IStockTransferService, Dia_CoreAPI.Services.Classes.Reports.Utility.StockTransferService>();
 
+// Mix Purchase Return (MVC: /parcel/mix-purchase-return)
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction.IMixPurchaseReturnRepository, Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction.MixPurchaseReturnRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction.IMixPurchaseReturnService, Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction.MixPurchaseReturnService>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>

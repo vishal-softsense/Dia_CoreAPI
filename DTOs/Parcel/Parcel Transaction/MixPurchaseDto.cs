@@ -316,7 +316,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public double Back { get; set; }
         public string? Symbol { get; set; }
         public string? Cur { get; set; }
-        public string? itemname { get; set; }
+        // SP column is "itemname"; keep single property to avoid camelCase JSON collision with ItemName
         public string? ItemName { get; set; }
         public double MemoTransCode { get; set; }
         public float CurCode { get; set; }

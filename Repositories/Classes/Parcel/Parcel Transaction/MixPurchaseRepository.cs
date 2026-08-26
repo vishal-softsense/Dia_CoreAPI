@@ -249,18 +249,14 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
         public async Task<List<MixConsignmentRowDto>> GetConsignmentAsync(string? partyCode, string? memoNo, string companyId)
         {
-            var parameters = new Dictionary<string, object>
-            {
-                { "@Party", partyCode ?? "" },
-                { "@invno", memoNo ?? "" }
-            };
+            // Match MVC PurchaseSaleProcessor.GetDetailsForMixConToMixPur:
+            // EXEC [Sp_SelectMixConsignmentForMixPurchase] @Party = '...', @invno = '...'
+            static string Esc(string? s) => (s ?? string.Empty).Replace("'", "''");
+            var sql =
+                $"EXEC [Sp_SelectMixConsignmentForMixPurchase] @Party = '{Esc(partyCode)}',@invno = '{Esc(memoNo)}'";
 
-            var result = await _sqlDataAccess.SelectDataFromSP<MixConsignmentRowDto>(
-                "Sp_SelectMixConsignmentForMixPurchase",
-                parameters,
-                companyId);
-
-            return result.ToList();
+            var result = await _sqlDataAccess.SelectRawSql<MixConsignmentRowDto>(sql, companyId);
+            return result?.ToList() ?? new List<MixConsignmentRowDto>();
         }
 
         public async Task<MixPurchaseGridViewDto> AddItemInGridAsync(
@@ -1783,22 +1779,20 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
         public async Task<List<object>> GetLotsAsync(string? searchBy, string companyId)
         {
-            string safe = (searchBy ?? "").Replace("'", "''");
-            string strWhere = string.IsNullOrWhiteSpace(safe)
-                ? ""
-                : $" AND (LotNo LIKE ''%{safe}%'' OR Itemname LIKE ''%{safe}%'') ";
+            // MVC MixController GetMixLotNoList — { id = Name, text = TextName }
+            if (string.IsNullOrWhiteSpace(searchBy) || searchBy.Trim().Length < 1)
+                return new List<object>();
 
+            string safe = searchBy.Trim().Replace("'", "''");
+            string strWhere = $" AND (LotNo LIKE ''%{safe}%'' OR Itemname LIKE ''%{safe}%'') ";
             string sql = $"EXEC [GetMixlotDataForDropdown] @strWhere = '{strWhere}'";
             var rows = (await _sqlDataAccess.SelectRawSql<MixLotDropdownRow>(sql, companyId)).ToList();
 
-            return rows.Select(r => (object)new
+            return rows.Select(r =>
             {
-                id = r.ID ?? r.Id ?? r.LotNo ?? "",
-                ID = r.ID ?? r.Id ?? r.LotNo ?? "",
-                name = r.Name ?? r.LotNo ?? "",
-                Name = r.Name ?? r.LotNo ?? "",
-                text = r.TextName ?? r.ItemName ?? r.Name ?? r.LotNo ?? "",
-                TextName = r.TextName ?? r.ItemName ?? r.Name ?? r.LotNo ?? ""
+                var lotNo = r.Name ?? r.LotNo ?? r.ID ?? r.Id ?? "";
+                var text = r.TextName ?? r.ItemName ?? r.Name ?? r.LotNo ?? lotNo;
+                return (object)new { id = lotNo, text };
             }).ToList();
         }
 
