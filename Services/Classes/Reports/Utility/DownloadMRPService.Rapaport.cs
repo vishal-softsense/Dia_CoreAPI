@@ -8,25 +8,14 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Dia_CoreAPI.DTOs.Reports.Utility;
 
-namespace Dia_CoreAPI.Services.Helpers
+namespace Dia_CoreAPI.Services.Classes.Reports.Utility
 {
-    /// <summary>
-    /// ASP.NET Core SOAP client for Rapaport Prices ASMX
-    /// (replaces MVC Connected Service MRPPrices.RapaportPricesSoapClient).
-    /// </summary>
-    public class RapaportPricesSoapClient
+    public partial class DownloadMRPService
     {
-        private const string Endpoint = "https://technet.rapaport.com:449/webservices/prices/rapaportprices.asmx";
+        private const string RapaportEndpoint = "https://technet.rapaport.com:449/webservices/prices/rapaportprices.asmx";
         private const string RapNs = "http://technet.rapaport.com/";
 
-        private readonly HttpClient _httpClient;
-
-        public RapaportPricesSoapClient(HttpClient httpClient)
-        {
-            _httpClient = httpClient;
-        }
-
-        public async Task<string?> LoginAsync(string username, string password)
+        private async Task<string?> RapaportLoginAsync(string username, string password)
         {
             var body = $@"<?xml version=""1.0"" encoding=""utf-8""?>
 <soap:Envelope xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:soap=""http://schemas.xmlsoap.org/soap/envelope/"">
@@ -38,7 +27,7 @@ namespace Dia_CoreAPI.Services.Helpers
   </soap:Body>
 </soap:Envelope>";
 
-            var responseXml = await PostSoapAsync("http://technet.rapaport.com/Login", body);
+            var responseXml = await PostRapaportSoapAsync("http://technet.rapaport.com/Login", body);
             var doc = XDocument.Parse(responseXml);
 
             var ticket = doc.Descendants()
@@ -50,7 +39,7 @@ namespace Dia_CoreAPI.Services.Helpers
             return string.IsNullOrWhiteSpace(ticket) ? null : ticket;
         }
 
-        public async Task<(DateTime Date, string Shape, DataTable Prices)> GetPriceSheetAsync(string ticket, string shape)
+        private async Task<(DateTime Date, string Shape, DataTable Prices)> GetRapaportPriceSheetAsync(string ticket, string shape)
         {
             var body = $@"<?xml version=""1.0"" encoding=""utf-8""?>
 <soap:Envelope xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:soap=""http://schemas.xmlsoap.org/soap/envelope/"">
@@ -66,7 +55,7 @@ namespace Dia_CoreAPI.Services.Helpers
   </soap:Body>
 </soap:Envelope>";
 
-            var responseXml = await PostSoapAsync("http://technet.rapaport.com/GetPriceSheet", body);
+            var responseXml = await PostRapaportSoapAsync("http://technet.rapaport.com/GetPriceSheet", body);
             var doc = XDocument.Parse(responseXml);
 
             var result = doc.Descendants().FirstOrDefault(e => e.Name.LocalName == "GetPriceSheetResult")
@@ -98,7 +87,7 @@ namespace Dia_CoreAPI.Services.Helpers
             return (rapDate, shapeAttr, ds.Tables[0]);
         }
 
-        public static RapaportPriceRowDTO MapPriceRow(DataRow row)
+        private static RapaportPriceRowDTO MapRapaportPriceRow(DataRow row)
         {
             // Match MVC MRPDownloadController ordinals:
             // InsertTabPriceIndexR(shape, [0] Color, [1] Clarity, [3] CaratsFrom, [2] CaratsTo, [4] Rate, date)
@@ -112,9 +101,9 @@ namespace Dia_CoreAPI.Services.Helpers
             };
         }
 
-        private async Task<string> PostSoapAsync(string soapAction, string body)
+        private async Task<string> PostRapaportSoapAsync(string soapAction, string body)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Post, Endpoint);
+            using var request = new HttpRequestMessage(HttpMethod.Post, RapaportEndpoint);
             request.Content = new StringContent(body, Encoding.UTF8, "text/xml");
             request.Headers.TryAddWithoutValidation("SOAPAction", $"\"{soapAction}\"");
 

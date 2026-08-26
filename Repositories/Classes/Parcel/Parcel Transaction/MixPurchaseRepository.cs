@@ -1783,31 +1783,47 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
         public async Task<List<object>> GetLotsAsync(string? searchBy, string companyId)
         {
-            string safe = (searchBy ?? "").Replace("'", "''");
-            string strWhere = string.IsNullOrWhiteSpace(safe)
-                ? ""
-                : $" AND (LotNo LIKE ''%{safe}%'' OR Itemname LIKE ''%{safe}%'') ";
+            if (string.IsNullOrWhiteSpace(searchBy) || searchBy.Trim().Length < 1)
+                return new List<object>();
 
+            string safe = searchBy.Trim().Replace("'", "''");
+            string strWhere = $" AND (LotNo LIKE ''%{safe}%'' OR Itemname LIKE ''%{safe}%'') ";
             string sql = $"EXEC [GetMixlotDataForDropdown] @strWhere = '{strWhere}'";
+
             var rows = (await _sqlDataAccess.SelectRawSql<MixLotDropdownRow>(sql, companyId)).ToList();
 
-            return rows.Select(r => (object)new
-            {
-                id = r.ID ?? r.Id ?? r.LotNo ?? "",
-                ID = r.ID ?? r.Id ?? r.LotNo ?? "",
-                name = r.Name ?? r.LotNo ?? "",
-                Name = r.Name ?? r.LotNo ?? "",
-                text = r.TextName ?? r.ItemName ?? r.Name ?? r.LotNo ?? "",
-                TextName = r.TextName ?? r.ItemName ?? r.Name ?? r.LotNo ?? ""
-            }).ToList();
+            return rows
+                .Select(r =>
+                {
+                    var lotNo = (r.Name ?? r.LotNo ?? "").Trim();
+                    var display = (r.TextName ?? r.ItemName ?? lotNo).Trim();
+                    return new MixLotOptionRow
+                    {
+                        id = lotNo,
+                        name = lotNo,
+                        text = display,
+                        TextName = display
+                    };
+                })
+                .Where(x => !string.IsNullOrEmpty(x.id))
+                .Cast<object>()
+                .ToList();
+        }
+
+        private class MixLotOptionRow
+        {
+            public string? id { get; set; }
+            public string? name { get; set; }
+            public string? text { get; set; }
+            public string? TextName { get; set; }
         }
 
         private class MixLotDropdownRow
         {
             public string? ID { get; set; }
-            public string? Id { get; set; }
             public string? Name { get; set; }
             public string? TextName { get; set; }
+            public string? Type { get; set; }
             public string? LotNo { get; set; }
             public string? ItemName { get; set; }
         }

@@ -48,7 +48,24 @@ namespace Dia_CoreAPI.Controllers.StockAccount
             return Ok(new
             {
                 Success = true,
-                Data = result
+                Data = MapMountingStockList(result)
+            });
+        }
+
+        private static IEnumerable<MountingduplicateMaster> MapMountingStockList(IEnumerable<JewStockMasterDto> rows)
+        {
+            return rows.Select(row => new MountingduplicateMaster
+            {
+                JewCode = row.JewCode,
+                Stock_ID = row.Stock_ID ?? string.Empty,
+                Pcs = row.Pcs,
+                MountCategory = row.MountCategory ?? row.DesignName ?? string.Empty,
+                MetalType = row.MetalType ?? string.Empty,
+                Purity = row.Purity ?? string.Empty,
+                TotalDiamondCarat = row.TotalDiamondCarat,
+                GrossWeight = row.GrossWeight,
+                NetWeight = row.NetWeight,
+                TotalMetalAmount = row.TotalMetalAmount
             });
         }
 
@@ -76,7 +93,7 @@ namespace Dia_CoreAPI.Controllers.StockAccount
                 return Ok(new
                 {
                     Success = true,
-                    Data = result
+                    Data = MapMountingStockList(result)
                 });
             }
             catch (Exception ex)

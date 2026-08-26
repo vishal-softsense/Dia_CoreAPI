@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs.Reports.Utility;
 
-namespace Dia_CoreAPI.Services.Helpers
+namespace Dia_CoreAPI.Services.Classes.Reports.Utility
 {
-    public partial class ImportGradingProcessor
+    public partial class ImportGradingService
     {
-        public async Task<ImportGradingResult> InsUpdparcelitemAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
+        private async Task<ImportGradingResult> InsUpdparcelitemInternalAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
         {
             var tableOrError = ReadExcel(dto.ImportFile);
             if (!tableOrError.Success) return tableOrError.Error;
@@ -183,7 +183,7 @@ namespace Dia_CoreAPI.Services.Helpers
             return new ImportGradingResult(true, "Parcel Item Data Upload Succesfull.");
         }
 
-        public async Task<ImportGradingResult> InsUpdsolitaireitemAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
+        private async Task<ImportGradingResult> InsUpdsolitaireitemInternalAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
         {
             var tableOrError = ReadExcel(dto.ImportFile);
             if (!tableOrError.Success) return tableOrError.Error;
@@ -350,7 +350,7 @@ namespace Dia_CoreAPI.Services.Helpers
                 companyIdStr: companyIdStr);
         }
 
-        public async Task<ImportGradingResult> InsUpdaccountitemAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
+        private async Task<ImportGradingResult> InsUpdaccountitemInternalAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
         {
             var tableOrError = ReadExcel(dto.ImportFile);
             if (!tableOrError.Success) return tableOrError.Error;
@@ -408,7 +408,7 @@ namespace Dia_CoreAPI.Services.Helpers
             return new ImportGradingResult(true, "Account Data Upload Succesfull.");
         }
 
-        public async Task<ImportGradingResult> UploadPurchaseDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
+        private async Task<ImportGradingResult> UploadPurchaseDataInternalAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
         {
             var tableOrError = ReadExcel(dto.ImportFile);
             if (!tableOrError.Success) return tableOrError.Error;
@@ -462,7 +462,7 @@ namespace Dia_CoreAPI.Services.Helpers
                     float sCurCode = await _repository.GetSCurIdAsync(companyId);
                     string mCurOperatorM = await _repository.GetMCurOperatorAsync(" and ID=" + mCurCode, companyId);
                     string sCurOperatorM = await _repository.GetSCurOperatorAsync(" and ID=" + mCurCode, companyId);
-                    var finalAmountResponse = ImportGradingHelper.GetConvertAmount(mCurCode, (float)mCurNetAmt, 1, mCurOperatorM, mToSCurRate, sCurOperatorM, mCurCode, sCurCode);
+                    var finalAmountResponse = GetConvertAmount(mCurCode, (float)mCurNetAmt, 1, mCurOperatorM, mToSCurRate, sCurOperatorM, mCurCode, sCurCode);
                     double.TryParse(finalAmountResponse[0], out double mCurFinalAmt);
                     double.TryParse(finalAmountResponse[1], out double sCurFinalAmt);
 
@@ -499,7 +499,7 @@ namespace Dia_CoreAPI.Services.Helpers
             }
         }
 
-        public async Task<ImportGradingResult> UploadPurchaseDetailsDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
+        private async Task<ImportGradingResult> UploadPurchaseDetailsInternalAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
         {
             var tableOrError = ReadExcel(dto.ImportFile);
             if (!tableOrError.Success) return tableOrError.Error;
@@ -601,7 +601,7 @@ namespace Dia_CoreAPI.Services.Helpers
                     float sCurCode = await _repository.GetSCurIdAsync(companyId);
                     string mCurOperatorM = await _repository.GetMCurOperatorAsync(" and ID=" + mCurCode, companyId);
                     string sCurOperatorM = await _repository.GetSCurOperatorAsync(" and ID=" + mCurCode, companyId);
-                    var finalAmountResponse = ImportGradingHelper.GetConvertAmount(mCurCode, finalMAmount, 1, mCurOperatorM, mToSCurRate, sCurOperatorM, mCurCode, sCurCode);
+                    var finalAmountResponse = GetConvertAmount(mCurCode, finalMAmount, 1, mCurOperatorM, mToSCurRate, sCurOperatorM, mCurCode, sCurCode);
                     double mCurFinalAmt = Convert.ToDouble(finalAmountResponse[0]);
                     double sCurFinalAmt = Convert.ToDouble(finalAmountResponse[1]);
 
@@ -675,7 +675,7 @@ namespace Dia_CoreAPI.Services.Helpers
         }
 #endif
 
-        public async Task<ImportGradingResult> UploadJewelleryDiamondStockAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
+        private async Task<ImportGradingResult> UploadJewelleryDiamondStockInternalAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
         {
             var tableOrError = ReadExcel(dto.ImportFile);
             if (!tableOrError.Success) return tableOrError.Error;
@@ -695,7 +695,7 @@ namespace Dia_CoreAPI.Services.Helpers
                         var stockid = Cell(dt.Rows[i], 1);
                         var itemCode = sql.GetMaxItemCode(" AND LotNo = ''" + stockid.Replace("'", "''") + "''");
                         int maxItemCode = int.TryParse(itemCode, out var ic) ? ic : 0;
-                        long maxJewCode = await _repository.GetJewCodeAsync("and Stock_ID=''" + Cell(dt.Rows[i], 0).Replace("'", "''") + "''", companyId);
+                        long maxJewCode = sql.GetJewCode("and Stock_ID=''" + Cell(dt.Rows[i], 0).Replace("'", "''") + "''");
                         sql.SaveStockDiamondDetailsData(null, Convert.ToInt32(maxJewCode), maxItemCode, stockid,
                             Cell(dt.Rows[i], 2), Cell(dt.Rows[i], 3), Cell(dt.Rows[i], 4), Cell(dt.Rows[i], 5),
                             Cell(dt.Rows[i], 6), Cell(dt.Rows[i], 7), CellInt(dt.Rows[i], 8), CellDbl(dt.Rows[i], 9),
@@ -712,7 +712,7 @@ namespace Dia_CoreAPI.Services.Helpers
             }
         }
 
-        public async Task<ImportGradingResult> UploadJewelleryFullAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
+        private async Task<ImportGradingResult> UploadJewelleryFullInternalAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
         {
             var tableOrError = ReadExcel(dto.ImportFile);
             if (!tableOrError.Success) return tableOrError.Error;
@@ -741,11 +741,12 @@ namespace Dia_CoreAPI.Services.Helpers
                 {
                     var first = group.First();
                     string stockId = Col(first, "StockId");
-                    string stockWhere = " AND Stock_ID = '" + stockId.Replace("'", "''") + "'";
-                    int existingCount = await _repository.GetJewStockMasterCountAsync(stockWhere, companyId);
+                    string stockWhere = " AND Stock_ID = ''" + stockId.Replace("'", "''") + "''";
+                    string jewCodeWhere = "and Stock_ID=''" + stockId.Replace("'", "''") + "''";
+                    bool isNewStock = !sql.JewStockExists(stockWhere);
                     long jewCode;
 
-                    if (existingCount == 0)
+                    if (isNewStock)
                     {
                         sql.SaveJewStockMasterData(
                             id: 0,
@@ -805,11 +806,11 @@ namespace Dia_CoreAPI.Services.Helpers
                             UseMounting: "",
                             costamount: 0,
                             ActionType: "insert");
-                            jewCode = await _repository.GetJewCodeAsync("and Stock_ID='" + stockId.Replace("'", "''") + "'",companyId);
+                        jewCode = sql.GetJewCode(jewCodeWhere);
                     }
                     else
                     {
-                        jewCode = await _repository.GetJewCodeAsync("and Stock_ID='" + stockId.Replace("'", "''") + "'",companyId);
+                        jewCode = sql.GetJewCode(jewCodeWhere);
                         sql.SaveJewStockMasterData(
                             id: Convert.ToInt32(jewCode),
                             Trndate: "",

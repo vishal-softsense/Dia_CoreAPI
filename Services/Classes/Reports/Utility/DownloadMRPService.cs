@@ -1,22 +1,22 @@
 ﻿using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Dia_CoreAPI.Repositories.Interfaces.Reports.Utility;
-using Dia_CoreAPI.Services.Helpers;
 using Dia_CoreAPI.Services.Interfaces.Reports.Utility;
 
 namespace Dia_CoreAPI.Services.Classes.Reports.Utility
 {
-    public class DownloadMRPService : IDownloadMRPService
+    public partial class DownloadMRPService : IDownloadMRPService
     {
         private readonly IDownloadMRPRepository _repository;
-        private readonly RapaportPricesSoapClient _rapaportClient;
+        private readonly HttpClient _httpClient;
 
         public DownloadMRPService(
             IDownloadMRPRepository repository,
-            RapaportPricesSoapClient rapaportClient)
+            IHttpClientFactory httpClientFactory)
         {
             _repository = repository;
-            _rapaportClient = rapaportClient;
+            _httpClient = httpClientFactory.CreateClient(nameof(DownloadMRPService));
         }
 
         public Task<int> CheckUserPermissionAsync(string userTypeId, string formName, string actionType, string companyId)
@@ -35,7 +35,7 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                 return (false, "Rapaport credentials (RapUsername / RapPassword) are not configured in settings.");
             }
 
-            var ticket = await _rapaportClient.LoginAsync(credentials.RapUsername!, credentials.RapPassword!);
+            var ticket = await RapaportLoginAsync(credentials.RapUsername!, credentials.RapPassword!);
             if (string.IsNullOrWhiteSpace(ticket))
             {
                 return (false, "Rapaport login failed. Please verify RapUsername and RapPassword.");
@@ -44,20 +44,20 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
             try
             {
                 // Round → BR (same as MVC)
-                var (dateBr, _, pricesBr) = await _rapaportClient.GetPriceSheetAsync(ticket, "Round");
+                var (dateBr, _, pricesBr) = await GetRapaportPriceSheetAsync(ticket, "Round");
                 await _repository.DeleteTabPriceIndexRAsync("BR", companyId);
                 for (int i = 0; i < pricesBr.Rows.Count; i++)
                 {
-                    var row = RapaportPricesSoapClient.MapPriceRow(pricesBr.Rows[i]);
+                    var row = MapRapaportPriceRow(pricesBr.Rows[i]);
                     await _repository.InsertTabPriceIndexRAsync("BR", row, dateBr, companyId);
                 }
 
                 // Pear → PS (same as MVC)
-                var (datePs, _, pricesPs) = await _rapaportClient.GetPriceSheetAsync(ticket, "Pear");
+                var (datePs, _, pricesPs) = await GetRapaportPriceSheetAsync(ticket, "Pear");
                 await _repository.DeleteTabPriceIndexRAsync("PS", companyId);
                 for (int i = 0; i < pricesPs.Rows.Count; i++)
                 {
-                    var row = RapaportPricesSoapClient.MapPriceRow(pricesPs.Rows[i]);
+                    var row = MapRapaportPriceRow(pricesPs.Rows[i]);
                     await _repository.InsertTabPriceIndexRAsync("PS", row, datePs, companyId);
                 }
 

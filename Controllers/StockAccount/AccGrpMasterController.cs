@@ -76,7 +76,8 @@ namespace Dia_CoreAPI.Controllers.StockAccount
                             UnderGroupName = row.UnderGroupName,
                             AccountType = row.AccountType,
                             OBalance = row.OBalance,
-                            Country = row.Country
+                            Country = row.Country,
+                            KAM = row.KAM
                         });
                     }
                 }

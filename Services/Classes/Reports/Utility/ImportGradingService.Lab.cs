@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -9,26 +9,17 @@ using Dia_CoreAPI.Repositories.Interfaces.Reports.Utility;
 using ExcelDataReader;
 using Microsoft.AspNetCore.Http;
 
-namespace Dia_CoreAPI.Services.Helpers
+namespace Dia_CoreAPI.Services.Classes.Reports.Utility
 {
-    public partial class ImportGradingProcessor
+    public partial class ImportGradingService
     {
-        private readonly IImportGradingRepository _repository;
-        private readonly ISqlDataAccess _sqlDataAccess;
-
-        public ImportGradingProcessor(IImportGradingRepository repository, ISqlDataAccess sqlDataAccess)
-        {
-            _repository = repository;
-            _sqlDataAccess = sqlDataAccess;
-        }
-
         private async Task<SqlTempAccess> CreateSqlTempAsync(string companyId)
         {
             var cs = await _sqlDataAccess.GetClientConnectionString(companyId);
             return new SqlTempAccess(cs);
         }
 
-        public async Task<ImportGradingResult> UpdateGiaDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
+        private async Task<ImportGradingResult> UpdateGiaDataInternalAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
         {
             var tableOrError = ReadExcel(dto.ImportFile);
             if (!tableOrError.Success) return tableOrError.Error;
@@ -94,7 +85,7 @@ namespace Dia_CoreAPI.Services.Helpers
                 : new ImportGradingResult(false, "GIA File is not valid.");
         }
 
-        public async Task<ImportGradingResult> UpdateIgiDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
+        private async Task<ImportGradingResult> UpdateIgiDataInternalAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
         {
             var tableOrError = ReadExcel(dto.ImportFile);
             if (!tableOrError.Success) return tableOrError.Error;
@@ -225,7 +216,7 @@ namespace Dia_CoreAPI.Services.Helpers
                 : new ImportGradingResult(false, "IGI File is not valid.");
         }
 
-        public async Task<ImportGradingResult> UpdateHrdDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
+        private async Task<ImportGradingResult> UpdateHrdDataInternalAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
         {
             var tableOrError = ReadExcel(dto.ImportFile);
             if (!tableOrError.Success) return tableOrError.Error;
@@ -337,7 +328,7 @@ namespace Dia_CoreAPI.Services.Helpers
                 : new ImportGradingResult(false, "Hrd file is not valid.");
         }
 
-        public async Task<ImportGradingResult> UpdateGraderDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
+        private async Task<ImportGradingResult> UpdateGraderDataInternalAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
         {
             var tableOrError = ReadExcel(dto.ImportFile);
             if (!tableOrError.Success) return tableOrError.Error;
@@ -410,7 +401,7 @@ namespace Dia_CoreAPI.Services.Helpers
                 : new ImportGradingResult(false, "Grader file is not valid.");
         }
 
-        public async Task<ImportGradingResult> UpdatePurchaseDataAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
+        private async Task<ImportGradingResult> UpdatePurchaseDataInternalAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
         {
             var tableOrError = ReadExcel(dto.ImportFile);
             if (!tableOrError.Success) return tableOrError.Error;
@@ -488,7 +479,7 @@ namespace Dia_CoreAPI.Services.Helpers
             return new ImportGradingResult(true, "Purchase Data Upload Succesfull.");
         }
 
-        public async Task<ImportGradingResult> UpdateimagevideoAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
+        private async Task<ImportGradingResult> UpdateimagevideoInternalAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
         {
             var tableOrError = ReadExcel(dto.ImportFile);
             if (!tableOrError.Success) return tableOrError.Error;
@@ -511,19 +502,19 @@ namespace Dia_CoreAPI.Services.Helpers
             return new ImportGradingResult(true, "Image/Video Data Upload Succesfull.");
         }
 
-        public async Task<ImportGradingResult> UpdateSizeIdsAsync(string companyId, string userTypeId)
+        private async Task<ImportGradingResult> UpdateSizeIdsInternalAsync(string companyId, string userTypeId)
         {
             await _repository.UpdateSizeIdsAsync(companyId);
             return new ImportGradingResult(true, "Size Updated Successfully.");
         }
 
-        public async Task<ImportGradingResult> DeleteDeletedRecordsAsync(string companyId, string userTypeId)
+        private async Task<ImportGradingResult> DeleteDeletedRecordsInternalAsync(string companyId, string userTypeId)
         {
             await _repository.DelRecordsAsync("DeleteFlag = 1", companyId);
             return new ImportGradingResult(true, "Delete Deleted Records Successfully.");
         }
 
-        public async Task<ImportGradingResult> UploadAndUpdateCompanyLoginLogoAsync(IFormFile image, string companyId, string userTypeId, string webRootPath)
+        private async Task<ImportGradingResult> UploadAndUpdateCompanyLoginLogoInternalAsync(IFormFile image, string companyId, string userTypeId, string webRootPath)
         {
             if (image == null || image.Length == 0)
                 return new ImportGradingResult(false, null, "No file selected");
@@ -553,7 +544,7 @@ namespace Dia_CoreAPI.Services.Helpers
             return new ImportGradingResult(true, null, "Company Logo updated successfully", imagePath);
         }
 
-        public async Task<ImportGradingResult> ImportAskingRateAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
+        private async Task<ImportGradingResult> ImportAskingRateInternalAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
         {
             var tableOrError = ReadExcel(dto.ImportFile);
             if (!tableOrError.Success) return tableOrError.Error;

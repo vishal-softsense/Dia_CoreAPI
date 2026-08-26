@@ -12,6 +12,7 @@ namespace Dia_CoreAPI.DTOs.StockAccount
         public string AccountType { get; set; } = string.Empty;
         public float OBalance { get; set; }
         public string Country { get; set; } = string.Empty;
+        public string KAM { get; set; } = string.Empty;
     }
 
     public class AccGrpMasterDto

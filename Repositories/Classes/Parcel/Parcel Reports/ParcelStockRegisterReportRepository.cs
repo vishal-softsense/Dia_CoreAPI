@@ -65,7 +65,7 @@ namespace Dia_CoreAPI.Repositories
         public async Task<IEnumerable<BasicDataDto>> GetParcelLotNoListAsync(string searchby, string companyId)
         {
             // Match MVC Getparcealdiamonlotnods + GetLotNoDiamondForDropdown
-            string strWhere = " AND ISNULL(SinglePcs,0) = 0 ";
+            string strWhere = " AND ISNULL(SinglePcs,0) IN (0,1) ";
             if (!string.IsNullOrEmpty(searchby))
             {
                 var cleaned = searchby

@@ -175,7 +175,7 @@ namespace Dia_CoreAPI.DataAccess
             
 
             string sql = @" EXEC [GetAllCommonData] @Type='LotExist',@Where = '" + Where + "' ";
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
 
 
@@ -964,7 +964,7 @@ namespace Dia_CoreAPI.DataAccess
             //string sql = @" SELECT Max(InvNo) FROM TabSalePur WHERE 1=1 " + Where;
 
             string sql = @" EXEC [GetAllCommonData] @Type='Inv',@Where = '" + Where + "' ";
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
 
 
@@ -973,7 +973,7 @@ namespace Dia_CoreAPI.DataAccess
             // string sql = @" SELECT max(invcode) FROM TabSalePurTran WHERE 1=1 " + Where;
 
             string sql = @" EXEC [GetAllCommonData] @Type='InvCode',@Where = '" + Where + "' ";
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
 
         public string GetMaxGcode(string Where)
@@ -982,7 +982,7 @@ namespace Dia_CoreAPI.DataAccess
 
 
             string sql = @" EXEC [GetAllCommonData] @Type='Gcode',@Where = '" + Where + "' ";
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
 
         public string GetVouNo(string Where)
@@ -990,7 +990,7 @@ namespace Dia_CoreAPI.DataAccess
            // string sql = @" Select max (VouNo ) from TabJV WHERE 1=1 " + Where;
 
             string sql = @" EXEC [GetAllCommonData] @Type='VouNo',@Where = '" + Where + "' ";
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
 
 
@@ -999,14 +999,14 @@ namespace Dia_CoreAPI.DataAccess
             //string sql = @" Select AccGrpCode From TabAccGrpMaster WHERE 1=1 " + Where;
             string sql = @" EXEC [GetAllCommonData] @Type='Party',@Where = '" + Where + "' ";
 
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
         public string GetMaxItemSrNo()
         {
             //string sql = @" Select isnull(MAX(ItemSrno),0) from TabItemMaster Where itemsrno between 0 and 999999 ";
             string sql = @" EXEC [GetAllCommonData] @Type='MaxItemSrNo'";
 
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
       
         public string GetMaxItemCode(string Where)
@@ -1014,13 +1014,13 @@ namespace Dia_CoreAPI.DataAccess
             //string sql = @" SELECT Max(ItemCode) FROM TabItemMaster WHERE 1=1 " + Where;
 
             string sql = @" EXEC [GetAllCommonData] @Type='ItemCode',@Where = '" + Where + "' ";
-            return _connection.Query<string>(sql, transaction: _transaction).FirstOrDefault();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).FirstOrDefault();
         }
 
         public string GetMaxItemSrnum(string Where)
         {           
             string sql = @" EXEC [GetAllCommonData] @Type='ItemSrnum',@Where = '" + Where + "' ";
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
 
 
@@ -1029,7 +1029,7 @@ namespace Dia_CoreAPI.DataAccess
             //string sql = @" SELECT Max(Code) FROM TabSalePur WHERE 1=1 " + Where;
 
             string sql = @" EXEC [GetAllCommonData] @Type='SPCode',@Where = '" + Where + "' ";
-             return _connection.Query<string>(sql, transaction: _transaction).First();
+             return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
 
         public string GetMaxJVCode(string Where)
@@ -1038,7 +1038,7 @@ namespace Dia_CoreAPI.DataAccess
 
             string sql = @" EXEC [GetAllCommonData] @Type='JVCode',@Where = '" + Where + "' ";
 
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
         public string GetMCurOperator(string Where)
         {
@@ -1046,14 +1046,14 @@ namespace Dia_CoreAPI.DataAccess
 
             string sql = @" EXEC [GetCurrencyDetail] @Type='MCurOperator',@Where = '" + Where + "' ";
 
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
         public string GetSCurOperator(string Where)
         {
           //  string sql = @" SELECT StockCurrencyOperator FROM TabCurrencyMaster WHERE 1=1 " + Where;
 
             string sql = @" EXEC [GetCurrencyDetail] @Type='SCurOperator',@Where = '" + Where + "' ";
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
         public double GetScurBaseRate(string where)
         {
@@ -1061,21 +1061,21 @@ namespace Dia_CoreAPI.DataAccess
           //  string sql = @" SELECT StockCurrencyRate FROM TabCurrencyMaster WHERE 1=1 and id=" + where;
 
             string sql = @" EXEC [GetCurrencyDetail] @Type='ScurBaseRate',@Where = '" + where + "' ";
-            return _connection.Query<double>(sql, transaction: _transaction).First();
+            return _connection.Query<double>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
         public long GetMCurID()
         {
            // string sql = @" SELECT ID FROM TabCurrencyMaster WHERE 1=1 and MasterCurrencyRate=1 ";
 
             string sql = @" EXEC [GetCurrencyDetail] @Type='MCurID'";
-            return _connection.Query<long>(sql, transaction: _transaction).First();
+            return _connection.Query<long>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
         public long GetSCurID()
         {
             // string sql = @" SELECT ID FROM TabCurrencyMaster WHERE 1=1 and StockCurrencyRate=1 ";
 
             string sql = @" EXEC [GetCurrencyDetail] @Type='SCurID'";
-            return _connection.Query<long>(sql, transaction: _transaction).First();
+            return _connection.Query<long>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
         public string GetAccountCode(string Where)
         {
@@ -1083,7 +1083,7 @@ namespace Dia_CoreAPI.DataAccess
 
             string sql = @" EXEC [GetAllCommonData] @Type='Party',@Where = '" + Where + "' ";
 
-            return _connection.Query<string>(sql, transaction: _transaction).FirstOrDefault();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).FirstOrDefault();
         }
         public string GetLOTNO(string Where)
         {
@@ -1091,14 +1091,14 @@ namespace Dia_CoreAPI.DataAccess
 
             string sql = @" EXEC [GetAllCommonData] @Type='LotNo',@Where = '" + Where + "' ";
 
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
 
         public string GetShipVia(string Where)
         {            
             string sql = @" EXEC [GetAllCommonData] @Type='ShipVia',@Where = '" + Where + "' ";
 
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
 
         public string GetAccountTypeCode(string Where)
@@ -1107,7 +1107,7 @@ namespace Dia_CoreAPI.DataAccess
 
             string sql = @" EXEC [GetAllCommonData] @Type='AccountType',@Where = '" + Where + "' ";
 
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
 
         public string GetAccountLevel(string Where)
@@ -1116,7 +1116,7 @@ namespace Dia_CoreAPI.DataAccess
 
             string sql = @" EXEC [GetAllCommonData] @Type='AccountLevel',@Where = '" + Where + "' ";
 
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
 
         public string GetLotNo(string Where)
@@ -1124,7 +1124,7 @@ namespace Dia_CoreAPI.DataAccess
 
             string sql = @" EXEC [GetAllCommonData] @Type='LotNo',@Where = '" + Where + "' ";
 
-            return _connection.Query<string>(sql, transaction: _transaction).FirstOrDefault();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).FirstOrDefault();
         }
 
         
@@ -1137,6 +1137,7 @@ namespace Dia_CoreAPI.DataAccess
         private IDbConnection _connection;
         private IDbTransaction _transaction;
         private bool isClosed = false;
+        private const int CommandTimeoutSeconds = 180;
 
 
         public SqlConnection _connections;
@@ -1160,12 +1161,24 @@ namespace Dia_CoreAPI.DataAccess
 
         public bool SaveDataInTransaction(string sp_name, DynamicParameters parameter)
         {
-            var result = _connection.Execute(sp_name, parameter, commandType: CommandType.StoredProcedure, transaction: _transaction);
+            var result = _connection.Execute(sp_name, parameter, commandType: CommandType.StoredProcedure, transaction: _transaction, commandTimeout: CommandTimeoutSeconds);
 
             if (result > 0)
                 return true;
             else
                 return false;
+        }
+
+        public long GetJewCode(string where)
+        {
+            string sql = @" EXEC [GetALLMasterList] @Type='GetJewCode',@Where = '" + where + "' ";
+            return _connection.Query<long>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).FirstOrDefault();
+        }
+
+        public bool JewStockExists(string where)
+        {
+            string sql = @" EXEC [GetALLMasterList] @Type='JewStock', @Where = '" + where + "' ";
+            return _connection.Query(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).Any();
         }
 
         //public bool UpdatePayRecByCodes(long JVCode, long InvCode, double Amount, string CurCode, double BaseRate, string Disc, double MasterCurrencyAmount, double StockCurrencyRate, double StockCurrencyAmount)
@@ -1185,7 +1198,7 @@ namespace Dia_CoreAPI.DataAccess
 
         public string GetStringData(string sql)
         {
-            return _connection.Query<string>(sql, transaction: _transaction).FirstOrDefault();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).FirstOrDefault();
         }
 
         public void CommitTransaction()
@@ -1304,7 +1317,7 @@ namespace Dia_CoreAPI.DataAccess
             //string sql = @" SELECT Max(Code) FROM TabSalePur WHERE 1=1 " + Where;
 
             string sql = @" EXEC [GetAllCommonData] @Type='JewCode',@Where = '" + Where + "' ";
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
 
         public bool SaveDiamondDetailsData(string designid, int jewcode, int diamonditemcode, string stockid, string type, string shape, string size, string sieve, string color, string clarity, int pcs, double carat, float price, double amount, string lab, string ActionType, int CompanyID)
@@ -1380,7 +1393,7 @@ namespace Dia_CoreAPI.DataAccess
             //string sql = @" SELECT Max(Code) FROM TabSalePur WHERE 1=1 " + Where;
 
             string sql = @" EXEC [GetAllCommonData] @Type='GetDesignName',@Where = '" + Where + "' ";
-            return _connection.Query<string>(sql, transaction: _transaction).FirstOrDefault();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).FirstOrDefault();
         }
 
         public int GetMaxStockSerialNo(string Where)
@@ -1388,7 +1401,7 @@ namespace Dia_CoreAPI.DataAccess
             //string sql = @" SELECT Max(Code) FROM TabSalePur WHERE 1=1 " + Where;
 
             string sql = @" EXEC [GetAllCommonData] @Type='MaxStockSerianNo',@Where = '" + Where + "' ";
-            return _connection.Query<int>(sql, transaction: _transaction).First();
+            return _connection.Query<int>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
 
         public string GetMaxStockCode(string Where)
@@ -1396,7 +1409,7 @@ namespace Dia_CoreAPI.DataAccess
             //string sql = @" SELECT Max(Code) FROM TabSalePur WHERE 1=1 " + Where;
 
             string sql = @" EXEC [GetAllCommonData] @Type='StockCode',@Where = '" + Where + "' ";
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
 
         public string GetMaxJewStockCode(string Where)
@@ -1404,7 +1417,7 @@ namespace Dia_CoreAPI.DataAccess
             //string sql = @" SELECT Max(ItemCode) FROM TabItemMaster WHERE 1=1 " + Where;
 
             string sql = @" EXEC [GetAllCommonData] @Type='StockCode',@Where = '" + Where + "' ";
-            return _connection.Query<string>(sql, transaction: _transaction).First();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).First();
         }
 
         public string GetCheckTrntype(string Where)
@@ -1412,7 +1425,7 @@ namespace Dia_CoreAPI.DataAccess
             //string sql = @" SELECT Max(Code) FROM TabSalePur WHERE 1=1 " + Where;
 
             string sql = @" EXEC [GetAllCommonData] @Type='CheckTrnTypeAndbillNo',@Where = '" + Where + "' ";
-            return _connection.Query<string>(sql, transaction: _transaction).FirstOrDefault();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).FirstOrDefault();
         }
 
         public bool SaveStockDiamondDetailsData(string designid, int jewcode, int diamondtemcode, string stockid, string type, string shape, string size, string sieve, string color, string clarity, int pcs, double carat, float price, double amount, string lab, string ActionType, int CompanyID)
@@ -1611,7 +1624,7 @@ namespace Dia_CoreAPI.DataAccess
             //string sql = @" SELECT Max(Code) FROM TabSalePur WHERE 1=1 " + Where;
 
             string sql = @" EXEC [GetALLMasterList] @Type='GetMountingName',@Where = '" + Where + "' ";
-            return _connection.Query<string>(sql, transaction: _transaction).FirstOrDefault();
+            return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).FirstOrDefault();
         }
 
     }
