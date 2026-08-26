@@ -1791,7 +1791,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             return rows.Select(r =>
             {
-                var lotNo = r.Name ?? r.LotNo ?? r.ID ?? r.Id ?? "";
+                var lotNo = r.Name ?? r.LotNo ?? r.ID ?? "";
                 var text = r.TextName ?? r.ItemName ?? r.Name ?? r.LotNo ?? lotNo;
                 return (object)new { id = lotNo, text };
             }).ToList();
