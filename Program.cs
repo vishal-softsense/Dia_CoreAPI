@@ -117,6 +117,14 @@ builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Tra
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction.IMixPurchaseService, Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction.MixPurchaseService>();
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction.IMixMemoOutRepository, Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction.MixMemoOutRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction.IMixMemoOutService, Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction.MixMemoOutService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction.IMixConsignmentRepository, Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction.MixConsignmentRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction.IMixConsignmentService, Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction.MixConsignmentService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction.IMixConsignmentReturnRepository, Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction.MixConsignmentReturnRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction.IMixConsignmentReturnService, Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction.MixConsignmentReturnService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction.IMixSaleRepository, Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction.MixSaleRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction.IMixSaleService, Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction.MixSaleService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction.IMixMemoOutReturnRepository, Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction.MixMemoOutReturnRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction.IMixMemoOutReturnService, Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction.MixMemoOutReturnService>();
 
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryTransaction.IJewelleryPurchaseRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryTransaction.JewelleryPurchaseRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryTransaction.IJewelleryPurchaseService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryTransaction.JewelleryPurchaseService>();
@@ -442,6 +450,10 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Utility.IStoc
 // Mix Purchase Return (MVC: /parcel/mix-purchase-return)
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction.IMixPurchaseReturnRepository, Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction.MixPurchaseReturnRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction.IMixPurchaseReturnService, Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction.MixPurchaseReturnService>();
+
+// Mix Sale Return (MVC: /MixSaleReturn/mixsalereturnlist)
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction.IMixSaleReturnRepository, Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction.MixSaleReturnRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction.IMixSaleReturnService, Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction.MixSaleReturnService>();
 
 builder.Services.AddCors(options =>
 {
