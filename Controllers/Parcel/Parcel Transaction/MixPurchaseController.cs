@@ -28,7 +28,7 @@ namespace Dia_CoreAPI.Controllers.Parcel.Parcel_Transaction
         public async Task<IActionResult> GetList()
         {
             try
-            {
+            {   
                 int permission = await _service.CheckUserPermissionAsync(UserTypeId, "MixPurchase", "select", CompanyId);
                 if (permission != 1)
                     return Ok(new { success = false, Data = "You are not authorized to perform this task." });
