@@ -100,12 +100,16 @@ builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solita
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction.ISolitaireConsignmentInService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction.SolitaireConsignmentInService>();
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction.ISolitaireMemoOutRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction.SolitaireMemoOutRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction.ISolitaireMemoOutService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction.SolitaireMemoOutService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction.ISolitairePartyHoldRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction.SolitairePartyHoldRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction.ISolitairePartyHoldService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction.SolitairePartyHoldService>();
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction.ISolitaireSaleRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction.SolitaireSaleRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction.ISolitaireSaleService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction.SolitaireSaleService>();
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction.ISolitaireSaleReturnRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction.SolitaireSaleReturnRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction.ISolitaireSaleReturnService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction.SolitaireSaleReturnService>();
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction.ISolitaireConsignmentInReturnRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction.SolitaireConsignmentInReturnRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction.ISolitaireConsignmentInReturnService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction.SolitaireConsignmentInReturnService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction.ISolitairePartyHoldReturnRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction.SolitairePartyHoldReturnRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction.ISolitairePartyHoldReturnService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction.SolitairePartyHoldReturnService>();
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction.ISolitaireMemoReturnRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction.SolitaireMemoReturnRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Transaction.ISolitaireMemoReturnService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction.SolitaireMemoReturnService>();
 
@@ -231,6 +235,10 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires
 // Solitaire Party Hold Report
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitairePartyHoldReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitairePartyHoldReportRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports.ISolitairePartyHoldReportService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports.SolitairePartyHoldReportService>();
+
+// Solitaire Hold/Unhold Report
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitaireHoldUnholdReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitaireHoldUnholdReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports.ISolitaireHoldUnholdReportService, Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports.SolitaireHoldUnholdReportService>();
 
 // Solitaire Aging Report
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports.ISolitaireAgingReportRepository, Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports.SolitaireAgingReportRepository>();
