@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Dapper;
 using Dia_CoreAPI.DataAccess;
 
 namespace Dia_CoreAPI.Repositories.Classes.Reports.Utility

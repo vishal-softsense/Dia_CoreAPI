@@ -1,16 +1,19 @@
 using Dia_CoreAPI.DTOs.StockAccount;
 using Dia_CoreAPI.Repositories.Interfaces.StockAccount;
 using Dia_CoreAPI.Services.Interfaces.StockAccount;
+using Microsoft.AspNetCore.Hosting;
 
 namespace Dia_CoreAPI.Services.Classes.StockAccount
 {
     public class JewStockMasterService : IJewStockMasterService
     {
         private readonly IJewStockMasterRepository _repository;
+        private readonly IWebHostEnvironment _env;
 
-        public JewStockMasterService(IJewStockMasterRepository repository)
+        public JewStockMasterService(IJewStockMasterRepository repository, IWebHostEnvironment env)
         {
             _repository = repository;
+            _env = env;
         }
 
         public async Task<int> CheckUserPermissionAsync(string userTypeId, string formName, string actionType, string companyId)
@@ -113,6 +116,8 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
                     return (false, "You are not authorized to perform this task.");
                 }
             }
+
+            model.ImageBinary = ResolveImageBinary(model.ImagePath, model.ImageBinary);
 
             bool saveSuccess = await _repository.SaveMountingStockAsync(model, diamond, setting, actionType, companyId);
             if (saveSuccess)
@@ -271,6 +276,73 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
         public async Task<List<LotNoDataJew>> GetJewLotNoDataAsync(string lotNo, string companyId)
         {
             return await _repository.GetJewLotNoDataAsync(lotNo, companyId);
+        }
+
+        /// <summary>
+        /// Same as MVC SaveMountingStock: read file bytes from ImagePath on server disk.
+        /// </summary>
+        private byte[] ResolveImageBinary(string? imagePath, byte[]? existingBinary)
+        {
+            if (string.IsNullOrWhiteSpace(imagePath))
+            {
+                return existingBinary ?? Array.Empty<byte>();
+            }
+
+            try
+            {
+                string trimmed = imagePath.Trim().Replace('\\', '/');
+                if (trimmed.StartsWith("~/", StringComparison.Ordinal))
+                {
+                    trimmed = trimmed[2..];
+                }
+
+                var candidates = new List<string>();
+
+                if (Path.IsPathRooted(trimmed))
+                {
+                    candidates.Add(trimmed);
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(_env.WebRootPath))
+                    {
+                        candidates.Add(Path.Combine(_env.WebRootPath, trimmed.TrimStart('/')));
+                    }
+
+                    if (!string.IsNullOrEmpty(_env.ContentRootPath))
+                    {
+                        candidates.Add(Path.Combine(_env.ContentRootPath, trimmed.TrimStart('/')));
+                    }
+                }
+
+                foreach (var fullPath in candidates.Distinct())
+                {
+                    if (File.Exists(fullPath))
+                    {
+                        return File.ReadAllBytes(fullPath);
+                    }
+                }
+
+                // MVC Server.MapPath("/JewelleryPhotos/...") resolves under application root.
+                if (trimmed.StartsWith("/JewelleryPhotos/", StringComparison.OrdinalIgnoreCase)
+                    && !string.IsNullOrEmpty(_env.ContentRootPath))
+                {
+                    var mvcStylePath = Path.Combine(
+                        _env.ContentRootPath,
+                        "JewelleryPhotos",
+                        trimmed["/JewelleryPhotos/".Length..].Replace('/', Path.DirectorySeparatorChar));
+                    if (File.Exists(mvcStylePath))
+                    {
+                        return File.ReadAllBytes(mvcStylePath);
+                    }
+                }
+            }
+            catch
+            {
+                // Fall through to existing/empty binary.
+            }
+
+            return existingBinary ?? Array.Empty<byte>();
         }
     }
 }

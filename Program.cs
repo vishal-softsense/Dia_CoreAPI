@@ -335,6 +335,13 @@ builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Payable_R
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Payable_Receivables.IOutstandingReportService, Dia_CoreAPI.Services.Classes.Reports.Payable_Receivables.OutstandingReportService>();
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Payable_Receivables.ILoanOutstandingReportRepository, Dia_CoreAPI.Repositories.Classes.Reports.Payable_Receivables.LoanOutstandingReportRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Payable_Receivables.ILoanOutstandingReportService, Dia_CoreAPI.Services.Classes.Reports.Payable_Receivables.LoanOutstandingReportService>();
+
+// Financial Transaction - Loan Given / Loan Taken
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.FinancialTransaction.Loan.ILoanGivenRepository, Dia_CoreAPI.Repositories.Classes.FinancialTransaction.Loan.LoanGivenRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.FinancialTransaction.Loan.ILoanGivenService, Dia_CoreAPI.Services.Classes.FinancialTransaction.Loan.LoanGivenService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.FinancialTransaction.Loan.ILoanTakenRepository, Dia_CoreAPI.Repositories.Classes.FinancialTransaction.Loan.LoanTakenRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.FinancialTransaction.Loan.ILoanTakenService, Dia_CoreAPI.Services.Classes.FinancialTransaction.Loan.LoanTakenService>();
+
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Payable_Receivables.IBrokerageOutstandingReportRepository, Dia_CoreAPI.Repositories.Classes.Reports.Payable_Receivables.BrokerageOutstandingReportRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Payable_Receivables.IBrokerageOutstandingReportService, Dia_CoreAPI.Services.Classes.Reports.Payable_Receivables.BrokerageOutstandingReportService>();
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Payable_Receivables.ICommissionOutstandingReportRepository, Dia_CoreAPI.Repositories.Classes.Reports.Payable_Receivables.CommissionOutstandingReportRepository>();
@@ -512,6 +519,12 @@ if (!Directory.Exists(crReportPath))
     Directory.CreateDirectory(crReportPath);
 }
 
+var jewelleryPhotosPath = Path.Combine(builder.Environment.ContentRootPath, "JewelleryPhotos");
+if (!Directory.Exists(jewelleryPhotosPath))
+{
+    Directory.CreateDirectory(jewelleryPhotosPath);
+}
+
 app.UseCors("AllowAll");
 
 app.UseStaticFiles(new StaticFileOptions
@@ -524,6 +537,12 @@ app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(crReportPath),
     RequestPath = "/CRreport"
+});
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(jewelleryPhotosPath),
+    RequestPath = "/JewelleryPhotos"
 });
 
 app.UseSession();

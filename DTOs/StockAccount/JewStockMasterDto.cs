@@ -200,6 +200,8 @@ namespace Dia_CoreAPI.DTOs.StockAccount
         public List<string> JewSettingValue { get; set; }
 
         public string DecimalinInvoiceAmount { get; set; }
+        public string OtherPer { get; set; } = "";
+        public string AskingPer { get; set; } = "";
     }
 
     public class SettingMasterDto

@@ -200,7 +200,17 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
                 DecimalinInvoiceAmount = setting
                     .Where(x => x.Name == "JewelleryMetalAmountCalculateOnGoldWeight")
                     .Select(x => x.Value)
-                    .FirstOrDefault()
+                    .FirstOrDefault(),
+
+                OtherPer = setting
+                    .Where(x => x.Name == "Addperinother")
+                    .Select(x => x.Value)
+                    .FirstOrDefault() ?? "",
+
+                AskingPer = setting
+                    .Where(x => x.Name == "Addperinasking")
+                    .Select(x => x.Value)
+                    .FirstOrDefault() ?? ""
             };
         }
 
