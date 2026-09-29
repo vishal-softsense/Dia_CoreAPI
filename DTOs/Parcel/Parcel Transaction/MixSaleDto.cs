@@ -44,6 +44,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public List<BasicDataDto> ItemGroup { get; set; } = new();
         public List<BasicDataDto> Address { get; set; } = new();
         public string? DefaultCurrencyCode { get; set; }
+        public string? CaratFormatNew { get; set; }
     }
 
     public class MixSaleHeaderDto
@@ -219,6 +220,9 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? CountryOfOrigin { get; set; }
         public string? CountryOfMfg { get; set; }
         public string? Status { get; set; }
+        public float COGS { get; set; }
+        public string? ExportNo { get; set; }
+        public float SRate { get; set; }
     }
 
     public class MixSaleSaveRequest
@@ -236,6 +240,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
     public class MixSaleLotDetailDto
     {
         public string? LotNo { get; set; }
+        public string? Stock_ID { get; set; }
         public string? ItemName { get; set; }
         public float Weight { get; set; }
         /// <summary>SP GetLotNoDataForAll (Type=Mix) returns Carats as string — mapped to Weight in repository.</summary>
@@ -329,6 +334,9 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public float Less2 { get; set; }
         public float Less3 { get; set; }
         public float Amount { get; set; }
+        public float COGS { get; set; }
+        public string? ExportNo { get; set; }
+        public float SRate { get; set; }
         public float MemoTransCode { get; set; }
         public float RtnCarats { get; set; }
         public string? StockType { get; set; }
