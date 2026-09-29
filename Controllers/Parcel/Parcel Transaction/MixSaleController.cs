@@ -248,8 +248,11 @@ namespace Dia_CoreAPI.Controllers.Parcel.Parcel_Transaction
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(CompanyId))
+                    return Ok(new { success = false, Data = "Company not found in token." });
+
                 var data = await _service.GetLotsAsync(searchby, CompanyId);
-                return Ok(new { success = true, Data = data });
+                return Ok(new { success = true, Data = data ?? new List<object>() });
             }
             catch (Exception ex)
             {

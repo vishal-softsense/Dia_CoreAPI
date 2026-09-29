@@ -1,4 +1,4 @@
-using Dia_CoreAPI.DataAccess;
+﻿using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
@@ -113,6 +113,11 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 new { },
                 companyId);
 
+            var caratFormatNew = await _sqlDataAccess.ExecuteQuerySingle<string>(
+                "SELECT Value FROM TabSettingMaster WHERE Name = 'CaratFormatNew'",
+                new { },
+                companyId);
+
             return new MixSalePageDataDto
             {
                 Type = MapBasic(list.Where(x => x.Type == "Type")),
@@ -127,7 +132,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 ProductType = MapBasic(itemList.Where(x => x.Type == "ProductType")),
                 ItemGroup = MapBasic(itemList.Where(x => x.Type == "ItemGroup")),
                 Address = MapBasic(list.Where(x => x.Type == "Bank")),
-                DefaultCurrencyCode = defaultCurrencyCode
+                DefaultCurrencyCode = defaultCurrencyCode,
+                CaratFormatNew = caratFormatNew
             };
         }
 
@@ -180,10 +186,30 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
         public async Task<List<MixSaleLotDetailDto>> GetLotDetailAsync(string lotNo, string companyId)
         {
+            var escaped = EscapeSql(lotNo);
+
+            // Jewellery stock uses Stock_ID (MVC GetMaxJewStockCode path on save)
+            if (IsJewelleryLotNo(lotNo))
+            {
+                string jewSql = $"EXEC [GetLotNoDataForAll] @Type = 'JewStockData',@Where = ' AND Stock_ID = ''{escaped}'' '";
+                var jewResult = (await _sqlDataAccess.SelectRawSql<MixSaleLotDetailDto>(jewSql, companyId)).ToList();
+                if (jewResult.Count > 0)
+                {
+                    foreach (var lot in jewResult)
+                    {
+                        if (string.IsNullOrWhiteSpace(lot.LotNo))
+                            lot.LotNo = lot.Stock_ID ?? lotNo;
+                        lot.StockType ??= "Jewellery";
+                        NormalizeLotDetail(lot);
+                    }
+                    return jewResult;
+                }
+            }
+
             var parameters = new Dictionary<string, object>
             {
                 { "@Type", "Mix" },
-                { "@Where", $" AND LotNo = '{lotNo}' " }
+                { "@Where", $" AND LotNo = '{escaped}' " }
             };
 
             var result = (await _sqlDataAccess.SelectDataFromSP<MixSaleLotDetailDto>(
@@ -232,11 +258,45 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             if (string.IsNullOrWhiteSpace(item.Clarity) && !string.IsNullOrWhiteSpace(item.ClarityId))
                 item.Clarity = item.ClarityId;
+
+            if (string.IsNullOrWhiteSpace(item.PShape))
+                item.PShape = item.ShapeId ?? item.Shape;
+
+            if (string.IsNullOrWhiteSpace(item.PColor))
+                item.PColor = item.ColorId ?? item.Color;
+
+            if (string.IsNullOrWhiteSpace(item.PClarity))
+                item.PClarity = item.ClarityId ?? item.Clarity;
+        }
+
+        private static string EscapeSql(string? value) => (value ?? string.Empty).Replace("'", "''");
+
+        private static bool IsJewelleryLotNo(string? lotNo)
+        {
+            var lot = (lotNo ?? string.Empty).Trim();
+            return lot.StartsWith("Jew_", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsJewelleryItem(MixSaleItemDto item)
+        {
+            if (string.Equals(item.StockType, "Jewellery", StringComparison.OrdinalIgnoreCase))
+                return true;
+            return IsJewelleryLotNo(item.LotNo);
+        }
+
+        private static bool IsJewelleryLotRequest(MixSaleAddLotRequest item)
+        {
+            if (string.Equals(item.StockType, "Jewellery", StringComparison.OrdinalIgnoreCase))
+                return true;
+            return IsJewelleryLotNo(item.LotNo);
         }
 
         private static void NormalizeLotDetail(MixSaleLotDetailDto lot)
         {
             if (lot == null) return;
+
+            if (!string.IsNullOrWhiteSpace(lot.Stock_ID) && string.IsNullOrWhiteSpace(lot.StockType))
+                lot.StockType = "Jewellery";
 
             // GetLotNoDataForAll Type=Mix returns Carats / PurchaseMRP (MVC LotNoData)
             if (lot.Weight == 0 && float.TryParse(lot.Carats, System.Globalization.NumberStyles.Any,
@@ -273,41 +333,50 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             MixSaleAddLotRequest item,
             string companyId)
         {
+            var caratFormat = await _sqlDataAccess.ExecuteQuerySingle<string>(
+                "SELECT Value FROM TabSettingMaster WHERE Name = 'CaratFormatNew'",
+                new { },
+                companyId) ?? "0.000";
+
             double totalCarats = 0;
             double totalAmount = 0;
             double totalMRPAmount = 0;
             double totalAmountWithoutless = 0;
             string alert = "";
 
-            float tempCarat = item.Carat;
-            string carat3D = Convert.ToDouble(tempCarat).ToString("N3");
-            float carat = float.Parse(carat3D);
-
-            if (carat <= 0)
-                throw new Exception("Carat is invalid.");
-
-            float purRate = item.Rate;
-            float back = item.Back != 0 ? item.Back : item.PurchaseBack;
+            bool isJewellery = IsJewelleryLotRequest(item);
+            float selectionCarats = FormatSelectionCarats(item.Weight, caratFormat);
+            float rate = item.Rate;
+            float back = item.Back;
             float mrp = item.MRP;
-            float issueCarats = item.IssueCarats != 0 ? item.IssueCarats : carat;
+            float issueCarats = item.IssueCarats != 0 ? item.IssueCarats : selectionCarats;
             float returnCarats = item.ReturnCarats != 0 ? item.ReturnCarats : item.RtnCarats;
-            bool isJewellery = string.Equals(item.StockType, "Jewellery", StringComparison.OrdinalIgnoreCase);
 
-            if (purRate == 0 && back == 0)
-                throw new Exception("Rate and Discount both can not be 0.");
+            if (isJewellery)
+            {
+                if (!(item.Pcs > 0 || selectionCarats == 0))
+                    throw new Exception("Carat is invalid.");
+            }
+            else if (!(selectionCarats > 0 || selectionCarats == 0))
+            {
+                throw new Exception("Carat is invalid.");
+            }
 
-            if (purRate != 0 && issueCarats != 0)
-                back = (((purRate * 100) / issueCarats) - 100);
-
-            float amount = isJewellery ? item.Pcs * purRate : carat * purRate;
-            if (item.Amount != 0)
+            float amount;
+            if (rate != 0)
+            {
+                amount = isJewellery ? item.Pcs * rate : selectionCarats * rate;
+                float l1 = item.Less1 != 0 ? amount * (100 + item.Less1) / 100 : amount;
+                float l2 = item.Less2 != 0 ? l1 * (100 + item.Less2) / 100 : l1;
+                float l3 = item.Less3 != 0 ? l2 * (100 + item.Less3) / 100 : l2;
+                amount = l3;
+            }
+            else
+            {
                 amount = item.Amount;
+            }
 
-            float l1 = item.Less1 != 0 ? amount * (100 + item.Less1) / 100 : amount;
-            float l2 = item.Less2 != 0 ? l1 * (100 + item.Less2) / 100 : l1;
-            float l3 = item.Less3 != 0 ? l2 * (100 + item.Less3) / 100 : l2;
-
-            var pur = new MixSaleItemDto
+            var row = new MixSaleItemDto
             {
                 LotNo = item.LotNo,
                 ItemName = item.ItemName,
@@ -325,19 +394,19 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 Sieve = item.SieveId,
                 SieveId = item.SieveId,
                 PSieve = item.SieveId,
-                Weight = item.Weight != 0 ? item.Weight : carat,
-                Carats = item.Weight != 0 ? item.Weight : carat,
+                Weight = item.Weight != 0 ? item.Weight : selectionCarats,
+                Carats = item.Weight != 0 ? item.Weight : selectionCarats,
                 IssueCarats = issueCarats,
                 Pcs = item.Pcs,
                 MRP = mrp,
-                PurchaseRate = purRate,
-                Rate = purRate,
+                PurchaseRate = rate,
+                Rate = rate,
                 PurchaseBack = back,
                 Less1 = item.Less1,
                 Less2 = item.Less2,
                 Less3 = item.Less3,
-                PurAmount = l3,
-                Amount = l3,
+                PurAmount = amount,
+                Amount = amount,
                 MemoTransCode = item.MemoTransCode,
                 RtnCarats = returnCarats,
                 ReturnCarats = returnCarats,
@@ -348,34 +417,25 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 ActualRate = item.ActualRate,
                 GroupId = item.GroupId,
                 StoneType = item.StoneType,
-                RMK = item.RMK
+                RMK = item.RMK,
+                COGS = item.COGS,
+                ExportNo = item.ExportNo,
+                SRate = item.SRate
             };
 
             var list = item.Items ?? new List<MixSaleItemDto>();
             bool isEdit = item.editIndex >= 0 && item.editIndex < list.Count;
 
             if (isEdit)
-            {
-                list[item.editIndex] = pur;
-            }
+                list[item.editIndex] = row;
             else
-            {
-                if (!string.IsNullOrWhiteSpace(item.LotNo) &&
-                    list.Any(x => string.Equals(x.LotNo, item.LotNo, StringComparison.OrdinalIgnoreCase)))
-                {
-                    throw new Exception($"Lot number {item.LotNo} already exists.");
-                }
+                list.Add(row);
 
-                list.Add(pur);
-            }
-
-            foreach (var row in list)
+            foreach (var gridRow in list)
             {
-                double weight = Convert.ToDouble(row.Weight.ToString("N3"));
-                totalCarats += weight;
-                totalAmount += row.PurAmount;
-                totalMRPAmount += weight * row.MRP;
-                totalAmountWithoutless += weight * row.PurchaseRate;
+                totalCarats += FormatSelectionCarats(gridRow.Weight, caratFormat);
+                totalAmount += gridRow.PurAmount != 0 ? gridRow.PurAmount : gridRow.Amount;
+                totalAmountWithoutless += FormatSelectionCarats(gridRow.Weight, caratFormat) * gridRow.PurchaseRate;
             }
 
             return new MixSaleGridViewDto
@@ -387,6 +447,15 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 Alert = alert,
                 ExcelData = list
             };
+        }
+
+        private static float FormatSelectionCarats(float weight, string caratFormat)
+        {
+            string weight3D = Convert.ToDouble(weight).ToString("N3");
+            if (caratFormat == "0.000")
+                return float.Parse(weight3D);
+            string weight2D = weight3D.Substring(0, weight3D.Length - 1);
+            return float.Parse(weight2D);
         }
 
         public async Task<(bool Success, string Message)> AddAsync(
@@ -452,7 +521,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                         await ProcessItemsAsync(
                             conn, trans, salePur, items, MaxSPCode, Curcode,
                             MCurBaseRate, SCurBaseRate, MCurOperator, SCurOperator,
-                            MCurCode, SCurCode, stockEffected, usercode, userId, companyId);
+                            MCurCode, SCurCode, stockEffected, usercode, userId, companyId, isEdit: false);
 
                         if (!salePur.chkoldsale)
                         {
@@ -561,7 +630,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                         await ProcessItemsAsync(
                             conn, trans, salePur, items, MaxSPCode, Curcode,
                             MCurBaseRate, SCurBaseRate, MCurOperator, SCurOperator,
-                            MCurCode, SCurCode, stockEffected, usercode, userId, companyId);
+                            MCurCode, SCurCode, stockEffected, usercode, userId, companyId, isEdit: true);
 
                         using (var cmd = new SqlCommand("SP_DeleteJV", conn, trans))
                         {
@@ -577,13 +646,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                                 conn, trans, salePur, MaxSPCode, Curcode,
                                 MCurBaseRate, SCurBaseRate, MCurOperator, MCurOperatorM, SCurOperatorM,
                                 MToSCurRate, MCurCode, usercode, userId, companyId);
-                        }
-
-                        using (var cmd = new SqlCommand("SP_UpdateItemMasterAtEditPrachase", conn, trans))
-                        {
-                            cmd.CommandType = CommandType.StoredProcedure;
-                            cmd.Parameters.Add(new SqlParameter("@InvCode", MaxSPCode));
-                            await cmd.ExecuteNonQueryAsync();
                         }
 
                         trans.Commit();
@@ -1107,8 +1169,9 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             using (var cmd = new SqlCommand("SP_InsertSalePur", conn, trans))
             {
                 cmd.CommandType = CommandType.StoredProcedure;
+                string billNo = string.IsNullOrWhiteSpace(salePur.BillNo) ? maxInvNo.ToString() : salePur.BillNo;
                 cmd.Parameters.Add(new SqlParameter("@invno", maxInvNo));
-                cmd.Parameters.Add(new SqlParameter("@billno", salePur.BillNo ?? (object)DBNull.Value));
+                cmd.Parameters.Add(new SqlParameter("@billno", billNo));
                 cmd.Parameters.Add(new SqlParameter("@trntype", "CSALE"));
                 cmd.Parameters.Add(new SqlParameter("@invtype", salePur.InvType ?? (object)DBNull.Value));
                 cmd.Parameters.Add(new SqlParameter("@category", salePur.Category ?? (object)DBNull.Value));
@@ -1281,216 +1344,48 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             bool stockEffected,
             int usercode,
             string userId,
-            string companyId)
+            string companyId,
+            bool isEdit)
         {
-            string generateLotno = await GetSettingValueAsync(conn, trans, "GenerateMixSaleLotno");
-            string city = await GetSettingValueAsync(conn, trans, "StoneCity");
-
             foreach (var im in items)
             {
-                float AskingRate = im.AskingRate;
-                var askAmtRes = GetConvertAmount(curCode, AskingRate, mCurBaseRate, mCurOperator, sCurBaseRate, sCurOperator, mCurCode, sCurCode);
-                double AkingSCurRate = askAmtRes.SCurAmt;
-                double AskingSAmount = AkingSCurRate * im.Weight;
+                float rate = im.PurchaseRate != 0 ? im.PurchaseRate : im.Rate;
+                float amount = im.PurAmount != 0 ? im.PurAmount : im.Amount;
+                var amtRes = GetConvertAmount(curCode, amount, mCurBaseRate, mCurOperator, sCurBaseRate, sCurOperator, mCurCode, sCurCode);
 
-                float ActualRate = im.ActualRate;
-                var actAmtRes = GetConvertAmount(curCode, ActualRate, mCurBaseRate, mCurOperator, sCurBaseRate, sCurOperator, mCurCode, sCurCode);
-                double ActualSCurRate = actAmtRes.SCurAmt;
-                double ActualSAmount = ActualSCurRate * im.Weight;
+                bool isJewellery = IsJewelleryItem(im);
+                string stockType = isJewellery ? "Jewellery" : (im.StockType ?? "Diamond");
+                string lotKey = EscapeSql(im.LotNo);
 
-                float PurRate = im.PurchaseRate;
-                var purRateRes = GetConvertAmount(curCode, PurRate, mCurBaseRate, mCurOperator, sCurBaseRate, sCurOperator, mCurCode, sCurCode);
-                double PurSCurRate = purRateRes.SCurAmt;
-
-                float PurAmount = im.PurAmount;
-                var purAmtRes = GetConvertAmount(curCode, PurAmount, mCurBaseRate, mCurOperator, sCurBaseRate, sCurOperator, mCurCode, sCurCode);
-                double PurMCurAmt = purAmtRes.MCurAmt;
-                double PurSCurAmt = purAmtRes.SCurAmt;
-
-                float B2BRate = im.B2BRate;
-                var b2bRateRes = GetConvertAmount(curCode, B2BRate, mCurBaseRate, mCurOperator, sCurBaseRate, sCurOperator, mCurCode, sCurCode);
-                double B2BRateSCur = b2bRateRes.SCurAmt;
-
-                float B2CRate = im.B2CRate;
-                var b2cRateRes = GetConvertAmount(curCode, B2CRate, mCurBaseRate, mCurOperator, sCurBaseRate, sCurOperator, mCurCode, sCurCode);
-                double B2CRateSCur = b2cRateRes.SCurAmt;
-
-                string LotAlready = await ExecuteCommonDataScalarAsync(conn, trans, "LotExist", " AND LotNo = ''" + im.LotNo + "''");
-
-                string ItemSrno = await ExecuteCommonDataScalarAsync(conn, trans, "MaxItemSrNo");
-                int MaxItemSrno = 0;
-                int.TryParse(ItemSrno, out MaxItemSrno);
-                MaxItemSrno = MaxItemSrno + 1;
-
-                string lotStr;
-                if (string.IsNullOrWhiteSpace(im.LotNo))
-                    lotStr = generateLotno + MaxItemSrno.ToString();
-                else
-                    lotStr = im.LotNo;
-
-                im.LotNo = lotStr;
-
-                float rtnCarats = im.RtnCarats != 0 ? im.RtnCarats : im.ReturnCarats;
-
-                if (LotAlready.ToString() == "0")
+                int maxItemCode = 0;
+                if (isJewellery)
                 {
-                    int singlerPcs = (im.Pcs <= 1) ? 1 : 0;
-
-                    DateTime parsedDate;
-                    string dateString = DateTime.TryParse(im.ReportDate?.ToString(), out parsedDate)
-                        ? parsedDate.ToString("yyyy-MM-dd")
-                        : string.Empty;
-
-                    using (var cmd = new SqlCommand("SP_ItemMaster", conn, trans))
-                    {
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        cmd.Parameters.Add(new SqlParameter("@ItemCode", (object)0));
-                        cmd.Parameters.Add(new SqlParameter("@ItemSrno", MaxItemSrno));
-                        cmd.Parameters.Add(new SqlParameter("@LotNo", im.LotNo));
-                        cmd.Parameters.Add(new SqlParameter("@ItemName", im.ItemName ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@ItemGroupId", im.ItemGroup ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@Category", salePur.Category ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@ProductType", salePur.Category ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@Pcs", im.Pcs));
-                        cmd.Parameters.Add(new SqlParameter("@Weight", (object)0));
-                        cmd.Parameters.Add(new SqlParameter("@CaratCL", Convert.ToDouble(im.Weight.ToString("N3"))));
-                        cmd.Parameters.Add(new SqlParameter("@SieveId", ""));
-                        cmd.Parameters.Add(new SqlParameter("@ShapeId", im.Shape ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@ColorId", im.Color ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@SizeId", im.Size ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@ClarityId", im.Clarity ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@MRP", im.MRP));
-                        cmd.Parameters.Add(new SqlParameter("@Back", im.AskingBack));
-                        cmd.Parameters.Add(new SqlParameter("@AskingRate", Math.Round(AkingSCurRate, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@AskingAmount", Math.Round(AskingSAmount, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@AmountCl", Math.Round(PurSCurAmt, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@BoxName", ""));
-                        cmd.Parameters.Add(new SqlParameter("@BoxRate", 0.0));
-                        cmd.Parameters.Add(new SqlParameter("@CertId", im.LAB ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@CertificateNo", im.CertificateNo ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@HAID", im.HA ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@PropId", im.Proportion ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@PolishId", im.Polish ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@SymId", im.Symmetry ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@FLId", im.FL ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@FLColor", im.FLColor ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@FancyColor", im.FancyColor ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@FancyColorIntensity", im.FancyColorIntensity ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@FancyColorOvertone", im.FancyColorOvertone ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@L", Math.Round(im.Length, 2)));
-                        cmd.Parameters.Add(new SqlParameter("@W", Math.Round(im.Width, 2)));
-                        cmd.Parameters.Add(new SqlParameter("@D", Math.Round(im.Depth, 2)));
-                        cmd.Parameters.Add(new SqlParameter("@Diameter", ""));
-                        cmd.Parameters.Add(new SqlParameter("@Measurement", ""));
-                        cmd.Parameters.Add(new SqlParameter("@LWRatio", im.LW));
-                        cmd.Parameters.Add(new SqlParameter("@TotDepth", im.TotDep));
-                        cmd.Parameters.Add(new SqlParameter("@TablePer", im.TablePer));
-                        cmd.Parameters.Add(new SqlParameter("@CrownHeight", im.CH));
-                        cmd.Parameters.Add(new SqlParameter("@CrownAngle", im.CA));
-                        cmd.Parameters.Add(new SqlParameter("@PavilionPer", im.PA));
-                        cmd.Parameters.Add(new SqlParameter("@PavilionHeight", im.PH));
-                        cmd.Parameters.Add(new SqlParameter("@GirdlePer", im.GirdlePer));
-                        cmd.Parameters.Add(new SqlParameter("@GirdleCondition", im.GirdleCondition ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@GirdleMin", im.GMin ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@GirdleMax", im.GMax ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@GirdleMinMS", im.Min));
-                        cmd.Parameters.Add(new SqlParameter("@GirdleMaxMS", im.Max));
-                        cmd.Parameters.Add(new SqlParameter("@CuletId", im.Culet ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@CuletCondition", im.CuletCondition ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@StrLn", im.StrLn));
-                        cmd.Parameters.Add(new SqlParameter("@LrHalf", im.LrHalf));
-                        cmd.Parameters.Add(new SqlParameter("@LaserInscription", false));
-                        cmd.Parameters.Add(new SqlParameter("@LaserInscriptionText", im.InscriptionText ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@Instruction", ""));
-                        cmd.Parameters.Add(new SqlParameter("@KeyToSymbols", im.KeyToSymbols ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@LABComments", im.LabComments ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@BrownId", im.Brown ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@GreenId", im.Green ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@MilkyId", im.Milky ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@LusterId", im.Luster ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@ButhId", ""));
-                        cmd.Parameters.Add(new SqlParameter("@NattsId", im.Natts ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@EyeClean", im.EyeClean ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@ShadeId", im.Shade ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@TableInclusion", im.BIT ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@CrownInclusion", im.BIS ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@OIT", im.OIT ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@OIC", im.OIC ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@OIP", im.OIP ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@OIG", im.OIG ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@PolishFeatures", ""));
-                        cmd.Parameters.Add(new SqlParameter("@SymFeatures", ""));
-                        cmd.Parameters.Add(new SqlParameter("@ColorDescription", ""));
-                        cmd.Parameters.Add(new SqlParameter("@ClarityDescription", ""));
-                        cmd.Parameters.Add(new SqlParameter("@ClarityStatus", ""));
-                        cmd.Parameters.Add(new SqlParameter("@Graining", ""));
-                        cmd.Parameters.Add(new SqlParameter("@Painting", ""));
-                        cmd.Parameters.Add(new SqlParameter("@IdealImagePath", ""));
-                        cmd.Parameters.Add(new SqlParameter("@AssetImagePath", ""));
-                        cmd.Parameters.Add(new SqlParameter("@HeartsImagePath", ""));
-                        cmd.Parameters.Add(new SqlParameter("@ArrowsImagePath", ""));
-                        cmd.Parameters.Add(new SqlParameter("@B2BVideoPath", ""));
-                        cmd.Parameters.Add(new SqlParameter("@B2CVideoPath", ""));
-                        cmd.Parameters.Add(new SqlParameter("@B2BDNAPagePath", ""));
-                        cmd.Parameters.Add(new SqlParameter("@B2CDNAPagePath", ""));
-                        cmd.Parameters.Add(new SqlParameter("@CertificatePath", ""));
-                        cmd.Parameters.Add(new SqlParameter("@PlottingImagePath", ""));
-                        cmd.Parameters.Add(new SqlParameter("@PurchaseDate", salePur.TrnDate));
-                        cmd.Parameters.Add(new SqlParameter("@PublicRemarks", im.MemberRemarks ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@PrivateRemarks", ""));
-                        cmd.Parameters.Add(new SqlParameter("@AdminRemarks", ""));
-                        cmd.Parameters.Add(new SqlParameter("@PurchaseRate", Math.Round(PurSCurRate, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@PurchaseBack", im.PurchaseBack));
-                        cmd.Parameters.Add(new SqlParameter("@PurchaseCarats", Convert.ToDouble(im.Weight.ToString("N3"))));
-                        cmd.Parameters.Add(new SqlParameter("@SPPurchaseRate", Math.Round(im.PurchaseRate, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@SPPurchaseBack", im.PurchaseBack));
-                        cmd.Parameters.Add(new SqlParameter("@PurchaseMRP", im.MRP));
-                        cmd.Parameters.Add(new SqlParameter("@PDollorRate", Math.Round(salePur.BaseRate, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@MasterCurrencyRate", Math.Round(mCurBaseRate, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@MasterCurrencyAmount", Math.Round(PurMCurAmt, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@StockCurrencyRate", Math.Round(sCurBaseRate, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@StockCurrencyAmount", Math.Round(PurSCurAmt, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@AdatPer", Math.Round(salePur.AdatPer, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@Brokerper", Math.Round(salePur.BrokerPer, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@LabReportDate", dateString));
-                        cmd.Parameters.Add(new SqlParameter("@SinglePcs", singlerPcs));
-                        cmd.Parameters.Add(new SqlParameter("@PurchaseAmount", Math.Round(PurSCurAmt, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@ActualRate", Math.Round(ActualSCurRate, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@ActualBack", im.ActualBack));
-                        cmd.Parameters.Add(new SqlParameter("@ActualAmount", Math.Round(ActualSAmount, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@BottomBack", im.BottomBack));
-                        cmd.Parameters.Add(new SqlParameter("@BottomRate", im.BottomRate));
-                        cmd.Parameters.Add(new SqlParameter("@B2BRate", Math.Round(B2BRateSCur, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@B2BBack", im.B2BBack));
-                        cmd.Parameters.Add(new SqlParameter("@B2CRate", Math.Round(B2CRateSCur, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@B2CBack", im.B2CBack));
-                        cmd.Parameters.Add(new SqlParameter("@MfgSeriesID", im.MfgSeriesID ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@MfgPacketID", im.MfgPacketID ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@RoughId", ""));
-                        cmd.Parameters.Add(new SqlParameter("@MinesId", ""));
-                        cmd.Parameters.Add(new SqlParameter("@Less1", im.Less1));
-                        cmd.Parameters.Add(new SqlParameter("@Less2", im.Less2));
-                        cmd.Parameters.Add(new SqlParameter("@Less3", im.Less3));
-                        cmd.Parameters.Add(new SqlParameter("@CompanyID", int.Parse(companyId)));
-                        cmd.Parameters.Add(new SqlParameter("@City", city ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@ImagePath", im.ImagePath ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@VideoPath", im.VideoPath ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@PagePath", im.PagePath ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@CountryOfOrigin", im.CountryOfOrigin ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@CountryOfMfg", im.CountryOfMfg ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@ActionType", "insert"));
-
-                        await cmd.ExecuteNonQueryAsync();
-                    }
+                    string itemCodeStr = await ExecuteCommonDataScalarAsync(conn, trans, "StockCode", $" AND Stock_ID = ''{lotKey}''");
+                    int.TryParse(itemCodeStr, out maxItemCode);
+                    if (maxItemCode == 0)
+                        throw new Exception($"Jewellery stock '{im.LotNo}' not found.");
+                }
+                else
+                {
+                    string itemCodeStr = await ExecuteCommonDataScalarAsync(conn, trans, "ItemCode", $" AND LotNo = ''{lotKey}''");
+                    int.TryParse(itemCodeStr, out maxItemCode);
+                    if (maxItemCode == 0)
+                        throw new Exception($"Lot number '{im.LotNo}' not found in Item Master.");
                 }
 
-                string ItemCodeStr = await ExecuteCommonDataScalarAsync(conn, trans, "ItemCode", " AND LotNo = ''" + im.LotNo + "''");
-                int MaxItemCode = 0;
-                int.TryParse(ItemCodeStr, out MaxItemCode);
+                string itemName = !string.IsNullOrWhiteSpace(im.ItemName) ? im.ItemName : im.LotNo ?? "";
 
-                string itemName = !string.IsNullOrWhiteSpace(im.ItemName)
-                    ? im.ItemName
-                    : $"{im.LotNo} {im.Shape} {im.Size} {im.Color} {im.Clarity}";
+                float memoTransCode = im.MemoTransCode;
+                float returnCarats = im.RtnCarats != 0 ? im.RtnCarats : im.ReturnCarats;
+                float issueCarats = im.IssueCarats != 0 ? im.IssueCarats : im.Weight;
+                float back = im.PurchaseBack;
+                float spCarats = memoTransCode != 0 ? float.Parse(im.Weight.ToString("N3")) : 0f;
+
+                string pShape = im.PShape ?? im.Shape ?? im.ShapeId ?? "";
+                string pSize = im.PSize ?? im.Size ?? "";
+                string pSieve = im.PSieve ?? im.Sieve ?? im.SieveId ?? "";
+                string pColor = im.PColor ?? im.Color ?? im.ColorId ?? "";
+                string pClarity = im.PClarity ?? im.Clarity ?? im.ClarityId ?? "";
 
                 using (var cmd = new SqlCommand("SP_InsertSalePurTran", conn, trans))
                 {
@@ -1499,26 +1394,24 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     cmd.Parameters.Add(new SqlParameter("@trntype", "CSALE"));
                     cmd.Parameters.Add(new SqlParameter("@InvType", salePur.InvType ?? (object)DBNull.Value));
                     cmd.Parameters.Add(new SqlParameter("@InvCode", maxSPCode));
-                    cmd.Parameters.Add(new SqlParameter("@ItemCode", MaxItemCode));
+                    cmd.Parameters.Add(new SqlParameter("@ItemCode", maxItemCode));
                     cmd.Parameters.Add(new SqlParameter("@ItemName", itemName));
                     cmd.Parameters.Add(new SqlParameter("@Carats", float.Parse(im.Weight.ToString("N3"))));
                     cmd.Parameters.Add(new SqlParameter("@Pcs", im.Pcs));
-                    cmd.Parameters.Add(new SqlParameter("@Rate", Convert.ToDouble(im.PurchaseRate.ToString("N2"))));
+                    cmd.Parameters.Add(new SqlParameter("@Rate", Convert.ToDouble(rate.ToString("N2"))));
                     cmd.Parameters.Add(new SqlParameter("@MRP", im.MRP));
-                    cmd.Parameters.Add(new SqlParameter("@PMRPDown", Convert.ToDouble(im.PurchaseBack.ToString("N2"))));
-                    cmd.Parameters.Add(new SqlParameter("@ReturnCarats", Convert.ToDouble(rtnCarats.ToString("N3"))));
-                    float issueCarats = im.IssueCarats != 0 ? im.IssueCarats : im.Weight;
-                    cmd.Parameters.Add(new SqlParameter("@IssueCarats", Convert.ToDouble(issueCarats.ToString("N3"))));
-                    cmd.Parameters.Add(new SqlParameter("@amount", Convert.ToDouble(im.PurAmount.ToString("N2"))));
-                    cmd.Parameters.Add(new SqlParameter("@ExportNo", ""));
+                    cmd.Parameters.Add(new SqlParameter("@PMRPDown", Convert.ToDouble(back.ToString("N2"))));
+                    cmd.Parameters.Add(new SqlParameter("@ReturnCarats", Convert.ToDouble(returnCarats.ToString("N2"))));
+                    cmd.Parameters.Add(new SqlParameter("@IssueCarats", Convert.ToDouble(issueCarats.ToString("N2"))));
+                    cmd.Parameters.Add(new SqlParameter("@amount", Convert.ToDouble(amount.ToString("N2"))));
+                    cmd.Parameters.Add(new SqlParameter("@ExportNo", im.ExportNo ?? ""));
                     cmd.Parameters.Add(new SqlParameter("@Less1", im.Less1));
                     cmd.Parameters.Add(new SqlParameter("@Less2", im.Less2));
                     cmd.Parameters.Add(new SqlParameter("@Less3", im.Less3));
                     cmd.Parameters.Add(new SqlParameter("@CurCode", salePur.CurCode.ToString()));
-                    cmd.Parameters.Add(new SqlParameter("@memotrancode", im.MemoTransCode));
+                    cmd.Parameters.Add(new SqlParameter("@memotrancode", memoTransCode));
                     cmd.Parameters.Add(new SqlParameter("@StockEffected", stockEffected));
                     cmd.Parameters.Add(new SqlParameter("@ExportDone", false));
-                    float spCarats = im.MemoTransCode != 0 ? float.Parse(im.Weight.ToString("N3")) : 0f;
                     cmd.Parameters.Add(new SqlParameter("@spcarats", spCarats));
                     cmd.Parameters.Add(new SqlParameter("@FItemCode", (object)0));
                     cmd.Parameters.Add(new SqlParameter("@TItemCode", (object)0));
@@ -1530,195 +1423,42 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     cmd.Parameters.Add(new SqlParameter("@MemoRemark", ""));
                     cmd.Parameters.Add(new SqlParameter("@UserCode", usercode));
                     cmd.Parameters.Add(new SqlParameter("@MasterCurrencyRate", Math.Round(mCurBaseRate, 4)));
-                    cmd.Parameters.Add(new SqlParameter("@MasterCurrencyAmount", Convert.ToDouble(PurMCurAmt.ToString("N2"))));
+                    cmd.Parameters.Add(new SqlParameter("@MasterCurrencyAmount", Convert.ToDouble(amtRes.MCurAmt.ToString("N2"))));
                     cmd.Parameters.Add(new SqlParameter("@StockCurrencyRate", Math.Round(sCurBaseRate, 4)));
-                    cmd.Parameters.Add(new SqlParameter("@StockCurrencyAmount", Convert.ToDouble(PurSCurAmt.ToString("N2"))));
+                    cmd.Parameters.Add(new SqlParameter("@StockCurrencyAmount", Convert.ToDouble(amtRes.SCurAmt.ToString("N2"))));
                     cmd.Parameters.Add(new SqlParameter("@CreatedBy", userId ?? ""));
                     cmd.Parameters.Add(new SqlParameter("@CompanyID", int.Parse(companyId)));
-                    string pShape = im.PShape ?? im.Shape ?? im.ShapeId ?? "";
-                    string pSize = im.PSize ?? im.Size ?? "";
-                    string pSieve = im.PSieve ?? im.Sieve ?? im.SieveId ?? "";
-                    string pColor = im.PColor ?? im.Color ?? im.ColorId ?? "";
-                    string pClarity = im.PClarity ?? im.Clarity ?? im.ClarityId ?? "";
                     cmd.Parameters.Add(new SqlParameter("@PShape", pShape));
                     cmd.Parameters.Add(new SqlParameter("@PSize", pSize));
                     cmd.Parameters.Add(new SqlParameter("@PSieve", pSieve));
                     cmd.Parameters.Add(new SqlParameter("@PColor", pColor));
                     cmd.Parameters.Add(new SqlParameter("@PClarity", pClarity));
+                    cmd.Parameters.Add(new SqlParameter("@COGS", im.COGS));
+                    cmd.Parameters.Add(new SqlParameter("@StockType", stockType));
                     cmd.Parameters.Add(new SqlParameter("@COGS", 0.0f));
                     cmd.Parameters.Add(new SqlParameter("@StockType", im.StockType ?? "Diamond"));
                     cmd.Parameters.Add(new SqlParameter("@InvDescription", im.InvDescription ?? ""));
                     cmd.Parameters.Add(new SqlParameter("@ActionType", "insert"));
-
                     await cmd.ExecuteNonQueryAsync();
                 }
 
-                if (im.MemoTransCode != 0)
-                {
-                    // MVC SubmitMixLot: csalertn when return cts, else memotosaletest (memotosale when no memo)
-                    string memoAction = rtnCarats != 0 ? "csalertn" : "memotosaletest";
-                    using (var cmd = new SqlCommand("SP_UpdateMemo", conn, trans))
-                    {
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        cmd.Parameters.Add(new SqlParameter("@code", im.MemoTransCode));
-                        cmd.Parameters.Add(new SqlParameter("@RtnDate", salePur.TrnDate));
-                        cmd.Parameters.Add(new SqlParameter("@rtncts", float.Parse(rtnCarats.ToString("N3"))));
-                        cmd.Parameters.Add(new SqlParameter("@spcts", float.Parse(im.Weight.ToString("N3"))));
-                        cmd.Parameters.Add(new SqlParameter("@Actiontype", memoAction));
-                        await cmd.ExecuteNonQueryAsync();
-                    }
-                }
+                string memoAction;
+                if (memoTransCode != 0 && returnCarats != 0)
+                    memoAction = "csalertn";
+                else if (memoTransCode != 0)
+                    memoAction = isEdit ? "memotosale" : "memotosaletest";
+                else
+                    memoAction = isEdit ? "memotosaletest" : "memotosale";
 
-                if (im.Size == null)
+                using (var cmd = new SqlCommand("SP_UpdateMemo", conn, trans))
                 {
-                    using (var cmd = new SqlCommand("SP_UpdateSizeid", conn, trans))
-                    {
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        cmd.Parameters.Add(new SqlParameter("@LotNo", im.LotNo));
-                        await cmd.ExecuteNonQueryAsync();
-                    }
-                }
-
-                if (salePur.chkGrading)
-                {
-                    using (var cmd = new SqlCommand("SP_InsertMultiGrading", conn, trans))
-                    {
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        cmd.Parameters.Add(new SqlParameter("@ItemCode", MaxItemCode));
-                        cmd.Parameters.Add(new SqlParameter("@itemsrno", MaxItemSrno));
-                        cmd.Parameters.Add(new SqlParameter("@LotNo", im.LotNo));
-                        cmd.Parameters.Add(new SqlParameter("@MfgSeriesID", im.MfgSeriesID ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@MfgPacketID", im.MfgPacketID ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@ECutCode", im.Shape ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@GraderName", "Selected"));
-                        cmd.Parameters.Add(new SqlParameter("@EColorCode", im.Color ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@EClarityCode", im.Clarity ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@carats", Convert.ToDouble(im.Weight.ToString("N3"))));
-                        cmd.Parameters.Add(new SqlParameter("@rate", Math.Round(AkingSCurRate, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@ActualRate", Math.Round(ActualSCurRate, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@amount", Math.Round(im.PurAmount, 4)));
-                        cmd.Parameters.Add(new SqlParameter("@MRP", im.MRP));
-                        cmd.Parameters.Add(new SqlParameter("@PMRPDown", im.AskingBack));
-                        cmd.Parameters.Add(new SqlParameter("@ActualPRapDown", im.AskingBack));
-                        cmd.Parameters.Add(new SqlParameter("@ESizeCode", ""));
-                        cmd.Parameters.Add(new SqlParameter("@CertCode", im.LAB ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@PropCode", im.Proportion ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@SymCode", im.Symmetry ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@PolishCode", im.Polish ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@Diameter", ""));
-                        cmd.Parameters.Add(new SqlParameter("@D", Math.Round(im.Depth, 2)));
-                        cmd.Parameters.Add(new SqlParameter("@L", Math.Round(im.Length, 2)));
-                        cmd.Parameters.Add(new SqlParameter("@W", Math.Round(im.Width, 2)));
-                        cmd.Parameters.Add(new SqlParameter("@LW", im.LW));
-                        cmd.Parameters.Add(new SqlParameter("@TopDepth", im.TotDep));
-                        cmd.Parameters.Add(new SqlParameter("@Table", im.TablePer));
-                        cmd.Parameters.Add(new SqlParameter("@CrownHeight", im.CH));
-                        cmd.Parameters.Add(new SqlParameter("@CA", im.CA));
-                        cmd.Parameters.Add(new SqlParameter("@GerdleMin", im.GMin ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@GerdleMax", im.GMax ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@GerdleMSMin", im.Min));
-                        cmd.Parameters.Add(new SqlParameter("@GerdleMSMax", im.Max));
-                        cmd.Parameters.Add(new SqlParameter("@PavilionPer", im.PA));
-                        cmd.Parameters.Add(new SqlParameter("@PavilionHeight", im.PH));
-                        cmd.Parameters.Add(new SqlParameter("@Culet", im.Culet ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@FLCode", im.FL ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@MilkyCode", im.Milky ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@LusterCode", im.Luster ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@Natts", im.Natts ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@Brown", im.Brown ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@Buth", ""));
-                        cmd.Parameters.Add(new SqlParameter("@ClarityStatus", ""));
-                        cmd.Parameters.Add(new SqlParameter("@PolishFeatures", ""));
-                        cmd.Parameters.Add(new SqlParameter("@SymFeatures", ""));
-                        cmd.Parameters.Add(new SqlParameter("@OIT", im.OIT ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@OIG", im.OIG ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@OIC", im.OIC ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@OIP", im.OIP ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@TableInclusion", im.BIT ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@CrownInclusion", im.BIS ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@HACode", im.HA ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@CertificateNo", im.CertificateNo ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@KeyToSymbols", im.KeyToSymbols ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@GDate", salePur.TrnDate));
-                        cmd.Parameters.Add(new SqlParameter("@Status", "CSALE"));
-                        cmd.Parameters.Add(new SqlParameter("@UpdateFlag", false));
-                        cmd.Parameters.Add(new SqlParameter("@Sync_Date", ""));
-                        cmd.Parameters.Add(new SqlParameter("@SinglePcs", true));
-                        cmd.Parameters.Add(new SqlParameter("@FinalPurPrice", true));
-                        cmd.Parameters.Add(new SqlParameter("@ReportDate", im.ReportDate ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@LaserInscriptionText", im.InscriptionText ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@StrLn", im.StrLn));
-                        cmd.Parameters.Add(new SqlParameter("@LrHalf", im.LrHalf));
-                        cmd.Parameters.Add(new SqlParameter("@GerdlePer", im.GirdlePer));
-                        cmd.Parameters.Add(new SqlParameter("@Comments", ""));
-                        cmd.Parameters.Add(new SqlParameter("@ControlNo", ""));
-                        cmd.Parameters.Add(new SqlParameter("@CertExpense", (object)0));
-                        cmd.Parameters.Add(new SqlParameter("@Remarks", im.LabComments ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@Instruction", ""));
-                        cmd.Parameters.Add(new SqlParameter("@SuratRemarks", ""));
-                        cmd.Parameters.Add(new SqlParameter("@IGICut", ""));
-                        cmd.Parameters.Add(new SqlParameter("@LABLocation", ""));
-                        cmd.Parameters.Add(new SqlParameter("@EyeClean", im.EyeClean ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@FlColor", im.FLColor ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@LABJobNo", ""));
-                        cmd.Parameters.Add(new SqlParameter("@LABMemoNo", ""));
-                        cmd.Parameters.Add(new SqlParameter("@LABPaint", ""));
-                        cmd.Parameters.Add(new SqlParameter("@LABPatintingComments", ""));
-                        cmd.Parameters.Add(new SqlParameter("@LABSyntheticIndecator", ""));
-                        cmd.Parameters.Add(new SqlParameter("@Painting", ""));
-                        cmd.Parameters.Add(new SqlParameter("@LABColorDesc", ""));
-                        cmd.Parameters.Add(new SqlParameter("@GirdleCondition", im.GirdleCondition ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@ReportAction", ""));
-                        cmd.Parameters.Add(new SqlParameter("@ServiceCode", ""));
-                        cmd.Parameters.Add(new SqlParameter("@RoughId", ""));
-                        cmd.Parameters.Add(new SqlParameter("@ShapeName", im.Shape ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@Shade", im.Shade ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@VV", ""));
-                        cmd.Parameters.Add(new SqlParameter("@COl2", ""));
-                        cmd.Parameters.Add(new SqlParameter("@SugLAB", ""));
-                        cmd.Parameters.Add(new SqlParameter("@REstRate", ""));
-                        cmd.Parameters.Add(new SqlParameter("@REstCts", ""));
-                        cmd.Parameters.Add(new SqlParameter("@REstEColorCode", ""));
-                        cmd.Parameters.Add(new SqlParameter("@REstEClarityCode", ""));
-                        cmd.Parameters.Add(new SqlParameter("@HRDCut", ""));
-                        cmd.Parameters.Add(new SqlParameter("@FancyColorOvertone", im.FancyColorOvertone ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@CuletCondition", im.CuletCondition ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@Green", im.Green ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@FancyColorIntensity", im.FancyColorIntensity ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@FancyColor", im.FancyColor ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@OP", ""));
-                        cmd.Parameters.Add(new SqlParameter("@SieveId", ""));
-                        cmd.Parameters.Add(new SqlParameter("@ClarityDescription", ""));
-                        cmd.Parameters.Add(new SqlParameter("@ColorDescription", ""));
-                        cmd.Parameters.Add(new SqlParameter("@SuratStoneID", ""));
-                        cmd.Parameters.Add(new SqlParameter("@Graining", ""));
-                        cmd.Parameters.Add(new SqlParameter("@CertResult", ""));
-                        cmd.Parameters.Add(new SqlParameter("@Measurement", ""));
-                        cmd.Parameters.Add(new SqlParameter("@TypeID", ""));
-                        cmd.Parameters.Add(new SqlParameter("@Black", ""));
-                        cmd.Parameters.Add(new SqlParameter("@CompanyID", int.Parse(companyId)));
-
-                        await cmd.ExecuteNonQueryAsync();
-                    }
-                }
-
-                if (string.Equals(salePur.Mode, "consignment", StringComparison.OrdinalIgnoreCase))
-                {
-                    using (var cmd = new SqlCommand("SP_UpdateonsignmentDetails", conn, trans))
-                    {
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        cmd.Parameters.Add(new SqlParameter("@Date", salePur.TrnDate));
-                        cmd.Parameters.Add(new SqlParameter("@Carats", float.Parse(im.Weight.ToString("N3"))));
-                        cmd.Parameters.Add(new SqlParameter("@LotNo", im.LotNo));
-                        try
-                        {
-                            await cmd.ExecuteNonQueryAsync();
-                        }
-                        catch
-                        {
-                            // SP name/params may vary; consignment fill is best-effort
-                        }
-                    }
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add(new SqlParameter("@code", memoTransCode));
+                    cmd.Parameters.Add(new SqlParameter("@RtnDate", salePur.TrnDate));
+                    cmd.Parameters.Add(new SqlParameter("@rtncts", float.Parse(returnCarats.ToString("N3"))));
+                    cmd.Parameters.Add(new SqlParameter("@spcts", float.Parse(im.Weight.ToString("N3"))));
+                    cmd.Parameters.Add(new SqlParameter("@Actiontype", memoAction));
+                    await cmd.ExecuteNonQueryAsync();
                 }
             }
         }
@@ -2035,21 +1775,50 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
         public async Task<List<object>> GetLotsAsync(string? searchBy, string companyId)
         {
             // MVC MixController GetMixLotNoList ? { id = Name, text = TextName }
-            if (string.IsNullOrWhiteSpace(searchBy) || searchBy.Trim().Length < 1)
+            if (string.IsNullOrWhiteSpace(searchBy) || searchBy.Trim().Length < 2)
                 return new List<object>();
 
-            string safe = searchBy.Trim().Replace("'", "''");
-            string strWhere = $" AND (LotNo LIKE ''%{safe}%'' OR Itemname LIKE ''%{safe}%'') ";
-            string sql = $"EXEC [GetMixlotDataForDropdown] @strWhere = '{strWhere}'";
+            string safe = EscapeSql(searchBy.Trim());
+            var results = new List<object>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            var rows = (await _sqlDataAccess.SelectRawSql<MixLotDropdownRow>(sql, companyId)).ToList();
-
-            return rows.Select(r =>
+            try
             {
-                var lotNo = r.Name ?? r.LotNo ?? r.ID ?? "";
-                var text = r.TextName ?? r.ItemName ?? r.Name ?? r.LotNo ?? lotNo;
-                return (object)new { id = lotNo, text };
-            }).ToList();
+                // Jewellery stock (MVC GetJewStockDataForDropdown — search by Stock_ID only)
+                string jewSql = $"EXEC [GetJewStockDataForDropdown] @strWhere = ' AND (Stock_ID LIKE ''%{safe}%'')'";
+                var jewRows = (await _sqlDataAccess.SelectRawSql<StockBasic>(jewSql, companyId)).ToList();
+                foreach (var r in jewRows)
+                {
+                    var lotNo = (r.Name ?? "").Trim();
+                    if (string.IsNullOrWhiteSpace(lotNo) || !seen.Add(lotNo)) continue;
+                    var text = !string.IsNullOrWhiteSpace(r.TextName) ? r.TextName.Trim() : lotNo;
+                    results.Add(new { id = lotNo, text, stockType = "Jewellery" });
+                }
+            }
+            catch
+            {
+                // Jewellery search is optional; diamond lots can still be returned.
+            }
+
+            try
+            {
+                string strWhere = $" AND (LotNo LIKE ''%{safe}%'' OR Itemname LIKE ''%{safe}%'') ";
+                string sql = $"EXEC [GetMixlotDataForDropdown] @strWhere = '{strWhere}'";
+                var rows = (await _sqlDataAccess.SelectRawSql<MixLotDropdownRow>(sql, companyId)).ToList();
+                foreach (var r in rows)
+                {
+                    var lotNo = (r.Name ?? r.LotNo ?? r.ID ?? "").Trim();
+                    if (string.IsNullOrWhiteSpace(lotNo) || !seen.Add(lotNo)) continue;
+                    var text = (r.TextName ?? r.ItemName ?? r.Name ?? r.LotNo ?? lotNo).Trim();
+                    results.Add(new { id = lotNo, text, stockType = "Diamond" });
+                }
+            }
+            catch
+            {
+                // Return jewellery matches even if diamond search fails.
+            }
+
+            return results;
         }
 
         private class MixLotDropdownRow
