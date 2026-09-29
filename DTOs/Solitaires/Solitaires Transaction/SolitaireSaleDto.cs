@@ -77,10 +77,16 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction
         public float VatAmount { get; set; }
         public float CGSTPer { get; set; }
         public float CGSTAmt { get; set; }
+        /// <summary>DB/SP column from GetSalepurRecord (maps to CGSTAmt). MVC aliases CGSTAmount AS CGSTAmt.</summary>
+        public float CGSTAmount { get; set; }
         public float SGSTPer { get; set; }
         public float SGSTAmt { get; set; }
+        /// <summary>DB/SP column from GetSalepurRecord (maps to SGSTAmt).</summary>
+        public float SGSTAmount { get; set; }
         public float IGSTPer { get; set; }
         public float IGSTAmt { get; set; }
+        /// <summary>DB/SP column from GetSalepurRecord (maps to IGSTAmt).</summary>
+        public float IGSTAmount { get; set; }
         public string? Term { get; set; }
         public long ExpPartyCode { get; set; }
         public float InterestPer { get; set; }

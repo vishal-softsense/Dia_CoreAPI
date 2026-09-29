@@ -517,7 +517,7 @@ namespace Dia_CoreAPI.DataAccess
         public bool InsertSalePurTran(DateTime SPdate, string TrnType, string InvType, int InvCode, int ItemCode, string ItemName, float Carats, float Pcs, double Rate, double MRP,
             double PMRPDown, double ReturnCarats, double IssueCarats, double amount, string ExportNo, double Less1, double Less2, double Less3, string CurCode, float memotrancode, bool StockEffected,
             bool ExportDone, double spcarats, int FItemCode, int TItemCode, double FItemRate, double TItemRate, int FromSuratCode, int AssorterCode, int RoughCode,
-            string MemoRemark, int UserCode, double MasterCurrencyRate, double MasterCurrencyAmount, double StockCurrencyRate, double StockCurrencyAmount, string CreatedBy, int CompanyID, [Optional] string PShape, [Optional] string PSize, [Optional] string PSieve, [Optional] string PColor, [Optional] string PClarity ,[Optional] float COGS, [Optional] string StockType)
+            string MemoRemark, int UserCode, double MasterCurrencyRate, double MasterCurrencyAmount, double StockCurrencyRate, double StockCurrencyAmount, string CreatedBy, int CompanyID, [Optional] string PShape, [Optional] string PSize, [Optional] string PSieve, [Optional] string PColor, [Optional] string PClarity ,[Optional] float COGS, [Optional] string StockType, [Optional] string InvDescription)
         {
             #region Parameter List
             try
@@ -570,6 +570,7 @@ namespace Dia_CoreAPI.DataAccess
 
                 param.Add("@COGS", COGS);
                 param.Add("@StockType", StockType);
+                param.Add("@InvDescription", InvDescription);
                 param.Add("@ActionType", "insert");
                 return SaveDataInTransaction("SP_InsertSalePurTran", param);
             }

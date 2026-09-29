@@ -259,7 +259,8 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             param.Add("@Broker", brokerVal);
 
             param.Add("@Executive", model.Executive ?? "");
-            param.Add("@TermName", model.Term ?? "");
+            // MVC passes TermName (dropdown Name). Accept TermName or Term from React.
+            param.Add("@TermName", !string.IsNullOrWhiteSpace(model.TermName) ? model.TermName : (model.Term ?? ""));
             param.Add("@TermPer", model.TermPer);
             param.Add("@GrNo", model.GRNO ?? "");
             param.Add("@PAN", model.PanNO ?? "");

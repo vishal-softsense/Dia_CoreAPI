@@ -141,6 +141,20 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             if (header == null)
                 return null;
 
+            // UI Description field maps to InvDisc / invdescription in DB (same as MVC)
+            if (string.IsNullOrWhiteSpace(header.Description) && !string.IsNullOrWhiteSpace(header.InvDisc))
+                header.Description = header.InvDisc;
+            else if (string.IsNullOrWhiteSpace(header.InvDisc) && !string.IsNullOrWhiteSpace(header.Description))
+                header.InvDisc = header.Description;
+
+            // GetSalepurRecord returns CGSTAmount/SGSTAmount/IGSTAmount; DTO save uses *Amt
+            if (header.CGSTAmt == 0 && header.CGSTAmount != 0)
+                header.CGSTAmt = header.CGSTAmount;
+            if (header.SGSTAmt == 0 && header.SGSTAmount != 0)
+                header.SGSTAmt = header.SGSTAmount;
+            if (header.IGSTAmt == 0 && header.IGSTAmount != 0)
+                header.IGSTAmt = header.IGSTAmount;
+
             var itemParams = new Dictionary<string, object>
             {
                 { "@Where", $" AND InvCode = {id}" }
@@ -603,7 +617,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 cmd.Parameters.Add(new SqlParameter("@RoundAmount", Math.Round(salePur.RoundAmount, 4)));
                 cmd.Parameters.Add(new SqlParameter("@FinalAmount", Math.Round(finalMAmount, 4)));
                 cmd.Parameters.Add(new SqlParameter("@BaseRate", Math.Round(salePur.BaseRate, 4)));
-                cmd.Parameters.Add(new SqlParameter("@Disc", salePur.InvDisc ?? ""));
+                cmd.Parameters.Add(new SqlParameter("@Disc", !string.IsNullOrWhiteSpace(salePur.InvDisc) ? salePur.InvDisc : (salePur.Description ?? "")));
                 cmd.Parameters.Add(new SqlParameter("@CurCode", curCode.ToString()));
                 cmd.Parameters.Add(new SqlParameter("@Outstanding", outstanding));
                 cmd.Parameters.Add(new SqlParameter("@StockEffected", stockEffected));
@@ -621,7 +635,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 cmd.Parameters.Add(new SqlParameter("@InterestPer", salePur.InterestPer));
                 cmd.Parameters.Add(new SqlParameter("@VatPer", salePur.VatPer));
                 cmd.Parameters.Add(new SqlParameter("@VatAmount", salePur.VatAmount));
-                cmd.Parameters.Add(new SqlParameter("@invdescription", salePur.InvDisc ?? ""));
+                cmd.Parameters.Add(new SqlParameter("@invdescription", !string.IsNullOrWhiteSpace(salePur.InvDisc) ? salePur.InvDisc : (salePur.Description ?? "")));
                 cmd.Parameters.Add(new SqlParameter("@bankname", (object)0));
                 cmd.Parameters.Add(new SqlParameter("@subtype", salePur.SubType ?? ""));
                 cmd.Parameters.Add(new SqlParameter("@ShipVia", salePur.ShipVia ?? ""));
@@ -708,7 +722,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 cmd.Parameters.Add(new SqlParameter("@Tracking", salePur.Tracking ?? ""));
                 cmd.Parameters.Add(new SqlParameter("@SalesPerson", ""));
                 cmd.Parameters.Add(new SqlParameter("@Attendee", ""));
-                cmd.Parameters.Add(new SqlParameter("@disc", salePur.InvDisc ?? ""));
+                cmd.Parameters.Add(new SqlParameter("@disc", !string.IsNullOrWhiteSpace(salePur.InvDisc) ? salePur.InvDisc : (salePur.Description ?? "")));
                 cmd.Parameters.Add(new SqlParameter("@CurCode", curCode.ToString()));
                 cmd.Parameters.Add(new SqlParameter("@OutStanding", outstanding));
                 cmd.Parameters.Add(new SqlParameter("@StockEffected", stockEffected));
@@ -1015,6 +1029,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                     cmd.Parameters.Add(new SqlParameter("@PClarity", ""));
                     cmd.Parameters.Add(new SqlParameter("@COGS", 0.0f));
                     cmd.Parameters.Add(new SqlParameter("@StockType", ""));
+                    cmd.Parameters.Add(new SqlParameter("@InvDescription", ""));
                     cmd.Parameters.Add(new SqlParameter("@ActionType", "insert"));
 
                     await cmd.ExecuteNonQueryAsync();

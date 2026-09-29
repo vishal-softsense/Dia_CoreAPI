@@ -342,6 +342,16 @@ builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.FinancialTransaction.
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.FinancialTransaction.Loan.ILoanTakenRepository, Dia_CoreAPI.Repositories.Classes.FinancialTransaction.Loan.LoanTakenRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.FinancialTransaction.Loan.ILoanTakenService, Dia_CoreAPI.Services.Classes.FinancialTransaction.Loan.LoanTakenService>();
 
+// Financial Transaction - Payment & Receipt
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.FinancialTransaction.Payment.IPaymentRepository, Dia_CoreAPI.Repositories.Classes.FinancialTransaction.Payment.PaymentRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.FinancialTransaction.Payment.IPaymentService, Dia_CoreAPI.Services.Classes.FinancialTransaction.Payment.PaymentService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.FinancialTransaction.Payment.IPayWithExDiffRepository, Dia_CoreAPI.Repositories.Classes.FinancialTransaction.Payment.PayWithExDiffRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.FinancialTransaction.Payment.IPayWithExDiffService, Dia_CoreAPI.Services.Classes.FinancialTransaction.Payment.PayWithExDiffService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.FinancialTransaction.Payment.IJournalEntryRepository, Dia_CoreAPI.Repositories.Classes.FinancialTransaction.Payment.JournalEntryRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.FinancialTransaction.Payment.IJournalEntryService, Dia_CoreAPI.Services.Classes.FinancialTransaction.Payment.JournalEntryService>();
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.FinancialTransaction.Payment.IIncomeExpenseRepository, Dia_CoreAPI.Repositories.Classes.FinancialTransaction.Payment.IncomeExpenseRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.FinancialTransaction.Payment.IIncomeExpenseService, Dia_CoreAPI.Services.Classes.FinancialTransaction.Payment.IncomeExpenseService>();
+
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Payable_Receivables.IBrokerageOutstandingReportRepository, Dia_CoreAPI.Repositories.Classes.Reports.Payable_Receivables.BrokerageOutstandingReportRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Reports.Payable_Receivables.IBrokerageOutstandingReportService, Dia_CoreAPI.Services.Classes.Reports.Payable_Receivables.BrokerageOutstandingReportService>();
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Reports.Payable_Receivables.ICommissionOutstandingReportRepository, Dia_CoreAPI.Repositories.Classes.Reports.Payable_Receivables.CommissionOutstandingReportRepository>();

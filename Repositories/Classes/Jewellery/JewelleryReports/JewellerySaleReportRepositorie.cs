@@ -78,6 +78,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports
                 if (!string.IsNullOrWhiteSpace(filter.FromDate) && !string.IsNullOrWhiteSpace(filter.ToDate))
                     strWhere += " AND Date BETWEEN ''" + filter.FromDate + "'' And ''" + filter.ToDate + "''";
 
+                // MVC JewSaleReportFilter: Print Date checkbox → filter RoundDate
+                if (filter.FromRChkBox)
+                {
+                    strWhere += " AND RoundDate BETWEEN ''" + filter.RDate + "'' And ''" + filter.RToDate + "''";
+                }
+
                 if (!string.IsNullOrWhiteSpace(filter.Type))
                     strWhere += " AND invType IN (''" + filter.Type + "'')";
 

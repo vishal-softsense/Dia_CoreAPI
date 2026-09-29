@@ -228,5 +228,19 @@ namespace Dia_CoreAPI.Controllers.Parcel.Parcel_Transaction
                 return Ok(new { success = false, Data = ex.Message });
             }
         }
+
+        [HttpGet("GetMixLotNoLM")]
+        public async Task<IActionResult> GetMixLotNoLM()
+        {
+            try
+            {
+                var lotNo = await _service.GetMixLotNoLMAsync(CompanyId);
+                return Ok(new { success = true, lotNo });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { success = false, lotNo = "", Data = ex.Message });
+            }
+        }
     }
 }

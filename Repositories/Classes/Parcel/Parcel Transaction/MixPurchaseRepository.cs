@@ -2,6 +2,7 @@ using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
+using Dia_CoreAPI.Utilities;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using BasicDataDto = Dia_CoreAPI.DTOs.BasicDataDto;
@@ -199,6 +200,10 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
         {
             if (item == null) return;
 
+            // GetSalepurTran may return MemoTranCode instead of MemoTransCode (same as MixSaleReturn)
+            if (item.MemoTransCode == 0 && item.MemoTranCode != 0)
+                item.MemoTransCode = item.MemoTranCode;
+
             if (item.Weight == 0 && item.Carats != 0)
                 item.Weight = item.Carats;
 
@@ -245,6 +250,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             if (string.IsNullOrWhiteSpace(lot.Clarity) && !string.IsNullOrWhiteSpace(lot.ClarityId))
                 lot.Clarity = lot.ClarityId;
+
+            if (string.IsNullOrWhiteSpace(lot.Size) && !string.IsNullOrWhiteSpace(lot.SizeId))
+                lot.Size = lot.SizeId;
+
+            if (string.IsNullOrWhiteSpace(lot.Sieve) && !string.IsNullOrWhiteSpace(lot.SieveId))
+                lot.Sieve = lot.SieveId;
         }
 
         public async Task<List<MixConsignmentRowDto>> GetConsignmentAsync(string? partyCode, string? memoNo, string companyId)
@@ -332,6 +343,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 RtnCarats = returnCarats,
                 ReturnCarats = returnCarats,
                 StockType = string.IsNullOrWhiteSpace(item.StockType) ? "Diamond" : item.StockType,
+                InvDescription = item.InvDescription,
                 SuppLotNo = item.SuppLotNo,
                 AskingRate = item.AskingRate,
                 ActualRate = item.ActualRate,
@@ -743,45 +755,157 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             string sql = $"EXEC GetMixSalepurRecordWithDetailsForINV @Where = '{where}'";
 
-            var rows = (await _sqlDataAccess.SelectRawSql<PrintInvRow>(sql, companyId)).ToList();
+            var rows = (await _sqlDataAccess.SelectDataAdoDynamic(sql, companyId)).ToList();
             if (rows.Count == 0 && int.TryParse(invNo, out _))
             {
-                // Fallback: treat value as InvNo when Code lookup returns nothing
                 where = $"tsp.TrnType = ''CPUR'' AND tsp.InvNo = ''{invNo}''";
                 sql = $"EXEC GetMixSalepurRecordWithDetailsForINV @Where = '{where}'";
-                rows = (await _sqlDataAccess.SelectRawSql<PrintInvRow>(sql, companyId)).ToList();
+                rows = (await _sqlDataAccess.SelectDataAdoDynamic(sql, companyId)).ToList();
             }
             if (rows.Count == 0)
                 return null;
 
-            var header = rows[0];
+            if (rows[0] is not IDictionary<string, object> header)
+                return null;
+
+            var (stockSymbol, masterSymbol, sCurId) = await ResolvePrintSymbolsAsync(companyId);
+            var (currency, useStockAmount) = ResolvePrintCurrency(header, stockSymbol, masterSymbol, sCurId);
+
+            DateTime? trnDate = GetPrintDictDate(header, "TrnDate");
+            DateTime? dueDate = GetPrintDictDate(header, "DueDate");
+
             var result = new MixPurchasePrintViewDto
             {
-                InvNo = header.InvNo,
-                BillNo = header.BillNo,
-                TrnDate = header.TrnDate.HasValue ? header.TrnDate.Value.ToString("MM/dd/yyyy") : null,
-                DueDays = header.DueDays,
-                PartyName = header.PartyName,
-                AddressLine1 = header.AddressLine1,
-                AddressLine2 = header.AddressLine2,
-                AddressLine3 = header.AddressLine3,
+                InvNo = GetPrintDictString(header, "InvNo"),
+                BillNo = GetPrintDictString(header, "BillNo"),
+                TrnDate = trnDate?.ToString("MM/dd/yyyy"),
+                DueDays = short.TryParse(GetPrintDictString(header, "DueDays"), out var dd) ? dd : (short)0,
+                DueDate = dueDate?.ToString("MM/dd/yyyy"),
+                Currency = currency,
+                StockSymbol = stockSymbol,
+                MasterSymbol = masterSymbol,
+                PartyName = GetPrintDictString(header, "PartyName"),
+                AddressLine1 = GetPrintDictString(header, "AddressLine1"),
+                AddressLine2 = GetPrintDictString(header, "AddressLine2"),
+                AddressLine3 = GetPrintDictString(header, "AddressLine3"),
                 Items = new List<MixPurchasePrintItemDto>()
             };
 
-            foreach (var dr in rows)
+            foreach (var rowObj in rows)
             {
+                if (rowObj is not IDictionary<string, object> row)
+                    continue;
+
+                // MVC MixPurPrintInv: stock → Amount; master → MasterCurrencyAmount
+                double stockAmt = GetPrintDictDouble(row, "Amount", "StockCurrencyAmount");
+                double masterAmt = GetPrintDictDouble(row, "MasterCurrencyAmount");
+                double amount = useStockAmount ? stockAmt : masterAmt;
+
                 result.Items.Add(new MixPurchasePrintItemDto
                 {
-                    StockNo = dr.LotNo,
-                    Description = dr.ItemName,
-                    Qty = dr.Pcs,
-                    Weight = dr.Carats,
-                    PricePerCarat = dr.Rate,
-                    Amount = dr.MasterCurrencyAmount
+                    StockNo = GetPrintDictString(row, "lotno", "LotNo", "Lotno"),
+                    Description = GetPrintDictString(row, "ItemName"),
+                    Qty = (int)GetPrintDictDouble(row, "Pcs"),
+                    Weight = GetPrintDictDouble(row, "Carats"),
+                    PricePerCarat = GetPrintDictDouble(row, "Rate"),
+                    Amount = amount
                 });
             }
 
             return result;
+        }
+
+        private async Task<(string stockSymbol, string masterSymbol, float sCurId)> ResolvePrintSymbolsAsync(string companyId)
+        {
+            var stockSymbol = await _sqlDataAccess.ExecuteQuerySingle<string>(
+                "SELECT Value FROM TabSettingMaster WHERE Name = 'SSymbol'",
+                new { },
+                companyId) ?? "USD";
+            var masterSymbol = await _sqlDataAccess.ExecuteQuerySingle<string>(
+                "SELECT Value FROM TabSettingMaster WHERE Name = 'MSymbol'",
+                new { },
+                companyId) ?? "INR";
+
+            // MVC SqlDataAccess.GetSCurID → EXEC GetCurrencyDetail @Type='SCurID'
+            var sCurParam = new Dictionary<string, object> { { "@Type", "SCurID" }, { "@Where", "" } };
+            var sCurIdText = await _sqlDataAccess.SelectDataFromSPSingle<string>("GetCurrencyDetail", sCurParam, companyId);
+            float.TryParse(sCurIdText, out var sCurId);
+            return (stockSymbol, masterSymbol, sCurId);
+        }
+
+        private static (string currency, bool useStockAmount) ResolvePrintCurrency(
+            IDictionary<string, object> header,
+            string stockSymbol,
+            string masterSymbol,
+            float sCurId)
+        {
+            string? entrySymbol = GetPrintDictString(header, "Symbol");
+            if (string.IsNullOrWhiteSpace(entrySymbol))
+            {
+                var curCodeText = GetPrintDictString(header, "CurCode");
+                if (float.TryParse(curCodeText, System.Globalization.NumberStyles.Any,
+                        System.Globalization.CultureInfo.InvariantCulture, out var curCode))
+                {
+                    entrySymbol = Math.Abs(curCode - sCurId) < 0.0001f ? stockSymbol : masterSymbol;
+                }
+            }
+
+            string currency =
+                string.Equals(entrySymbol, stockSymbol, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entrySymbol, "USD", StringComparison.OrdinalIgnoreCase)
+                    ? stockSymbol
+                    : masterSymbol;
+
+            bool useStockAmount =
+                string.Equals(currency, stockSymbol, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(currency, "USD", StringComparison.OrdinalIgnoreCase);
+
+            return (currency, useStockAmount);
+        }
+
+        private static string? GetPrintDictString(IDictionary<string, object> row, params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                foreach (var kvp in row)
+                {
+                    if (!string.Equals(kvp.Key, key, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    if (kvp.Value == null || kvp.Value == DBNull.Value)
+                        continue;
+                    var text = Convert.ToString(kvp.Value)?.Trim();
+                    if (!string.IsNullOrEmpty(text))
+                        return text;
+                }
+            }
+            return null;
+        }
+
+        private static double GetPrintDictDouble(IDictionary<string, object> row, params string[] keys)
+        {
+            var text = GetPrintDictString(row, keys);
+            if (string.IsNullOrWhiteSpace(text))
+                return 0;
+            return double.TryParse(text, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out var n) ? n : 0;
+        }
+
+        private static DateTime? GetPrintDictDate(IDictionary<string, object> row, params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                foreach (var kvp in row)
+                {
+                    if (!string.Equals(kvp.Key, key, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    if (kvp.Value is DateTime dt)
+                        return dt;
+                    if (kvp.Value != null && kvp.Value != DBNull.Value
+                        && DateTime.TryParse(Convert.ToString(kvp.Value), out var parsed))
+                        return parsed;
+                }
+            }
+            return null;
         }
 
         public async Task<MixPurchaseStatusDto?> GetCurrentStatusAsync(string invNo, string companyId)
@@ -1299,6 +1423,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     cmd.Parameters.Add(new SqlParameter("@PClarity", pClarity));
                     cmd.Parameters.Add(new SqlParameter("@COGS", 0.0f));
                     cmd.Parameters.Add(new SqlParameter("@StockType", im.StockType ?? "Diamond"));
+                    cmd.Parameters.Add(new SqlParameter("@InvDescription", im.InvDescription ?? ""));
                     cmd.Parameters.Add(new SqlParameter("@ActionType", "insert"));
 
                     await cmd.ExecuteNonQueryAsync();
@@ -1313,7 +1438,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                         cmd.Parameters.Add(new SqlParameter("@RtnDate", salePur.TrnDate));
                         cmd.Parameters.Add(new SqlParameter("@rtncts", float.Parse(rtnCarats.ToString("N3"))));
                         cmd.Parameters.Add(new SqlParameter("@spcts", float.Parse(im.Weight.ToString("N3"))));
-                        cmd.Parameters.Add(new SqlParameter("@Actiontype", "contopurtest"));
+                        cmd.Parameters.Add(new SqlParameter("@Actiontype", "contopur"));
                         await cmd.ExecuteNonQueryAsync();
                     }
                 }
@@ -1740,16 +1865,21 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             public string? InvNo { get; set; }
             public string? BillNo { get; set; }
             public DateTime? TrnDate { get; set; }
+            public DateTime? DueDate { get; set; }
             public short DueDays { get; set; }
             public string? PartyName { get; set; }
             public string? AddressLine1 { get; set; }
             public string? AddressLine2 { get; set; }
             public string? AddressLine3 { get; set; }
+            public string? Symbol { get; set; }
+            public float? CurCode { get; set; }
             public string? LotNo { get; set; }
             public string? ItemName { get; set; }
             public int Pcs { get; set; }
             public double Carats { get; set; }
             public double Rate { get; set; }
+            public double Amount { get; set; }
+            public double StockCurrencyAmount { get; set; }
             public double MasterCurrencyAmount { get; set; }
         }
 
@@ -1795,6 +1925,39 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 var text = r.TextName ?? r.ItemName ?? r.Name ?? r.LotNo ?? lotNo;
                 return (object)new { id = lotNo, text };
             }).ToList();
+        }
+
+        public async Task<string> GetMixLotNoDIAsync(string companyId)
+        {
+            var rows = (await _sqlDataAccess.SelectDataFromSP<MixLotNoRow>(
+                "GetLatestLotNoDI",
+                new Dictionary<string, object>(),
+                companyId)).ToList();
+
+            var latest = MixLotNoHelper.ReadLatestLotNoFromRow(rows.FirstOrDefault());
+
+            if (string.IsNullOrWhiteSpace(latest))
+            {
+                var dynRows = await _sqlDataAccess.SelectDataAdoDynamic("EXEC [GetLatestLotNoDI]", companyId);
+                latest = MixLotNoHelper.ReadLatestLotNo(dynRows);
+            }
+
+            return await MixLotNoHelper.GetNextAvailableLotNoAsync(
+                latest,
+                "DI000",
+                lotNo => CheckParcelLotExistsAsync(lotNo, companyId));
+        }
+
+        private async Task<bool> CheckParcelLotExistsAsync(string lotNo, string companyId)
+        {
+            var param = new Dictionary<string, object>
+            {
+                { "@Type", "LotExist" },
+                { "@Where", $" AND LotNo = '{lotNo.Replace("'", "''")}'" }
+            };
+
+            var result = await _sqlDataAccess.SelectDataFromSPSingle<string>("GetAllCommonData", param, companyId);
+            return result != "0" && !string.IsNullOrEmpty(result);
         }
 
         private class MixLotDropdownRow

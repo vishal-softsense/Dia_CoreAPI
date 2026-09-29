@@ -1,4 +1,4 @@
-﻿using Dia_CoreAPI.DataAccess;
+using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
@@ -129,7 +129,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
                     if (string.Equals(stockType, "Diamond", StringComparison.OrdinalIgnoreCase))
                     {
-                        // ExecuteCommonDataScalarAsync converts '' → ' for SP params (same as MixMemoOut)
+                        // ExecuteCommonDataScalarAsync converts '' ? ' for SP params (same as MixMemoOut)
                         string itemCodeStr = await ExecuteCommonDataScalarAsync(
                             conn, trans, "ItemCode", $" AND LotNo = ''{lotKey}''");
                         maxItemCode = int.TryParse(itemCodeStr, out var ic) ? ic : 0;
@@ -163,7 +163,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     var amtRes = GetConvertAmount(im.CurCode, amount, mCurBaseRate, mCurOperator, sCurBaseRate, sCurOperator, mCurCode, sCurCode);
 
                     // Match MVC InsertSalePurTran(..., InvCode:0, RoughCode:MaxInvNo, ...)
-                    // Cast int 0 as (object) so SqlParameter(string, object) is used — not SqlParameter(string, SqlDbType).
+                    // Cast int 0 as (object) so SqlParameter(string, object) is used ? not SqlParameter(string, SqlDbType).
                     using (var cmd = new SqlCommand("SP_InsertSalePurTran", conn, trans))
                     {
                         cmd.CommandType = CommandType.StoredProcedure;
@@ -212,6 +212,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                         cmd.Parameters.Add(new SqlParameter("@PClarity", ""));
                         cmd.Parameters.Add(new SqlParameter("@COGS", 0f));
                         cmd.Parameters.Add(new SqlParameter("@StockType", stockType));
+                        cmd.Parameters.Add(new SqlParameter("@InvDescription", ""));
                         cmd.Parameters.Add(new SqlParameter("@ActionType", "insert"));
                         await cmd.ExecuteNonQueryAsync();
                     }

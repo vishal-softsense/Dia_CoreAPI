@@ -234,5 +234,42 @@ namespace Dia_CoreAPI.Controllers.Solitaires.Solitaires_Transaction
                 return Ok(new { success = false, Data = ex.Message });
             }
         }
+
+        /// <summary>MVC MasterProcessor.GetRapRate — fills MRP when Excel MRP is 0/blank.</summary>
+        [HttpPost("get-rap-rate")]
+        public async Task<IActionResult> GetRapRate([FromBody] SolitairePurchaseRapRateBatchRequest? batch)
+        {
+            try
+            {
+                var items = batch?.Items;
+                if (items == null || items.Count == 0)
+                    return Ok(new { success = false, Data = "Shape/Color/Clarity/Carat required." });
+
+                var results = new System.Collections.Generic.List<SolitairePurchaseRapRateResponse>();
+                foreach (var item in items)
+                {
+                    var mrp = await _service.GetRapRateAsync(
+                        item?.Shape ?? "",
+                        item?.Color ?? "",
+                        item?.Clarity ?? "",
+                        item?.Carat ?? 0,
+                        CompanyId);
+                    results.Add(new SolitairePurchaseRapRateResponse
+                    {
+                        Shape = item?.Shape,
+                        Color = item?.Color,
+                        Clarity = item?.Clarity,
+                        Carat = item?.Carat ?? 0,
+                        MRP = mrp
+                    });
+                }
+
+                return Ok(new { success = true, Data = results });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { success = false, Data = ex.Message });
+            }
+        }
     }
 }

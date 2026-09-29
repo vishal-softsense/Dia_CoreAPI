@@ -95,6 +95,12 @@ namespace Dia_CoreAPI.Services.Classes.Parcel.Parcel_Reports
                     }
                 }
 
+                // MVC MixMemoReportFilter: Print Date checkbox → filter RoundDate
+                if (filter.FromRChkBox)
+                {
+                    sb.Append($" AND tm.RoundDate BETWEEN ''{filter.RDate}'' And ''{filter.RToDate}''");
+                }
+
                 if (!string.IsNullOrWhiteSpace(filter.Currency))
                     sb.Append($" AND tm.CurCode IN (''{filter.Currency}'')");
 
@@ -109,6 +115,9 @@ namespace Dia_CoreAPI.Services.Classes.Parcel.Parcel_Reports
 
                 if (!string.IsNullOrWhiteSpace(filter.Broker))
                     sb.Append($" AND tbroker.AccGrpname IN (''{filter.Broker}'')");
+
+                if (!string.IsNullOrWhiteSpace(filter.Tracking))
+                    sb.Append($" AND tm.Tracking IN (''{filter.Tracking}'')");
 
                 if (!string.IsNullOrWhiteSpace(filter.LotNo))
                 {

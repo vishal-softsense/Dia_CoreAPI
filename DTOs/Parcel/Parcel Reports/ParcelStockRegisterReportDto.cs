@@ -85,6 +85,9 @@ namespace Dia_CoreAPI.DTOs
         public decimal BalanceStock { get; set; }
         public decimal BalancePrice { get; set; }
         public decimal BalanceAmount { get; set; }
+
+        /// <summary>MVC Invno — invoice/memo number from SP_StockRegisterReport.</summary>
+        public int Invno { get; set; }
     }
 
     /// <summary>Response shape expected by ParcelStockRegisterReport.js (mirrors Solitaire Stock History).</summary>
@@ -92,6 +95,8 @@ namespace Dia_CoreAPI.DTOs
     {
         public string TrnDate { get; set; }
         public string Trntype { get; set; }
+        /// <summary>MVC Invno — displayed as InvNo column.</summary>
+        public int Invno { get; set; }
         public string Perticulors { get; set; }
         public string LotNo { get; set; }
 

@@ -2,6 +2,7 @@ using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
+using Dia_CoreAPI.Utilities;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using BasicDataDto = Dia_CoreAPI.DTOs.BasicDataDto;
@@ -156,6 +157,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             if (header == null)
                 return null;
 
+            NormalizeHeader(header);
+
             var itemParams = new Dictionary<string, object>
             {
                 { "@Where", $" AND InvCode = {id}" }
@@ -174,6 +177,27 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 Header = header,
                 Items = items
             };
+        }
+
+        /// <summary>
+        /// GetSalepurRecord returns CGSTAmount/SGSTAmount/IGSTAmount (MVC aliases AS CGSTAmt).
+        /// Description on the form is InvDisc (MVC Edit #InvDisc). Align both for API/UI.
+        /// </summary>
+        private static void NormalizeHeader(MixConsignmentHeaderDto header)
+        {
+            if (header == null) return;
+
+            if (header.CGSTAmt == 0 && header.CGSTAmount != 0)
+                header.CGSTAmt = header.CGSTAmount;
+            if (header.SGSTAmt == 0 && header.SGSTAmount != 0)
+                header.SGSTAmt = header.SGSTAmount;
+            if (header.IGSTAmt == 0 && header.IGSTAmount != 0)
+                header.IGSTAmt = header.IGSTAmount;
+
+            if (string.IsNullOrWhiteSpace(header.Description) && !string.IsNullOrWhiteSpace(header.InvDisc))
+                header.Description = header.InvDisc;
+            else if (string.IsNullOrWhiteSpace(header.InvDisc) && !string.IsNullOrWhiteSpace(header.Description))
+                header.InvDisc = header.Description;
         }
 
         public async Task<List<MixConsignmentLotDetailDto>> GetLotDetailAsync(string lotNo, string companyId)
@@ -245,6 +269,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             if (string.IsNullOrWhiteSpace(lot.Clarity) && !string.IsNullOrWhiteSpace(lot.ClarityId))
                 lot.Clarity = lot.ClarityId;
+
+            if (string.IsNullOrWhiteSpace(lot.Size) && !string.IsNullOrWhiteSpace(lot.SizeId))
+                lot.Size = lot.SizeId;
+
+            if (string.IsNullOrWhiteSpace(lot.Sieve) && !string.IsNullOrWhiteSpace(lot.SieveId))
+                lot.Sieve = lot.SieveId;
         }
 
         public async Task<MixConsignmentGridViewDto> AddItemInGridAsync(
@@ -320,6 +350,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 RtnCarats = returnCarats,
                 ReturnCarats = returnCarats,
                 StockType = string.IsNullOrWhiteSpace(item.StockType) ? "Diamond" : item.StockType,
+                InvDescription = item.InvDescription,
                 SuppLotNo = item.SuppLotNo,
                 AskingRate = item.AskingRate,
                 ActualRate = item.ActualRate,
@@ -372,6 +403,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             string userId,
             string companyId)
         {
+            NormalizeHeader(salePur);
+
             string connectionString = await _sqlDataAccess.GetClientConnectionString(companyId);
             using (var conn = new SqlConnection(connectionString))
             {
@@ -452,6 +485,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             string userId,
             string companyId)
         {
+            NormalizeHeader(salePur);
+
             string connectionString = await _sqlDataAccess.GetClientConnectionString(companyId);
             using (var conn = new SqlConnection(connectionString))
             {
@@ -1270,6 +1305,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     cmd.Parameters.Add(new SqlParameter("@PClarity", pClarity));
                     cmd.Parameters.Add(new SqlParameter("@COGS", 0.0f));
                     cmd.Parameters.Add(new SqlParameter("@StockType", im.StockType ?? "Diamond"));
+                    cmd.Parameters.Add(new SqlParameter("@InvDescription", im.InvDescription ?? ""));
                     cmd.Parameters.Add(new SqlParameter("@ActionType", "insert"));
 
                     await cmd.ExecuteNonQueryAsync();
@@ -1788,6 +1824,39 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 var text = r.TextName ?? r.ItemName ?? r.Name ?? r.LotNo ?? lotNo;
                 return (object)new { id = lotNo, text };
             }).ToList();
+        }
+
+        public async Task<string> GetMixLotNoLMAsync(string companyId)
+        {
+            var rows = (await _sqlDataAccess.SelectDataFromSP<MixLotNoRow>(
+                "GetLatestLotNo",
+                new Dictionary<string, object>(),
+                companyId)).ToList();
+
+            var latest = MixLotNoHelper.ReadLatestLotNoFromRow(rows.FirstOrDefault());
+
+            if (string.IsNullOrWhiteSpace(latest))
+            {
+                var dynRows = await _sqlDataAccess.SelectDataAdoDynamic("EXEC [GetLatestLotNo]", companyId);
+                latest = MixLotNoHelper.ReadLatestLotNo(dynRows);
+            }
+
+            return await MixLotNoHelper.GetNextAvailableLotNoAsync(
+                latest,
+                "LM000",
+                lotNo => CheckParcelLotExistsAsync(lotNo, companyId));
+        }
+
+        private async Task<bool> CheckParcelLotExistsAsync(string lotNo, string companyId)
+        {
+            var param = new Dictionary<string, object>
+            {
+                { "@Type", "LotExist" },
+                { "@Where", $" AND LotNo = '{lotNo.Replace("'", "''")}'" }
+            };
+
+            var result = await _sqlDataAccess.SelectDataFromSPSingle<string>("GetAllCommonData", param, companyId);
+            return result != "0" && !string.IsNullOrEmpty(result);
         }
 
         private class MixLotDropdownRow

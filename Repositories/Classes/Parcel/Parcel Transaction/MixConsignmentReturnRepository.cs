@@ -224,6 +224,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                         cmd.Parameters.Add(new SqlParameter("@PClarity", ""));
                         cmd.Parameters.Add(new SqlParameter("@COGS", 0f));
                         cmd.Parameters.Add(new SqlParameter("@StockType", im.StockType ?? "Diamond"));
+                        cmd.Parameters.Add(new SqlParameter("@InvDescription", ""));
                         cmd.Parameters.Add(new SqlParameter("@ActionType", "insert"));
                         await cmd.ExecuteNonQueryAsync();
                     }

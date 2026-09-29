@@ -136,6 +136,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public float Amount { get; set; }
         public string? ExportNo { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
         public float MemoTransCode { get; set; }
     }
 
@@ -174,6 +175,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? Sieve { get; set; }
         public string? SieveId { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
     }
 
     public class MixPurchaseReturnLotRequest
@@ -212,6 +214,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? ExportNo { get; set; }
         public float MemoTransCode { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
         public int editIndex { get; set; } = -1;
         public List<MixPurchaseReturnItemDto> Items { get; set; } = new();
     }

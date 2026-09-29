@@ -84,10 +84,16 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public float VatAmount { get; set; }
         public float CGSTPer { get; set; }
         public float CGSTAmt { get; set; }
+        /// <summary>DB/SP column from GetSalepurRecord (maps to CGSTAmt). MVC aliases CGSTAmount AS CGSTAmt.</summary>
+        public float CGSTAmount { get; set; }
         public float SGSTPer { get; set; }
         public float SGSTAmt { get; set; }
+        /// <summary>DB/SP column from GetSalepurRecord (maps to SGSTAmt).</summary>
+        public float SGSTAmount { get; set; }
         public float IGSTPer { get; set; }
         public float IGSTAmt { get; set; }
+        /// <summary>DB/SP column from GetSalepurRecord (maps to IGSTAmt).</summary>
+        public float IGSTAmount { get; set; }
         public string? Term { get; set; }
         public long ExpPartyCode { get; set; }
         public float InterestPer { get; set; }
@@ -125,6 +131,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public float IssueCarats { get; set; }
         public int Pcs { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
         public string? SuppLotNo { get; set; }
         public string? GroupId { get; set; }
         public string? StoneType { get; set; }
@@ -251,9 +258,11 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? Clarity { get; set; }
         public string? ClarityId { get; set; }
         public string? Size { get; set; }
+        public string? SizeId { get; set; }
         public string? Sieve { get; set; }
         public string? SieveId { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
         public string? Polish { get; set; }
         public string? Symmetry { get; set; }
         public string? FL { get; set; }
@@ -325,6 +334,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public float MemoTransCode { get; set; }
         public float RtnCarats { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
         public string? SuppLotNo { get; set; }
         public float AskingRate { get; set; }
         public float ActualRate { get; set; }

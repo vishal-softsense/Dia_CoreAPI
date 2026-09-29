@@ -218,20 +218,39 @@ namespace Dia_CoreAPI.DTOs.Jewellery.JewelleryTransaction
         public string? Description { get; set; }
         public int Qty { get; set; }
         public double Weight { get; set; }
+        public double? GrossWeight { get; set; }
+        public double? NetWeight { get; set; }
         public double PricePerCarat { get; set; }
+        public double FinalJewAmount { get; set; }
         public double Amount { get; set; }
+        public string? ImagePath { get; set; }
     }
 
     public class JewelleryPurchasePrintViewDto
     {
         public string? TrnDate { get; set; }
+        public string? RoundDate { get; set; }
         public string? BillNo { get; set; }
         public string? InvNo { get; set; }
         public short DueDays { get; set; }
+        public string? DueDate { get; set; }
+        public string? Currency { get; set; }
+        public string? StockSymbol { get; set; }
+        public string? MasterSymbol { get; set; }
         public string? PartyName { get; set; }
         public string? AddressLine1 { get; set; }
         public string? AddressLine2 { get; set; }
         public string? AddressLine3 { get; set; }
+        public string? SalesPerson { get; set; }
+        public string? ContactPerson { get; set; }
+        public string? ShipVia { get; set; }
+        public string? Tracking { get; set; }
+        public string? bnm { get; set; }
+        public string? BankAccNo { get; set; }
+        public string? ABARoutingNumber { get; set; }
+        public string? SwiftCode { get; set; }
+        public string? ZelleID { get; set; }
+        public string? IbanNo { get; set; }
         public List<JewelleryPurchasePrintItemDto> Items { get; set; } = new();
     }
 

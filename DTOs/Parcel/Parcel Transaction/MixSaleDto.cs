@@ -131,6 +131,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public float IssueCarats { get; set; }
         public int Pcs { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
         public string? SuppLotNo { get; set; }
         public string? GroupId { get; set; }
         public string? StoneType { get; set; }
@@ -211,6 +212,8 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public double Less3 { get; set; }
         public bool Chk { get; set; }
         public float MemoTransCode { get; set; }
+        /// <summary>SP GetSalepurTran often returns MemoTranCode (no 's'); mapped then copied to MemoTransCode.</summary>
+        public float MemoTranCode { get; set; }
         public float RtnCarats { get; set; }
         public float ReturnCarats { get; set; }
         public string? ImagePath { get; set; }
@@ -219,6 +222,8 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? CountryOfOrigin { get; set; }
         public string? CountryOfMfg { get; set; }
         public string? Status { get; set; }
+        /// <summary>SP GetSalepurTran column for memo/consignment row status (e.g. Purchase, Sale-rtn).</summary>
+        public string? SRtnStatus { get; set; }
     }
 
     public class MixSaleSaveRequest
@@ -259,6 +264,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? Sieve { get; set; }
         public string? SieveId { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
         public string? Polish { get; set; }
         public string? Symmetry { get; set; }
         public string? FL { get; set; }
@@ -332,6 +338,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public float MemoTransCode { get; set; }
         public float RtnCarats { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
         public string? SuppLotNo { get; set; }
         public float AskingRate { get; set; }
         public float ActualRate { get; set; }
@@ -354,17 +361,29 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
 
     public class MixSalePrintItemDto
     {
+        public string? MemoNo { get; set; }
+        public string? Lotno { get; set; }
         public string? StockNo { get; set; }
+        public string? ItemName { get; set; }
         public string? Description { get; set; }
+        public int Pcs { get; set; }
         public int Qty { get; set; }
+        public double Carats { get; set; }
         public double Weight { get; set; }
+        public double? TotalDiamondCarat { get; set; }
+        public double Rate { get; set; }
         public double PricePerCarat { get; set; }
+        public double MasterCurrencyAmount { get; set; }
         public double Amount { get; set; }
+        public string? StockType { get; set; }
+        public byte[]? ImageFullPath { get; set; }
+        public string? ImagePath { get; set; }
     }
 
     public class MixSalePrintViewDto
     {
         public string? TrnDate { get; set; }
+        public string? RoundDate { get; set; }
         public string? BillNo { get; set; }
         public string? InvNo { get; set; }
         public short DueDays { get; set; }
@@ -372,6 +391,17 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? AddressLine1 { get; set; }
         public string? AddressLine2 { get; set; }
         public string? AddressLine3 { get; set; }
+        public string? InvDisc { get; set; }
+        public string? SalesPersons { get; set; }
+        public string? ShipVia { get; set; }
+        public string? Tracking { get; set; }
+        public double FinalAmount { get; set; }
+        public string? bnm { get; set; }
+        public string? BankAccNo { get; set; }
+        public string? ABARoutingNumber { get; set; }
+        public string? SwiftCode { get; set; }
+        public string? ZelleID { get; set; }
+        public string? InvFeesDescription { get; set; }
         public List<MixSalePrintItemDto> Items { get; set; } = new();
     }
 

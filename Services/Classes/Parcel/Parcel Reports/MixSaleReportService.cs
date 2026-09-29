@@ -67,6 +67,12 @@ namespace Dia_CoreAPI.Services.Classes.Parcel.Parcel_Reports
                     sb.Append($" AND Date BETWEEN ''{filter.FromDate.Value:yyyy-MM-dd}'' And ''{filter.ToDate.Value:yyyy-MM-dd}''");
                 }
 
+                // MVC GeneralSaleReportFilter: Print Date checkbox → filter RoundDate
+                if (filter.FromRChkBox)
+                {
+                    sb.Append($" AND VER.RoundDate BETWEEN ''{filter.RDate}'' And ''{filter.RToDate}''");
+                }
+
                 if (!string.IsNullOrWhiteSpace(filter.Currency))
                     sb.Append($" AND VER.CurCode IN (''{filter.Currency}'')");
 

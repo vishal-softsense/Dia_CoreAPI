@@ -160,6 +160,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 Item = GetString(row, "Item", "item"),
                 ItemName = GetString(row, "ItemName", "itemName"),
                 Carats = GetDouble(row, "Carats", "carats"),
+                ReturnCarats = GetDouble(row, "ReturnCarats", "returnCarats", "RtnCarats", "rtnCarats"),
                 MRP = GetDouble(row, "MRP", "mrp"),
                 Rate = GetDouble(row, "Rate", "rate"),
                 Discount = GetDouble(row, "Discount", "discount"),

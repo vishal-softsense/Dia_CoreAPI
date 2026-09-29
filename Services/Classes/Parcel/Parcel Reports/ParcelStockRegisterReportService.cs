@@ -80,6 +80,7 @@ namespace Dia_CoreAPI.Services
             {
                 TrnDate = row.TrnDate,
                 Trntype = row.TrnType,
+                Invno = row.Invno,
                 Perticulors = row.Particulars,
                 LotNo = row.StockID,
                 InCts = row.StockIn,

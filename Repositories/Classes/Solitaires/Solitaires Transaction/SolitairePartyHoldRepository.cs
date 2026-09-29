@@ -955,6 +955,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 cmd.Parameters.Add(new SqlParameter("@PClarity", ""));
                 cmd.Parameters.Add(new SqlParameter("@COGS", 0.0f));
                 cmd.Parameters.Add(new SqlParameter("@StockType", ""));
+                cmd.Parameters.Add(new SqlParameter("@InvDescription", ""));
                 cmd.Parameters.Add(new SqlParameter("@ActionType", "insert"));
                 await cmd.ExecuteNonQueryAsync();
             }

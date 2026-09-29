@@ -4,6 +4,7 @@ using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using System.Globalization;
 using BasicDataDto = Dia_CoreAPI.DTOs.BasicDataDto;
 using StockBasic = Dia_CoreAPI.DTOs.StockAccount.BasicDataDto;
 
@@ -200,6 +201,14 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
         {
             if (item == null) return;
 
+            if (item.MemoTransCode == 0 && item.MemoTranCode != 0)
+                item.MemoTransCode = item.MemoTranCode;
+
+            if (string.IsNullOrWhiteSpace(item.SRtnStatus) && !string.IsNullOrWhiteSpace(item.Status))
+                item.SRtnStatus = item.Status;
+            else if (string.IsNullOrWhiteSpace(item.Status) && !string.IsNullOrWhiteSpace(item.SRtnStatus))
+                item.Status = item.SRtnStatus;
+
             if (item.Weight == 0 && item.Carats != 0)
                 item.Weight = item.Carats;
 
@@ -333,6 +342,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 RtnCarats = returnCarats,
                 ReturnCarats = returnCarats,
                 StockType = string.IsNullOrWhiteSpace(item.StockType) ? "Diamond" : item.StockType,
+                InvDescription = item.InvDescription,
                 SuppLotNo = item.SuppLotNo,
                 AskingRate = item.AskingRate,
                 ActualRate = item.ActualRate,
@@ -735,54 +745,291 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
         public async Task<MixSalePrintViewDto?> GetPrintViewAsync(string invNo, string companyId)
         {
-            // Prefer Code lookup (MVC MixSale/MixSalePrintInv?ID=code); also allow InvNo
+            var escapedInvNo = (invNo ?? "").Replace("'", "''");
             string where;
             if (int.TryParse(invNo, out var codeId))
                 where = $"tsp.TrnType = ''CSALE'' AND tsp.Code = {codeId}";
             else
-                where = $"tsp.TrnType = ''CSALE'' AND tsp.InvNo = ''{invNo}''";
+                where = $"tsp.TrnType = ''CSALE'' AND tsp.InvNo = ''{escapedInvNo}''";
 
             string sql = $"EXEC GetMixSalepurRecordWithDetailsForINV @Where = '{where}'";
 
-            var rows = (await _sqlDataAccess.SelectRawSql<PrintInvRow>(sql, companyId)).ToList();
+            var rows = (await _sqlDataAccess.SelectDataAdoDynamic(sql, companyId)).ToList();
             if (rows.Count == 0 && int.TryParse(invNo, out _))
             {
-                // Fallback: treat value as InvNo when Code lookup returns nothing
-                where = $"tsp.TrnType = ''CSALE'' AND tsp.InvNo = ''{invNo}''";
+                where = $"tsp.TrnType = ''CSALE'' AND tsp.InvNo = ''{escapedInvNo}''";
                 sql = $"EXEC GetMixSalepurRecordWithDetailsForINV @Where = '{where}'";
-                rows = (await _sqlDataAccess.SelectRawSql<PrintInvRow>(sql, companyId)).ToList();
+                rows = (await _sqlDataAccess.SelectDataAdoDynamic(sql, companyId)).ToList();
             }
             if (rows.Count == 0)
                 return null;
 
-            var header = rows[0];
+            if (rows[0] is not IDictionary<string, object> header)
+                return null;
+
+            var trnDate = GetPrintDateTime(header, "TrnDate");
+            var roundDate = GetPrintDateTime(header, "RoundDate");
+
             var result = new MixSalePrintViewDto
             {
-                InvNo = header.InvNo,
-                BillNo = header.BillNo,
-                TrnDate = header.TrnDate.HasValue ? header.TrnDate.Value.ToString("MM/dd/yyyy") : null,
-                DueDays = header.DueDays,
-                PartyName = header.PartyName,
-                AddressLine1 = header.AddressLine1,
-                AddressLine2 = header.AddressLine2,
-                AddressLine3 = header.AddressLine3,
+                InvNo = GetPrintString(header, "InvNo"),
+                BillNo = GetPrintString(header, "BillNo"),
+                TrnDate = trnDate?.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture),
+                RoundDate = roundDate?.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture),
+                PartyName = GetPrintString(header, "PartyName"),
+                AddressLine1 = GetPrintString(header, "AddressLine1"),
+                AddressLine2 = GetPrintString(header, "AddressLine2"),
+                AddressLine3 = GetPrintString(header, "AddressLine3"),
+                InvDisc = GetPrintString(header, "InvDisc"),
+                SalesPersons = GetPrintString(header, "SalesPersons", "SalesPerson"),
+                ShipVia = GetPrintString(header, "ShipVia"),
+                Tracking = GetPrintString(header, "Tracking"),
+                FinalAmount = GetPrintDouble(header, "FinalAmount"),
+                bnm = GetPrintString(header, "bnm"),
+                BankAccNo = GetPrintString(header, "BankAccNo"),
+                ABARoutingNumber = GetPrintString(header, "ABARoutingNumber"),
+                SwiftCode = GetPrintString(header, "SwiftCode"),
+                ZelleID = GetPrintString(header, "ZelleID"),
+                InvFeesDescription = GetPrintString(header, "InvFeesDescription"),
                 Items = new List<MixSalePrintItemDto>()
             };
 
             foreach (var dr in rows)
             {
+                if (dr is not IDictionary<string, object> rowDict)
+                    continue;
+
+                string? lotNo = ResolvePrintLotNo(rowDict);
+                byte[]? imageFromRow = GetPrintBytes(rowDict, "ImageFullPath", "ImagePath", "AssetImagePath");
+                var imageResult = await ResolvePrintItemImageAsync(lotNo, imageFromRow, companyId);
+                string? itemName = GetPrintString(rowDict, "ItemName");
+                var pcs = GetPrintInt(rowDict, "Pcs");
+                var carats = GetPrintDouble(rowDict, "Carats");
+                var rate = GetPrintDouble(rowDict, "Rate");
+                var amount = GetPrintDouble(rowDict, "MasterCurrencyAmount", "Amount");
+
                 result.Items.Add(new MixSalePrintItemDto
                 {
-                    StockNo = dr.LotNo,
-                    Description = dr.ItemName,
-                    Qty = dr.Pcs,
-                    Weight = dr.Carats,
-                    PricePerCarat = dr.Rate,
-                    Amount = dr.MasterCurrencyAmount
+                    MemoNo = GetPrintString(rowDict, "MemoNo", "ExportNo"),
+                    Lotno = lotNo,
+                    StockNo = lotNo,
+                    ItemName = itemName,
+                    Description = itemName,
+                    Pcs = pcs,
+                    Qty = pcs,
+                    Carats = carats,
+                    Weight = carats,
+                    TotalDiamondCarat = GetPrintNullableDouble(rowDict, "TotalDiamondCarat"),
+                    Rate = rate,
+                    PricePerCarat = rate,
+                    MasterCurrencyAmount = amount,
+                    Amount = amount,
+                    StockType = GetPrintString(rowDict, "StockType", "SubType", "Category"),
+                    ImageFullPath = imageResult.Item1,
+                    ImagePath = imageResult.Item2
                 });
             }
 
             return result;
+        }
+
+        private static string? ResolvePrintLotNo(IDictionary<string, object>? row)
+        {
+            if (row == null)
+                return null;
+
+            string? lot = GetPrintString(row, "lotno", "Lotno", "LotNo", "Stock_ID", "StockId", "JewItem", "StockNo");
+            if (!string.IsNullOrWhiteSpace(lot))
+                return lot;
+
+            if (!IsJewelleryPrintRow(row))
+                return null;
+
+            string? itemName = GetPrintString(row, "ItemName");
+            if (string.IsNullOrWhiteSpace(itemName))
+                return null;
+
+            string[] parts = itemName.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length > 0 ? parts[0] : null;
+        }
+
+        private static bool IsJewelleryPrintRow(IDictionary<string, object> row)
+        {
+            string? stockType = GetPrintString(row, "StockType", "SubType", "Category")?.ToLowerInvariant();
+            if (stockType is "jewellery" or "jew" or "jewelry")
+                return true;
+
+            if (GetPrintNullableDouble(row, "GrossWeight").HasValue || GetPrintNullableDouble(row, "TotalDiamondCarat").HasValue)
+                return true;
+
+            string? shape = GetPrintString(row, "ShapeId", "Shape");
+            string? clarity = GetPrintString(row, "ClarityId", "Clarity");
+            double carats = GetPrintDouble(row, "Carats");
+            return string.IsNullOrWhiteSpace(shape) && string.IsNullOrWhiteSpace(clarity) && carats == 0;
+        }
+
+        #region Print mapping helpers
+        private static bool IsPrintColumnMatch(string dictKey, string searchKey)
+        {
+            if (string.Equals(dictKey, searchKey, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (!dictKey.StartsWith(searchKey, StringComparison.OrdinalIgnoreCase))
+                return false;
+            if (dictKey.Length == searchKey.Length)
+                return true;
+            for (int i = searchKey.Length; i < dictKey.Length; i++)
+            {
+                if (!char.IsDigit(dictKey[i]))
+                    return false;
+            }
+            return true;
+        }
+
+        private static string? GetPrintString(IDictionary<string, object> row, params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                foreach (var kvp in row)
+                {
+                    if (!IsPrintColumnMatch(kvp.Key, key))
+                        continue;
+                    var formatted = FormatPrintScalarString(kvp.Value);
+                    if (!string.IsNullOrWhiteSpace(formatted))
+                        return formatted;
+                }
+            }
+            return null;
+        }
+
+        private static string? FormatPrintScalarString(object? value)
+        {
+            if (value == null || value == DBNull.Value)
+                return null;
+            var text = Convert.ToString(value, CultureInfo.InvariantCulture)?.Trim();
+            return string.IsNullOrEmpty(text) ? null : text;
+        }
+
+        private static byte[]? GetPrintBytes(IDictionary<string, object> row, params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                foreach (var kvp in row)
+                {
+                    if (!IsPrintColumnMatch(kvp.Key, key))
+                        continue;
+                    if (kvp.Value is byte[] bytes && bytes.Length > 0)
+                        return bytes;
+                }
+            }
+            return null;
+        }
+
+        private static int GetPrintInt(IDictionary<string, object> row, params string[] keys)
+        {
+            string? text = GetPrintString(row, keys);
+            if (string.IsNullOrWhiteSpace(text))
+                return 0;
+            return int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int n) ? n : 0;
+        }
+
+        private static double GetPrintDouble(IDictionary<string, object> row, params string[] keys)
+        {
+            string? text = GetPrintString(row, keys);
+            if (string.IsNullOrWhiteSpace(text))
+                return 0;
+            return double.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out double n) ? n : 0;
+        }
+
+        private static double? GetPrintNullableDouble(IDictionary<string, object> row, params string[] keys)
+        {
+            string? text = GetPrintString(row, keys);
+            if (string.IsNullOrWhiteSpace(text))
+                return null;
+            return double.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out double n) ? n : null;
+        }
+
+        private static DateTime? GetPrintDateTime(IDictionary<string, object> row, params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                foreach (var kvp in row)
+                {
+                    if (!IsPrintColumnMatch(kvp.Key, key))
+                        continue;
+                    if (kvp.Value is DateTime dt)
+                        return dt;
+                    if (kvp.Value != null && kvp.Value != DBNull.Value &&
+                        DateTime.TryParse(Convert.ToString(kvp.Value, CultureInfo.InvariantCulture),
+                            CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsed))
+                        return parsed;
+                }
+            }
+            return null;
+        }
+        #endregion
+
+        /// <summary>MVC Jewellery_SaleUSA_Print: ImageFullPath byte[]; JewStockData fallback uses Stock_ID only.</summary>
+        private async Task<(byte[]? ImageFullPath, string? ImagePath)> ResolvePrintItemImageAsync(
+            string? lotNo,
+            byte[]? imageBytes,
+            string companyId)
+        {
+            if (imageBytes != null && imageBytes.Length > 0)
+                return (imageBytes, null);
+
+            if (string.IsNullOrWhiteSpace(lotNo))
+                return (null, null);
+
+            try
+            {
+                // MVC GetLotNoDataForAll JewStockData — ViewJewelleryClosingStockDateWise has Stock_ID, not LOTNO
+                var escaped = lotNo.Replace("'", "''");
+                var sql = $"EXEC [GetLotNoDataForAll] @Type = 'JewStockData', @Where = ' AND Stock_ID = ''{escaped}'' '";
+                var lotRows = (await _sqlDataAccess.SelectDataAdoDynamic(sql, companyId)).ToList();
+                foreach (var row in lotRows)
+                {
+                    if (row is not IDictionary<string, object> dict)
+                        continue;
+
+                    byte[]? foundBytes = null;
+                    string? foundPath = null;
+
+                    foreach (var kvp in dict)
+                    {
+                        if (kvp.Key.StartsWith("ImageFullPath", StringComparison.OrdinalIgnoreCase) &&
+                            kvp.Value is byte[] bytes && bytes.Length > 0)
+                        {
+                            foundBytes = bytes;
+                            break;
+                        }
+                    }
+
+                    if (foundBytes != null)
+                        return (foundBytes, null);
+
+                    foreach (var kvp in dict)
+                    {
+                        if (!kvp.Key.StartsWith("ImagePath", StringComparison.OrdinalIgnoreCase) ||
+                            kvp.Key.StartsWith("ImageFullPath", StringComparison.OrdinalIgnoreCase))
+                            continue;
+                        var path = kvp.Value?.ToString()?.Trim();
+                        if (!string.IsNullOrEmpty(path) && !string.Equals(path, "null", StringComparison.OrdinalIgnoreCase))
+                        {
+                            foundPath = path;
+                            break;
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(foundPath))
+                        return (null, foundPath);
+                }
+            }
+            catch
+            {
+                // Image lookup must not block invoice print
+            }
+
+            return (null, null);
         }
 
         public async Task<MixSaleStatusDto?> GetCurrentStatusAsync(string invNo, string companyId)
@@ -1300,6 +1547,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     cmd.Parameters.Add(new SqlParameter("@PClarity", pClarity));
                     cmd.Parameters.Add(new SqlParameter("@COGS", 0.0f));
                     cmd.Parameters.Add(new SqlParameter("@StockType", im.StockType ?? "Diamond"));
+                    cmd.Parameters.Add(new SqlParameter("@InvDescription", im.InvDescription ?? ""));
                     cmd.Parameters.Add(new SqlParameter("@ActionType", "insert"));
 
                     await cmd.ExecuteNonQueryAsync();
@@ -1751,11 +1999,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             public string? AddressLine2 { get; set; }
             public string? AddressLine3 { get; set; }
             public string? LotNo { get; set; }
+            public string? lotno { get; set; }
             public string? ItemName { get; set; }
             public int Pcs { get; set; }
             public double Carats { get; set; }
             public double Rate { get; set; }
             public double MasterCurrencyAmount { get; set; }
+            public byte[]? ImageFullPath { get; set; }
         }
 
         private class StatusInvRow

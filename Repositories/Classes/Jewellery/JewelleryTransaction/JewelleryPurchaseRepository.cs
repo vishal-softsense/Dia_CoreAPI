@@ -736,41 +736,176 @@ namespace Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryTransaction
 
         public async Task<JewelleryPurchasePrintViewDto?> GetPrintViewAsync(string invNo, string companyId)
         {
+            // MVC jewpurchase/Jewprintinv — SP_SaleInvData / GetSalepurRecordWithDetailsForINV
             string where = $"tsp.TrnType = ''PJEW'' AND tsp.InvNo = ''{invNo}''";
             string sql = $"EXEC GetSalepurRecordWithDetailsForINV @Where = '{where}'";
 
-            var rows = (await _sqlDataAccess.SelectRawSql<PrintInvRow>(sql, companyId)).ToList();
+            var rows = (await _sqlDataAccess.SelectDataAdoDynamic(sql, companyId)).ToList();
             if (rows.Count == 0)
                 return null;
 
-            var header = rows[0];
+            if (rows[0] is not IDictionary<string, object> header)
+                return null;
+
+            var stockSymbol = await _sqlDataAccess.ExecuteQuerySingle<string>(
+                "SELECT Value FROM TabSettingMaster WHERE Name = 'SSymbol'",
+                new { },
+                companyId) ?? "USD";
+            var masterSymbol = await _sqlDataAccess.ExecuteQuerySingle<string>(
+                "SELECT Value FROM TabSettingMaster WHERE Name = 'MSymbol'",
+                new { },
+                companyId) ?? "INR";
+
+            // MVC SqlDataAccess.GetSCurID → EXEC GetCurrencyDetail @Type='SCurID'
+            var sCurParam = new Dictionary<string, object> { { "@Type", "SCurID" }, { "@Where", "" } };
+            var sCurIdText = await _sqlDataAccess.SelectDataFromSPSingle<string>("GetCurrencyDetail", sCurParam, companyId);
+            float.TryParse(sCurIdText, out var sCurId);
+
+            string? entrySymbol = GetPrintDictString(header, "Symbol");
+            if (string.IsNullOrWhiteSpace(entrySymbol))
+            {
+                var curCodeText = GetPrintDictString(header, "CurCode");
+                if (float.TryParse(curCodeText, System.Globalization.NumberStyles.Any,
+                        System.Globalization.CultureInfo.InvariantCulture, out var curCode))
+                    entrySymbol = Math.Abs(curCode - sCurId) < 0.0001f ? stockSymbol : masterSymbol;
+            }
+
+            string currency =
+                string.Equals(entrySymbol, stockSymbol, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entrySymbol, "USD", StringComparison.OrdinalIgnoreCase)
+                    ? stockSymbol
+                    : masterSymbol;
+
+            bool useStockAmount =
+                string.Equals(currency, stockSymbol, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(currency, "USD", StringComparison.OrdinalIgnoreCase);
+
+            DateTime? trnDate = GetPrintDictDate(header, "TrnDate");
+            DateTime? roundDate = GetPrintDictDate(header, "RoundDate");
+            DateTime? dueDate = GetPrintDictDate(header, "DueDate");
+
             var result = new JewelleryPurchasePrintViewDto
             {
-                InvNo = header.InvNo,
-                BillNo = header.BillNo,
-                TrnDate = header.TrnDate.HasValue ? header.TrnDate.Value.ToString("MM/dd/yyyy") : null,
-                DueDays = header.DueDays,
-                PartyName = header.PartyName,
-                AddressLine1 = header.AddressLine1,
-                AddressLine2 = header.AddressLine2,
-                AddressLine3 = header.AddressLine3,
+                InvNo = GetPrintDictString(header, "InvNo"),
+                BillNo = GetPrintDictString(header, "BillNo"),
+                TrnDate = trnDate?.ToString("MM/dd/yyyy"),
+                RoundDate = roundDate?.ToString("MM/dd/yyyy"),
+                DueDays = short.TryParse(GetPrintDictString(header, "DueDays"), out var dd) ? dd : (short)0,
+                DueDate = dueDate?.ToString("MM/dd/yyyy"),
+                Currency = currency,
+                StockSymbol = stockSymbol,
+                MasterSymbol = masterSymbol,
+                PartyName = GetPrintDictString(header, "PartyName"),
+                AddressLine1 = GetPrintDictString(header, "AddressLine1"),
+                AddressLine2 = GetPrintDictString(header, "AddressLine2"),
+                AddressLine3 = GetPrintDictString(header, "AddressLine3"),
+                SalesPerson = GetPrintDictString(header, "SalesPerson"),
+                ContactPerson = GetPrintDictString(header, "ContactPerson"),
+                ShipVia = GetPrintDictString(header, "ShipVia"),
+                Tracking = GetPrintDictString(header, "Tracking"),
+                bnm = GetPrintDictString(header, "bnm"),
+                BankAccNo = GetPrintDictString(header, "BankAccNo"),
+                ABARoutingNumber = GetPrintDictString(header, "ABARoutingNumber"),
+                SwiftCode = GetPrintDictString(header, "SwiftCode"),
+                ZelleID = GetPrintDictString(header, "ZelleID"),
+                IbanNo = GetPrintDictString(header, "IbanNo"),
                 Items = new List<JewelleryPurchasePrintItemDto>()
             };
 
-            foreach (var dr in rows)
+            foreach (var rowObj in rows)
             {
+                if (rowObj is not IDictionary<string, object> row)
+                    continue;
+
+                double jewelleryFAmount = GetPrintDictDouble(row, "JewelleryFAmount");
+                double masterAmt = GetPrintDictDouble(row, "MasterCurrencyAmount");
+                // MVC: display amount = JewelleryFAmount when stock/USD else MasterCurrencyAmount
+                double displayAmount = useStockAmount ? jewelleryFAmount : masterAmt;
+
+                byte[]? imgBytes = null;
+                foreach (var kvp in row)
+                {
+                    if (string.Equals(kvp.Key, "ImageFullPath", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(kvp.Key, "ImagePath", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (kvp.Value is byte[] b && b.Length > 0)
+                        {
+                            imgBytes = b;
+                            break;
+                        }
+                    }
+                }
+
+                string? imagePath = imgBytes != null
+                    ? $"data:image/png;base64,{Convert.ToBase64String(imgBytes)}"
+                    : GetPrintDictString(row, "ImagePath");
+
+                double gross = GetPrintDictDouble(row, "GrossWeight");
+                double net = GetPrintDictDouble(row, "NetWeight");
+                double carats = GetPrintDictDouble(row, "Carats");
+                double finalJew = GetPrintDictDouble(row, "FinalJewAmount");
+
                 result.Items.Add(new JewelleryPurchasePrintItemDto
                 {
-                    StockNo = dr.LotNo,
-                    Description = dr.ItemName,
-                    Qty = dr.Pcs,
-                    Weight = dr.Carats,
-                    PricePerCarat = dr.Rate,
-                    Amount = dr.MasterCurrencyAmount
+                    StockNo = GetPrintDictString(row, "lotno", "LotNo", "Lotno"),
+                    Description = GetPrintDictString(row, "ItemName"),
+                    Qty = (int)GetPrintDictDouble(row, "Pcs"),
+                    Weight = carats,
+                    GrossWeight = gross != 0 ? gross : null,
+                    NetWeight = net != 0 ? net : null,
+                    PricePerCarat = finalJew,
+                    FinalJewAmount = finalJew,
+                    Amount = displayAmount,
+                    ImagePath = imagePath
                 });
             }
 
             return result;
+        }
+
+        private static string? GetPrintDictString(IDictionary<string, object> row, params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                foreach (var kvp in row)
+                {
+                    if (!string.Equals(kvp.Key, key, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    if (kvp.Value == null || kvp.Value == DBNull.Value)
+                        continue;
+                    var text = Convert.ToString(kvp.Value)?.Trim();
+                    if (!string.IsNullOrEmpty(text))
+                        return text;
+                }
+            }
+            return null;
+        }
+
+        private static double GetPrintDictDouble(IDictionary<string, object> row, params string[] keys)
+        {
+            var text = GetPrintDictString(row, keys);
+            if (string.IsNullOrWhiteSpace(text))
+                return 0;
+            return double.TryParse(text, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out var n) ? n : 0;
+        }
+
+        private static DateTime? GetPrintDictDate(IDictionary<string, object> row, params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                foreach (var kvp in row)
+                {
+                    if (!string.Equals(kvp.Key, key, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    if (kvp.Value is DateTime dt)
+                        return dt;
+                    if (kvp.Value != null && kvp.Value != DBNull.Value
+                        && DateTime.TryParse(Convert.ToString(kvp.Value), out var parsed))
+                        return parsed;
+                }
+            }
+            return null;
         }
 
         public async Task<JewelleryPurchaseStatusDto?> GetCurrentStatusAsync(string invNo, string companyId)
@@ -1081,6 +1216,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryTransaction
                     cmd.Parameters.Add(new SqlParameter("@PClarity", ""));
                     cmd.Parameters.Add(new SqlParameter("@COGS", 0.0f));
                     cmd.Parameters.Add(new SqlParameter("@StockType", ""));
+                    cmd.Parameters.Add(new SqlParameter("@InvDescription", ""));
                     cmd.Parameters.Add(new SqlParameter("@ActionType", "insert"));
 
                     await cmd.ExecuteNonQueryAsync();

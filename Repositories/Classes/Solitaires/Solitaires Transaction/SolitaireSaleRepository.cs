@@ -93,6 +93,20 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             if (!header.chkoldsale)
                 header.chkoldsale = header.OutStanding;
 
+            // GetSalepurRecord returns CGSTAmount/SGSTAmount/IGSTAmount (MVC aliases AS CGSTAmt).
+            // Dapper maps Amount columns separately; copy into *Amt used by API/UI.
+            if (header.CGSTAmt == 0 && header.CGSTAmount != 0)
+                header.CGSTAmt = header.CGSTAmount;
+            if (header.SGSTAmt == 0 && header.SGSTAmount != 0)
+                header.SGSTAmt = header.SGSTAmount;
+            if (header.IGSTAmt == 0 && header.IGSTAmount != 0)
+                header.IGSTAmt = header.IGSTAmount;
+
+            if (string.IsNullOrWhiteSpace(header.Description) && !string.IsNullOrWhiteSpace(header.InvDisc))
+                header.Description = header.InvDisc;
+            else if (string.IsNullOrWhiteSpace(header.InvDisc) && !string.IsNullOrWhiteSpace(header.Description))
+                header.InvDisc = header.Description;
+
             var items = (await _sqlDataAccess.SelectDataFromSP<SolitaireSaleItemDto>(
                 "GetSalepurTran_Sale",
                 new Dictionary<string, object> { { "@Where", $" AND InvCode = {id}" } },
@@ -1122,6 +1136,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                     cmd.Parameters.Add(new SqlParameter("@PClarity", ""));
                     cmd.Parameters.Add(new SqlParameter("@COGS", 0.0f));
                     cmd.Parameters.Add(new SqlParameter("@StockType", ""));
+                    cmd.Parameters.Add(new SqlParameter("@InvDescription", ""));
                     cmd.Parameters.Add(new SqlParameter("@ActionType", "insert"));
                     await cmd.ExecuteNonQueryAsync();
                 }

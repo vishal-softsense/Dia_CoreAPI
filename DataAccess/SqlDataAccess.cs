@@ -145,6 +145,9 @@ namespace Dia_CoreAPI.DataAccess
             if (underlying == typeof(bool))
                 return Convert.ToBoolean(val, System.Globalization.CultureInfo.InvariantCulture);
 
+            if (underlying == typeof(byte[]))
+                return val is byte[] bytes ? bytes : null;
+
             // Numeric: go through decimal first so SQL decimal/float/real/money all map cleanly
             if (underlying == typeof(byte) || underlying == typeof(short) || underlying == typeof(int) ||
                 underlying == typeof(long) || underlying == typeof(float) || underlying == typeof(double) ||

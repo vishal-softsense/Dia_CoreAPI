@@ -270,6 +270,29 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction
         public string? LotNo { get; set; }
     }
 
+    /// <summary>MVC MasterProcessor.GetRapRate input — used by Excel import when MRP is 0.</summary>
+    public class SolitairePurchaseRapRateRequest
+    {
+        public string? Shape { get; set; }
+        public string? Color { get; set; }
+        public string? Clarity { get; set; }
+        public double Carat { get; set; }
+    }
+
+    public class SolitairePurchaseRapRateResponse
+    {
+        public string? Shape { get; set; }
+        public string? Color { get; set; }
+        public string? Clarity { get; set; }
+        public double Carat { get; set; }
+        public float MRP { get; set; }
+    }
+
+    public class SolitairePurchaseRapRateBatchRequest
+    {
+        public List<SolitairePurchaseRapRateRequest> Items { get; set; } = new();
+    }
+
     public class SolitaireConsignmentRequest
     {
         public string? PartyCode { get; set; }
@@ -344,6 +367,10 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction
         public string? BillNo { get; set; }
         public string? InvNo { get; set; }
         public short DueDays { get; set; }
+        public string? DueDate { get; set; }
+        public string? Currency { get; set; }
+        public string? StockSymbol { get; set; }
+        public string? MasterSymbol { get; set; }
         public string? PartyName { get; set; }
         public string? AddressLine1 { get; set; }
         public string? AddressLine2 { get; set; }

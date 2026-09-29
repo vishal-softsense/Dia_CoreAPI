@@ -112,6 +112,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public float SpCarats { get; set; }
         public float ReturnCarats { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
         public string? Stock_ID { get; set; }
     }
 
@@ -140,6 +141,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public float Amount { get; set; }
         public string? FinalAmount { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
         public string? ExportNo { get; set; }
         public string? Status { get; set; }
         public string? ShapeId { get; set; }
@@ -178,6 +180,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public float Less3 { get; set; }
         public float Amount { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
         public int editIndex { get; set; } = -1;
         public List<MixMemoOutItemDto> Items { get; set; } = new();
     }

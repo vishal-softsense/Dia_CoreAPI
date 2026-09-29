@@ -28,6 +28,12 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Reports
         public List<string>? Clarity { get; set; }
         public List<string>? Size { get; set; }
         public List<string>? Sieve { get; set; }
+        /// <summary>MVC FromRChkBox — when true, filter by RoundDate (Print Date).</summary>
+        public bool FromRChkBox { get; set; }
+        /// <summary>MVC RDate — Print Date (RoundDate from).</summary>
+        public string? RDate { get; set; }
+        /// <summary>MVC RToDate — Print To Date (RoundDate to).</summary>
+        public string? RToDate { get; set; }
     }
 
     public class MixSaleReportResultDTO

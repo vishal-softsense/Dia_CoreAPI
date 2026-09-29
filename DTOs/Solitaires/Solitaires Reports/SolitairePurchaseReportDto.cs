@@ -56,6 +56,7 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
         public string? Item { get; set; }
         public string? ItemName { get; set; }
         public double Carats { get; set; }
+        public double ReturnCarats { get; set; }
         public double MRP { get; set; }
         public double Rate { get; set; }
         public double Discount { get; set; }

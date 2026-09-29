@@ -57,6 +57,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports
                         strWhere += " AND   convert(date,tmtran.MemoReturnDate)  BETWEEN ''" + filter.FromRtnDate + "'' And ''" + filter.ToRtnDate + "''";
                 }
 
+                // MVC JewMemoReportFilter: Print Date checkbox → filter RoundDate
+                if (filter.FromRChkBox)
+                {
+                    strWhere += " AND tm.RoundDate BETWEEN ''" + filter.RDate + "'' And ''" + filter.RToDate + "''";
+                }
+
                 if (!string.IsNullOrWhiteSpace(filter.Currency))
                     strWhere += " AND tcur.ID IN (''" + filter.Currency + "'')";
 

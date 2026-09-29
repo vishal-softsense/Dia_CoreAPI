@@ -50,5 +50,8 @@ namespace Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction
 
         public Task<SolitairePurchaseStatusDto?> GetCurrentStatusAsync(string invNo, string companyId)
             => _repository.GetCurrentStatusAsync(invNo, companyId);
+
+        public Task<float> GetRapRateAsync(string shape, string color, string clarity, double carat, string companyId)
+            => _repository.GetRapRateAsync(shape, color, clarity, carat, companyId);
     }
 }

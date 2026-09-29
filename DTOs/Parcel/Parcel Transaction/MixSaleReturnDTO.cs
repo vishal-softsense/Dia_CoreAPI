@@ -136,6 +136,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public float Amount { get; set; }
         public string? ExportNo { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
         public float MemoTransCode { get; set; }
         /// <summary>SP GetSalepurTran often returns MemoTranCode (no 's'); mapped then copied to MemoTransCode.</summary>
         public float MemoTranCode { get; set; }
@@ -176,6 +177,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? Sieve { get; set; }
         public string? SieveId { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
     }
 
     public class MixSaleReturnLotRequest
@@ -214,6 +216,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? ExportNo { get; set; }
         public float MemoTransCode { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
         public int editIndex { get; set; } = -1;
         public List<MixSaleReturnItemDto> Items { get; set; } = new();
     }
@@ -340,6 +343,8 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? PSize { get; set; }
         public string? PClarity { get; set; }
         public int Pcs { get; set; }
+
+        public string? InvDescription { get; set; }
     }
 
     public class MixSaleReturnCSaleFillRequest

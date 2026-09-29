@@ -18,5 +18,6 @@ namespace Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction
         Task<(bool Success, string Message)> DeleteAsync(int id, string userId, string companyId);
         Task<SolitairePurchasePrintViewDto?> GetPrintViewAsync(string invNo, string companyId);
         Task<SolitairePurchaseStatusDto?> GetCurrentStatusAsync(string invNo, string companyId);
+        Task<float> GetRapRateAsync(string shape, string color, string clarity, double carat, string companyId);
     }
 }

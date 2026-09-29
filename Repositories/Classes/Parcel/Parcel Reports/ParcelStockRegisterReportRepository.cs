@@ -207,7 +207,8 @@ namespace Dia_CoreAPI.Repositories
                 COGS = GetDecimal("COGS"),
                 BalanceStock = GetDecimal("BalanceStock", "BalCts"),
                 BalancePrice = GetDecimal("BalancePrice", "BalRate"),
-                BalanceAmount = GetDecimal("BalanceAmount", "BalAmount")
+                BalanceAmount = GetDecimal("BalanceAmount", "BalAmount"),
+                Invno = GetInt("Invno", "InvNo", "invno")
             };
         }
     }

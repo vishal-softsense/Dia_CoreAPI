@@ -189,7 +189,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 Less2 = item.Less2,
                 Less3 = item.Less3,
                 Amount = l3,
-                StockType = stockType
+                StockType = stockType,
+                InvDescription = item.InvDescription
             };
 
             float alertThreshold = isJewellery ? 0.009f : 0.05f;
@@ -276,6 +277,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     Less3 = request.Less3,
                     Amount = l3,
                     StockType = string.IsNullOrWhiteSpace(lotRow.StockType) ? "Diamond" : lotRow.StockType,
+                    InvDescription = lotRow.InvDescription,
                     ExportNo = lotRow.ExportNo,
                     Status = lotRow.Status,
                     SpCarats = lotRow.SpCarats,
@@ -1041,6 +1043,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 cmd.Parameters.Add(new SqlParameter("@PClarity", ""));
                 cmd.Parameters.Add(new SqlParameter("@COGS", 0.0f));
                 cmd.Parameters.Add(new SqlParameter("@StockType", stockType));
+                cmd.Parameters.Add(new SqlParameter("@InvDescription", im.InvDescription ?? ""));
                 cmd.Parameters.Add(new SqlParameter("@ActionType", "insert"));
                 await cmd.ExecuteNonQueryAsync();
             }

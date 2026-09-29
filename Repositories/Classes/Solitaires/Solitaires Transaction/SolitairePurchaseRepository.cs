@@ -6,6 +6,10 @@ using Microsoft.Data.SqlClient;
 using System.Data;
 using BasicDataDto = Dia_CoreAPI.DTOs.BasicDataDto;
 using StockBasic = Dia_CoreAPI.DTOs.StockAccount.BasicDataDto;
+using PriceIndex = Dia_CoreAPI.DTOs.StockAccount.PriceIndex;
+using ShapeMaster = Dia_CoreAPI.DTOs.Masters.ShapeMaster;
+using ColorMaster = Dia_CoreAPI.DTOs.Masters.ColorMaster;
+using ClarityMaster = Dia_CoreAPI.DTOs.Masters.ClarityMaster;
 
 namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
 {
@@ -726,38 +730,150 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             string where = $"tsp.TrnType = ''PUR'' AND tsp.InvNo = ''{invNo}''";
             string sql = $"EXEC GetSalepurRecordWithDetailsForINV @Where = '{where}'";
 
-            var rows = (await _sqlDataAccess.SelectRawSql<PrintInvRow>(sql, companyId)).ToList();
+            var rows = (await _sqlDataAccess.SelectDataAdoDynamic(sql, companyId)).ToList();
             if (rows.Count == 0)
                 return null;
 
-            var header = rows[0];
+            if (rows[0] is not IDictionary<string, object> header)
+                return null;
+
+            var (stockSymbol, masterSymbol, sCurId) = await ResolvePrintSymbolsAsync(companyId);
+            var (currency, useStockAmount) = ResolvePrintCurrency(header, stockSymbol, masterSymbol, sCurId);
+
+            DateTime? trnDate = GetPrintDictDate(header, "TrnDate");
+            DateTime? dueDate = GetPrintDictDate(header, "DueDate");
+
             var result = new SolitairePurchasePrintViewDto
             {
-                InvNo = header.InvNo,
-                BillNo = header.BillNo,
-                TrnDate = header.TrnDate.HasValue ? header.TrnDate.Value.ToString("MM/dd/yyyy") : null,
-                DueDays = header.DueDays,
-                PartyName = header.PartyName,
-                AddressLine1 = header.AddressLine1,
-                AddressLine2 = header.AddressLine2,
-                AddressLine3 = header.AddressLine3,
+                InvNo = GetPrintDictString(header, "InvNo"),
+                BillNo = GetPrintDictString(header, "BillNo"),
+                TrnDate = trnDate?.ToString("MM/dd/yyyy"),
+                DueDays = short.TryParse(GetPrintDictString(header, "DueDays"), out var dd) ? dd : (short)0,
+                DueDate = dueDate?.ToString("MM/dd/yyyy"),
+                Currency = currency,
+                StockSymbol = stockSymbol,
+                MasterSymbol = masterSymbol,
+                PartyName = GetPrintDictString(header, "PartyName"),
+                AddressLine1 = GetPrintDictString(header, "AddressLine1"),
+                AddressLine2 = GetPrintDictString(header, "AddressLine2"),
+                AddressLine3 = GetPrintDictString(header, "AddressLine3"),
                 Items = new List<SolitairePurchasePrintItemDto>()
             };
 
-            foreach (var dr in rows)
+            foreach (var rowObj in rows)
             {
+                if (rowObj is not IDictionary<string, object> row)
+                    continue;
+
+                // MVC PrintInvoice: stock → StockCurrencyAmount; master → MasterCurrencyAmount
+                double amount = useStockAmount
+                    ? GetPrintDictDouble(row, "StockCurrencyAmount", "Amount")
+                    : GetPrintDictDouble(row, "MasterCurrencyAmount");
+
                 result.Items.Add(new SolitairePurchasePrintItemDto
                 {
-                    StockNo = dr.LotNo,
-                    Description = dr.ItemName,
-                    Qty = dr.Pcs,
-                    Weight = dr.Carats,
-                    PricePerCarat = dr.Rate,
-                    Amount = dr.MasterCurrencyAmount
+                    StockNo = GetPrintDictString(row, "LotNo", "lotno", "Lotno"),
+                    Description = GetPrintDictString(row, "ItemName"),
+                    Qty = (int)GetPrintDictDouble(row, "Pcs"),
+                    Weight = GetPrintDictDouble(row, "Carats"),
+                    PricePerCarat = GetPrintDictDouble(row, "Rate"),
+                    Amount = amount
                 });
             }
 
             return result;
+        }
+
+        private async Task<(string stockSymbol, string masterSymbol, float sCurId)> ResolvePrintSymbolsAsync(string companyId)
+        {
+            var stockSymbol = await _sqlDataAccess.ExecuteQuerySingle<string>(
+                "SELECT Value FROM TabSettingMaster WHERE Name = 'SSymbol'",
+                new { },
+                companyId) ?? "USD";
+            var masterSymbol = await _sqlDataAccess.ExecuteQuerySingle<string>(
+                "SELECT Value FROM TabSettingMaster WHERE Name = 'MSymbol'",
+                new { },
+                companyId) ?? "INR";
+
+            var sCurParam = new Dictionary<string, object> { { "@Type", "SCurID" }, { "@Where", "" } };
+            var sCurIdText = await _sqlDataAccess.SelectDataFromSPSingle<string>("GetCurrencyDetail", sCurParam, companyId);
+            float.TryParse(sCurIdText, out var sCurId);
+            return (stockSymbol, masterSymbol, sCurId);
+        }
+
+        private static (string currency, bool useStockAmount) ResolvePrintCurrency(
+            IDictionary<string, object> header,
+            string stockSymbol,
+            string masterSymbol,
+            float sCurId)
+        {
+            string? entrySymbol = GetPrintDictString(header, "Symbol");
+            if (string.IsNullOrWhiteSpace(entrySymbol))
+            {
+                var curCodeText = GetPrintDictString(header, "CurCode");
+                if (float.TryParse(curCodeText, System.Globalization.NumberStyles.Any,
+                        System.Globalization.CultureInfo.InvariantCulture, out var curCode))
+                {
+                    entrySymbol = Math.Abs(curCode - sCurId) < 0.0001f ? stockSymbol : masterSymbol;
+                }
+            }
+
+            string currency =
+                string.Equals(entrySymbol, stockSymbol, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entrySymbol, "USD", StringComparison.OrdinalIgnoreCase)
+                    ? stockSymbol
+                    : masterSymbol;
+
+            bool useStockAmount =
+                string.Equals(currency, stockSymbol, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(currency, "USD", StringComparison.OrdinalIgnoreCase);
+
+            return (currency, useStockAmount);
+        }
+
+        private static string? GetPrintDictString(IDictionary<string, object> row, params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                foreach (var kvp in row)
+                {
+                    if (!string.Equals(kvp.Key, key, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    if (kvp.Value == null || kvp.Value == DBNull.Value)
+                        continue;
+                    var text = Convert.ToString(kvp.Value)?.Trim();
+                    if (!string.IsNullOrEmpty(text))
+                        return text;
+                }
+            }
+            return null;
+        }
+
+        private static double GetPrintDictDouble(IDictionary<string, object> row, params string[] keys)
+        {
+            var text = GetPrintDictString(row, keys);
+            if (string.IsNullOrWhiteSpace(text))
+                return 0;
+            return double.TryParse(text, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out var n) ? n : 0;
+        }
+
+        private static DateTime? GetPrintDictDate(IDictionary<string, object> row, params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                foreach (var kvp in row)
+                {
+                    if (!string.Equals(kvp.Key, key, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    if (kvp.Value is DateTime dt)
+                        return dt;
+                    if (kvp.Value != null && kvp.Value != DBNull.Value
+                        && DateTime.TryParse(Convert.ToString(kvp.Value), out var parsed))
+                        return parsed;
+                }
+            }
+            return null;
         }
 
         public async Task<SolitairePurchaseStatusDto?> GetCurrentStatusAsync(string invNo, string companyId)
@@ -805,6 +921,72 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Matches MVC MasterProcessor.GetRapRate: map Shape/Color/Clarity to Pricing* IDs, then GetMRPList.
+        /// </summary>
+        public async Task<float> GetRapRateAsync(string shape, string color, string clarity, double carat, string companyId)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(shape) || string.IsNullOrWhiteSpace(color)
+                    || string.IsNullOrWhiteSpace(clarity) || carat <= 0)
+                    return 0;
+
+                static string Esc(string? v) => (v ?? string.Empty).Replace("'", "''");
+
+                var pricingShape = (await _sqlDataAccess.SelectDataFromSP<ShapeMaster>(
+                    "GetALLMasterList",
+                    new Dictionary<string, object>
+                    {
+                        { "@Type", "Shape" },
+                        { "@Where", $" AND ShapeId = '{Esc(shape)}'" }
+                    },
+                    companyId)).Select(x => x.PricingShapeID).FirstOrDefault();
+
+                var pricingColor = (await _sqlDataAccess.SelectDataFromSP<ColorMaster>(
+                    "GetALLMasterList",
+                    new Dictionary<string, object>
+                    {
+                        { "@Type", "Color" },
+                        { "@Where", $" AND ColorId = '{Esc(color)}'" }
+                    },
+                    companyId)).Select(x => x.PricingColorID).FirstOrDefault();
+
+                var pricingClarity = (await _sqlDataAccess.SelectDataFromSP<ClarityMaster>(
+                    "GetALLMasterList",
+                    new Dictionary<string, object>
+                    {
+                        { "@Type", "Clarity" },
+                        { "@Where", $" AND ClarityId = '{Esc(clarity)}'" }
+                    },
+                    companyId)).Select(x => x.PricingClarityID).FirstOrDefault();
+
+                if (string.IsNullOrWhiteSpace(pricingShape)
+                    || string.IsNullOrWhiteSpace(pricingColor)
+                    || string.IsNullOrWhiteSpace(pricingClarity))
+                    return 0;
+
+                // Match MVC GetMRPList where clause (Cut = pricing shape).
+                string where =
+                    "and 1=1 and  Cut='" + Esc(pricingShape) +
+                    "' and  Color ='" + Esc(pricingColor) +
+                    "' and   clarity ='" + Esc(pricingClarity) +
+                    "' and  CaratsFrom <= '" + carat.ToString(System.Globalization.CultureInfo.InvariantCulture) +
+                    "' and  CaratsTo >='" + carat.ToString(System.Globalization.CultureInfo.InvariantCulture) + "' ";
+
+                var rate = (await _sqlDataAccess.SelectDataFromSP<PriceIndex>(
+                    "GetMRPList",
+                    new Dictionary<string, object> { { "@Where", where } },
+                    companyId)).Select(x => x.Rate).FirstOrDefault();
+
+                return rate;
+            }
+            catch
+            {
+                return 0;
+            }
         }
 
         #region Private insert/update helpers
@@ -1262,6 +1444,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                     cmd.Parameters.Add(new SqlParameter("@PClarity", ""));
                     cmd.Parameters.Add(new SqlParameter("@COGS", 0.0f));
                     cmd.Parameters.Add(new SqlParameter("@StockType", ""));
+                    cmd.Parameters.Add(new SqlParameter("@InvDescription", ""));
                     cmd.Parameters.Add(new SqlParameter("@ActionType", "insert"));
 
                     await cmd.ExecuteNonQueryAsync();
@@ -1703,16 +1886,20 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             public string? InvNo { get; set; }
             public string? BillNo { get; set; }
             public DateTime? TrnDate { get; set; }
+            public DateTime? DueDate { get; set; }
             public short DueDays { get; set; }
             public string? PartyName { get; set; }
             public string? AddressLine1 { get; set; }
             public string? AddressLine2 { get; set; }
             public string? AddressLine3 { get; set; }
+            public string? Symbol { get; set; }
+            public float? CurCode { get; set; }
             public string? LotNo { get; set; }
             public string? ItemName { get; set; }
             public int Pcs { get; set; }
             public double Carats { get; set; }
             public double Rate { get; set; }
+            public double StockCurrencyAmount { get; set; }
             public double MasterCurrencyAmount { get; set; }
         }
 

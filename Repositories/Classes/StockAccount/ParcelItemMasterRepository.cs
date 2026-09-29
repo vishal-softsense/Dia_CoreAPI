@@ -96,6 +96,8 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             param.Add("@AskingRate", model.AskingRate);
             param.Add("@AskingAmount", model.AskingAmount);
             param.Add("@PublicRemarks", model.PublicCommnets ?? "");
+            int singlePcs = string.Equals(model.StoneTypes, "Single", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+            param.Add("@SinglePcs", singlePcs);
             param.Add("@CompanyID", int.Parse(companyId));
             param.Add("@ActionType", actionType);
 

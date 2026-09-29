@@ -124,6 +124,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public float IssueCarats { get; set; }
         public int Pcs { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
         public string? SuppLotNo { get; set; }
         public string? GroupId { get; set; }
         public string? StoneType { get; set; }
@@ -204,6 +205,8 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public double Less3 { get; set; }
         public bool Chk { get; set; }
         public float MemoTransCode { get; set; }
+        /// <summary>SP GetSalepurTran often returns MemoTranCode (no 's'); mapped then copied to MemoTransCode.</summary>
+        public float MemoTranCode { get; set; }
         public float RtnCarats { get; set; }
         public float ReturnCarats { get; set; }
         public string? ImagePath { get; set; }
@@ -249,9 +252,11 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? Clarity { get; set; }
         public string? ClarityId { get; set; }
         public string? Size { get; set; }
+        public string? SizeId { get; set; }
         public string? Sieve { get; set; }
         public string? SieveId { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
         public string? Polish { get; set; }
         public string? Symmetry { get; set; }
         public string? FL { get; set; }
@@ -355,6 +360,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public float MemoTransCode { get; set; }
         public float RtnCarats { get; set; }
         public string? StockType { get; set; }
+        public string? InvDescription { get; set; }
         public string? SuppLotNo { get; set; }
         public float AskingRate { get; set; }
         public float ActualRate { get; set; }
@@ -391,6 +397,10 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? BillNo { get; set; }
         public string? InvNo { get; set; }
         public short DueDays { get; set; }
+        public string? DueDate { get; set; }
+        public string? Currency { get; set; }
+        public string? StockSymbol { get; set; }
+        public string? MasterSymbol { get; set; }
         public string? PartyName { get; set; }
         public string? AddressLine1 { get; set; }
         public string? AddressLine2 { get; set; }

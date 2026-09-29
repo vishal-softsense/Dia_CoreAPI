@@ -191,7 +191,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 Amount = l3,
                 ExportNo = item.ExportNo,
                 MemoTransCode = item.MemoTransCode,
-                StockType = string.IsNullOrWhiteSpace(item.StockType) ? "Diamond" : item.StockType
+                StockType = string.IsNullOrWhiteSpace(item.StockType) ? "Diamond" : item.StockType,
+                InvDescription = item.InvDescription
             };
 
             bool isEdit = item.editIndex >= 0 && item.editIndex < list.Count;
@@ -599,7 +600,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     Sieve = im.PSieve,
                     SieveId = im.PSieve,
                     PSieve = im.PSieve,
-                    StockType = string.IsNullOrWhiteSpace(im.StockType) ? "Diamond" : im.StockType
+                    StockType = string.IsNullOrWhiteSpace(im.StockType) ? "Diamond" : im.StockType,
+                    InvDescription = im.InvDescription
                 });
             }
 
@@ -1012,6 +1014,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     cmd.Parameters.Add(new SqlParameter("@PClarity", pClarity));
                     cmd.Parameters.Add(new SqlParameter("@COGS", im.COGS));
                     cmd.Parameters.Add(new SqlParameter("@StockType", im.StockType ?? "Diamond"));
+                    cmd.Parameters.Add(new SqlParameter("@InvDescription", im.InvDescription ?? ""));
                     cmd.Parameters.Add(new SqlParameter("@ActionType", "insert"));
                     await cmd.ExecuteNonQueryAsync();
                 }

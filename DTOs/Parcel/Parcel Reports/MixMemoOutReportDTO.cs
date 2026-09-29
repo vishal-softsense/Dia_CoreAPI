@@ -61,7 +61,14 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Reports
         public List<string>? Mines { get; set; }
         public List<string>? ProductType { get; set; }
         public List<string>? Sieve { get; set; }
+        public string? Tracking { get; set; }
         public bool Clear { get; set; }
+        /// <summary>MVC FromRChkBox — when true, filter by RoundDate (Print Date).</summary>
+        public bool FromRChkBox { get; set; }
+        /// <summary>MVC RDate — Print Date (RoundDate from).</summary>
+        public string? RDate { get; set; }
+        /// <summary>MVC RToDate — Print To Date (RoundDate to).</summary>
+        public string? RToDate { get; set; }
     }
 
     public class MixMemoOutReportResultDTO
@@ -119,6 +126,8 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Reports
         public string? Category { get; set; }
         public string? Stock_ID { get; set; }
         public string? StockType { get; set; }
+        public string? SalesPerson { get; set; }
+        public string? Tracking { get; set; }
         public string? Status { get; set; }
         public string? AdjustmentType { get; set; }
         public decimal? Purchase { get; set; }

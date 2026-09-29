@@ -47,6 +47,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 if (!string.IsNullOrWhiteSpace(filter.FromDate) && !string.IsNullOrWhiteSpace(filter.ToDate))
                     strWhere += " AND Date BETWEEN ''" + filter.FromDate + "'' And ''" + filter.ToDate + "''";
 
+                // MVC SaleReportFilter: Print Date checkbox → filter RoundDate
+                if (filter.FromRChkBox)
+                {
+                    strWhere += " AND RoundDate BETWEEN ''" + filter.RDate + "'' And ''" + filter.RToDate + "''";
+                }
+
                 if (!string.IsNullOrWhiteSpace(filter.Currency))
                     strWhere += " AND CurCode IN (''" + filter.Currency + "'')";
 

@@ -138,6 +138,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Reports
                 Category = GetString(row, "Category", "category"),
                 Stock_ID = GetString(row, "Stock_ID", "stock_ID", "Stock_Id"),
                 StockType = GetString(row, "StockType", "stockType"),
+                SalesPerson = GetString(row, "SalesPerson", "salesPerson"),
+                Tracking = GetString(row, "Tracking", "tracking"),
                 Status = GetString(row, "Status", "status"),
                 AdjustmentType = GetString(row, "AdjustmentType", "adjustmentType"),
                 Purchase = GetDecimal(row, "Purchase", "purchase"),

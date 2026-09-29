@@ -976,6 +976,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                     cmd.Parameters.Add(new SqlParameter("@PClarity", ""));
                     cmd.Parameters.Add(new SqlParameter("@COGS", 0.0f));
                     cmd.Parameters.Add(new SqlParameter("@StockType", ""));
+                    cmd.Parameters.Add(new SqlParameter("@InvDescription", ""));
                     cmd.Parameters.Add(new SqlParameter("@ActionType", "insert"));
                     await cmd.ExecuteNonQueryAsync();
                 }
@@ -983,8 +984,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 // MVC: MemoTransCode != 0 → memotosaletest on ADD / memotosale on EDIT
                 //      MemoTransCode == 0 → memotosale on ADD / memotosaletest on EDIT
                 string memoAction = memoTransCode != 0
-                    ? (isEdit ? "memotosale" : "memotosaletest")
-                    : (isEdit ? "memotosaletest" : "memotosale");
+                    ? (isEdit ? "csalertn" : "memotosaletest")
+                    : (isEdit ? "memotosaletest" : "csalertn");
 
                 using (var cmd = new SqlCommand("SP_UpdateMemo", conn, trans))
                 {
