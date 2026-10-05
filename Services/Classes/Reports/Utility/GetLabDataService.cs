@@ -334,6 +334,7 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                         Measurement1 = measurement.Length > 0 ? measurement[0] : "",
                         Measurement2 = measurement.Length > 2 ? measurement[2] : "",
                         Measurement3 = measurement.Length > 4 ? measurement[4] : "",
+                        Comments = Col(row, "COMMENTS"),
                         Cert = "IGI",
                         LotNo = im.Lotno ?? string.Empty
                     });
@@ -441,6 +442,7 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                 row[43] = CleanNumber(tm.CrownAngel);
                 row[44] = CleanNumber(tm.PavilionAngel);
                 row[45] = CleanNumber(tm.PavilionDepth);
+                row[50] = tm.Comments;
                 row[51] = tm.ReportDate;
                 rows.Add(row);
             }

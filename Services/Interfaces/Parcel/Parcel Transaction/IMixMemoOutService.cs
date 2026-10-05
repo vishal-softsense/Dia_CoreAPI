@@ -18,6 +18,7 @@ namespace Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction
         Task<(bool Success, string Message)> EditAsync(MixMemoOutSaveRequest request, string userId, string companyId);
         Task<(bool Success, string Message)> DeleteAsync(int id, string userId, string companyId);
         Task<MixMemoOutPrintViewDto?> GetPrintViewAsync(string invNo, string companyId);
+        Task<MixMemoOutPrintViewDto?> GetCurrentStatusAsync(string invNo, string companyId);
         Task<List<MixMemoOutShipViaOptionDto>> GetShipViaAsync(string searchBy, string companyId);
         Task<List<MixMemoOutLotOptionDto>> GetLotsAsync(string? searchBy, string companyId);
     }

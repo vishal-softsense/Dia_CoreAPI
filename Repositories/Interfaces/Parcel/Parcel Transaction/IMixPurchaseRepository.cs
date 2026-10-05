@@ -20,5 +20,7 @@ namespace Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction
         Task<MixPurchaseStatusDto?> GetCurrentStatusAsync(string invNo, string companyId);
         Task<List<object>> GetLotsAsync(string? searchBy, string companyId);
         Task<string> GetMixLotNoDIAsync(string companyId);
+        Task<string?> GetSettingValueAsync(string name, string companyId);
+        Task<float> GetRapRateAsync(string shape, string color, string clarity, double carat, string companyId);
     }
 }

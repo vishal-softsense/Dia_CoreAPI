@@ -81,8 +81,9 @@ namespace Dia_CoreAPI.Repositories.Classes.Reports.Payable_Receivables
                 + "',@CurMasterOperator = '" + curMasterOperator
                 + "',@DisplayCur = '" + dispCurrency + "'";
 
-            var result = await _db.SelectRawSql<OutstandingReportResultDto>(sql, companyId);
-            return result.ToList();
+            // Dynamic map (MVC OutstandingReportModel) — ensures SalesPerson and alt column names bind
+            var rows = await _db.SelectDataAdoDynamic(sql, companyId);
+            return rows.Select(MapOutstandingRow).ToList();
         }
 
         public async Task<List<OutstandingReportResultDto>> GetOutstandingSummDataAsync(
@@ -102,8 +103,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Reports.Payable_Receivables
                 + "',@MCurRate = '" + mCurRate
                 + "',@CurMasterOperator = '" + curMasterOperator + "'";
 
-            var result = await _db.SelectRawSql<OutstandingReportResultDto>(sql, companyId);
-            return result.ToList();
+            var rows = await _db.SelectDataAdoDynamic(sql, companyId);
+            return rows.Select(MapOutstandingRow).ToList();
         }
 
         public async Task<long> GetCurCodeAsync(string where, string companyId)
@@ -138,6 +139,109 @@ namespace Dia_CoreAPI.Repositories.Classes.Reports.Payable_Receivables
                 .OrderBy(x => x.SalesPerson)
                 .ToList()
                 ?? new List<SalesPersonOptionDto>();
+        }
+
+        /// <summary>Maps GetOutstandingReportData row → MVC OutstandingReportModel fields.</summary>
+        private static OutstandingReportResultDto MapOutstandingRow(dynamic row)
+        {
+            return new OutstandingReportResultDto
+            {
+                Code = GetLong(row, "Code", "code"),
+                Date = GetString(row, "Date", "date"),
+                DueDate = GetString(row, "DueDate", "dueDate"),
+                InvNo = GetString(row, "InvNo", "invNo"),
+                BillNo = GetString(row, "BillNo", "billNo"),
+                Category = GetString(row, "Category", "category"),
+                Party = GetString(row, "Party", "party"),
+                Adat = GetString(row, "Adat", "adat"),
+                Weight = GetFloat(row, "Weight", "weight"),
+                Amount = GetString(row, "Amount", "amount"),
+                TotINR = GetFloat(row, "TotINR", "totINR"),
+                PaidINR = GetFloat(row, "PaidINR", "paidINR"),
+                ProductType = GetString(row, "ProductType", "productType"),
+                Pcs = GetFloat(row, "Pcs", "pcs"),
+                InvoiceNo = GetString(row, "InvoiceNo", "invoiceNo"),
+                InvType = GetString(row, "InvType", "invType", "SellerInvType"),
+                DueDays = GetString(row, "DueDays", "dueDays"),
+                Totcts = GetString(row, "Totcts", "totcts", "TotCts", "Weight"),
+                PartyMobile = GetString(row, "PartyMobile", "partyMobile"),
+                Broker = GetString(row, "Broker", "broker"),
+                BrokerMobile = GetString(row, "BrokerMobile", "brokerMobile"),
+                PaidAmount = GetFloat(row, "PaidAmount", "paidAmount"),
+                ExDiff = GetFloat(row, "ExDiff", "exDiff"),
+                RemainAmount = GetFloat(row, "RemainAmount", "remainAmount"),
+                PostDateAmount = GetFloat(row, "PostDateAmount", "postDateAmount"),
+                ExportAmount = GetFloat(row, "ExportAmount", "exportAmount"),
+                Seller = GetString(row, "Seller", "seller"),
+                SellerInvType = GetString(row, "SellerInvType", "sellerInvType"),
+                Symbol = GetString(row, "Symbol", "symbol"),
+                Disc = GetString(row, "Disc", "disc"),
+                SellerPartyMobile = GetString(row, "SellerPartyMobile", "sellerPartyMobile"),
+                Rate = GetString(row, "Rate", "rate"),
+                Dollarrate = GetString(row, "Dollarrate", "dollarrate", "DollarRate"),
+                Remarks = GetString(row, "Remarks", "remarks"),
+                UserName = GetString(row, "UserName", "userName"),
+                ExpPartyName = GetString(row, "ExpPartyName", "expPartyName", "ExpParty"),
+                AddressLine1 = GetString(row, "AddressLine1", "addressLine1"),
+                AddressLine2 = GetString(row, "AddressLine2", "addressLine2"),
+                AddressLine3 = GetString(row, "AddressLine3", "addressLine3"),
+                TrnType = GetString(row, "TrnType", "trnType"),
+                // MVC OutstandingReportModel.SalesPerson — SP may return SalesPerson / SalesPersons / KAM
+                SalesPerson = GetString(row, "SalesPerson", "salesPerson", "SalesPersons", "salesPersons", "KAM", "Kam", "Sales Person")
+            };
+        }
+
+        private static object? GetRaw(dynamic row, params string[] keys)
+        {
+            if (row is IDictionary<string, object> dict)
+            {
+                foreach (var key in keys)
+                {
+                    var match = dict.Keys.FirstOrDefault(k =>
+                        string.Equals(k, key, StringComparison.OrdinalIgnoreCase));
+                    if (match != null)
+                    {
+                        var value = dict[match];
+                        if (value != null && value != DBNull.Value) return value;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private static string? GetString(dynamic row, params string[] keys)
+        {
+            var raw = GetRaw(row, keys);
+            if (raw == null) return null;
+            var text = Convert.ToString(raw, CultureInfo.InvariantCulture);
+            return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
+        }
+
+        private static long GetLong(dynamic row, params string[] keys)
+        {
+            var raw = GetRaw(row, keys);
+            if (raw == null) return 0;
+            return long.TryParse(Convert.ToString(raw, CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out long n)
+                ? n
+                : 0;
+        }
+
+        private static float GetFloat(dynamic row, params string[] keys)
+        {
+            var raw = GetRaw(row, keys);
+            if (raw == null) return 0f;
+            return float.TryParse(Convert.ToString(raw, CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out float n)
+                ? n
+                : 0f;
+        }
+
+        private class PermissionCheck
+        {
+            public int InsertData { get; set; }
+            public int EditData { get; set; }
+            public int DeleteData { get; set; }
+            public int NavigateData { get; set; }
+            public int SelectData { get; set; }
         }
     }
 }

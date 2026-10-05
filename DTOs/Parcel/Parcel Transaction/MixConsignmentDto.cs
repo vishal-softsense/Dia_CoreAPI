@@ -363,11 +363,15 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public double Weight { get; set; }
         public double PricePerCarat { get; set; }
         public double Amount { get; set; }
+        /// <summary>MVC ParcelConsignmentPending / GetParcelConsignmentReportData</summary>
+        public double Balance { get; set; }
+        public double BalanceAmt { get; set; }
     }
 
     public class MixConsignmentPrintViewDto
     {
         public string? TrnDate { get; set; }
+        public string? RoundDate { get; set; }
         public string? BillNo { get; set; }
         public string? InvNo { get; set; }
         public short DueDays { get; set; }
@@ -375,6 +379,10 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? AddressLine1 { get; set; }
         public string? AddressLine2 { get; set; }
         public string? AddressLine3 { get; set; }
+        public string? ShipVia { get; set; }
+        public string? Tracking { get; set; }
+        public string? SalesPerson { get; set; }
+        public string? SalesPersons { get; set; }
         public List<MixConsignmentPrintItemDto> Items { get; set; } = new();
     }
 

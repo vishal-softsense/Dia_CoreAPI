@@ -91,5 +91,7 @@ namespace Dia_CoreAPI.DTOs.Reports.Payable_Receivables
         public string? AddressLine2 { get; set; }
         public string? AddressLine3 { get; set; }
         public string? TrnType { get; set; }
+        /// <summary>MVC Outstanding report column SalesPerson.</summary>
+        public string? SalesPerson { get; set; }
     }
 }

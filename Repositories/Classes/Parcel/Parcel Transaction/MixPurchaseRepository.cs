@@ -1,10 +1,12 @@
 using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
+using Dia_CoreAPI.DTOs.StockAccount;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Utilities;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using System.Globalization;
 using BasicDataDto = Dia_CoreAPI.DTOs.BasicDataDto;
 using StockBasic = Dia_CoreAPI.DTOs.StockAccount.BasicDataDto;
 
@@ -179,10 +181,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
         public async Task<List<MixPurchaseLotDetailDto>> GetLotDetailAsync(string lotNo, string companyId)
         {
+            // MVC PurchaseSaleProcessor.GetMixLotNoPurData @Type = 'MixPur'
+            var escapedLotNo = (lotNo ?? string.Empty).Replace("'", "''");
             var parameters = new Dictionary<string, object>
             {
                 { "@Type", "MixPur" },
-                { "@Where", $" AND LotNo = '{lotNo}' " }
+                { "@Where", $" AND LotNo = '{escapedLotNo}' " }
             };
 
             var result = (await _sqlDataAccess.SelectDataFromSP<MixPurchaseLotDetailDto>(
@@ -1960,6 +1964,74 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             return result != "0" && !string.IsNullOrEmpty(result);
         }
 
+        public async Task<string?> GetSettingValueAsync(string name, string companyId)
+        {
+            var rows = await _sqlDataAccess.SelectRawSql<SettingValueRow>(
+                $"SELECT Value FROM TabSettingMaster WHERE Name = '{name.Replace("'", "''")}'",
+                companyId);
+            return rows.FirstOrDefault()?.Value;
+        }
+
+        public async Task<float> GetRapRateAsync(string shape, string color, string clarity, double carat, string companyId)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(shape) || string.IsNullOrWhiteSpace(color)
+                    || string.IsNullOrWhiteSpace(clarity) || carat <= 0)
+                    return 0;
+
+                static string Esc(string? v) => (v ?? string.Empty).Replace("'", "''");
+
+                var pricingShape = (await _sqlDataAccess.SelectDataFromSP<Dia_CoreAPI.DTOs.Masters.ShapeMaster>(
+                    "GetALLMasterList",
+                    new Dictionary<string, object>
+                    {
+                        { "@Type", "Shape" },
+                        { "@Where", $" AND ShapeId = '{Esc(shape)}'" }
+                    },
+                    companyId)).Select(x => x.PricingShapeID).FirstOrDefault();
+
+                var pricingColor = (await _sqlDataAccess.SelectDataFromSP<Dia_CoreAPI.DTOs.Masters.ColorMaster>(
+                    "GetALLMasterList",
+                    new Dictionary<string, object>
+                    {
+                        { "@Type", "Color" },
+                        { "@Where", $" AND ColorId = '{Esc(color)}'" }
+                    },
+                    companyId)).Select(x => x.PricingColorID).FirstOrDefault();
+
+                var pricingClarity = (await _sqlDataAccess.SelectDataFromSP<Dia_CoreAPI.DTOs.Masters.ClarityMaster>(
+                    "GetALLMasterList",
+                    new Dictionary<string, object>
+                    {
+                        { "@Type", "Clarity" },
+                        { "@Where", $" AND ClarityId = '{Esc(clarity)}'" }
+                    },
+                    companyId)).Select(x => x.PricingClarityID).FirstOrDefault();
+
+                if (string.IsNullOrWhiteSpace(pricingShape)
+                    || string.IsNullOrWhiteSpace(pricingColor)
+                    || string.IsNullOrWhiteSpace(pricingClarity))
+                    return 0;
+
+                string where =
+                    "and 1=1 and  Cut='" + Esc(pricingShape) +
+                    "' and  Color ='" + Esc(pricingColor) +
+                    "' and   clarity ='" + Esc(pricingClarity) +
+                    "' and  CaratsFrom <= '" + carat.ToString(CultureInfo.InvariantCulture) +
+                    "' and  CaratsTo >='" + carat.ToString(CultureInfo.InvariantCulture) + "' ";
+
+                return (await _sqlDataAccess.SelectDataFromSP<PriceIndex>(
+                    "GetMRPList",
+                    new Dictionary<string, object> { { "@Where", where } },
+                    companyId)).Select(x => x.Rate).FirstOrDefault();
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
         private class MixLotDropdownRow
         {
             public string? ID { get; set; }
@@ -1968,6 +2040,11 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             public string? Type { get; set; }
             public string? LotNo { get; set; }
             public string? ItemName { get; set; }
+        }
+
+        private class SettingValueRow
+        {
+            public string? Value { get; set; }
         }
     }
 }

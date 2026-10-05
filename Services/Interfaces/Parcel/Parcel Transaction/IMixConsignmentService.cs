@@ -17,6 +17,7 @@ namespace Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction
         Task<(bool Success, string Message)> DeleteAsync(int id, string userId, string companyId);
         Task<MixConsignmentPrintViewDto?> GetPrintViewAsync(string invNo, string companyId);
         Task<MixConsignmentStatusDto?> GetCurrentStatusAsync(string invNo, string companyId);
+        Task<MixConsignmentPrintViewDto?> GetCurrentStatusPrintAsync(string invNo, string companyId);
         Task<List<object>> GetLotsAsync(string? searchBy, string companyId);
         Task<string> GetMixLotNoLMAsync(string companyId);
     }

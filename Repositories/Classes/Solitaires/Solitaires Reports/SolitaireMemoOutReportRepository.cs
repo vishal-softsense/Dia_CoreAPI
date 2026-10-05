@@ -178,7 +178,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 CertificateNo = GetString(row, "CertificateNo", "certificateNo"),
                 Invtype = GetString(row, "Invtype", "InvType", "invtype"),
                 MemoTime = GetString(row, "MemoTime", "memoTime"),
-                MemoReturnTime = GetString(row, "MemoReturnTime", "memoReturnTime")
+                MemoReturnTime = GetString(row, "MemoReturnTime", "memoReturnTime"),
+                Prio = GetString(row, "Prio", "prio")
             };
         }
 

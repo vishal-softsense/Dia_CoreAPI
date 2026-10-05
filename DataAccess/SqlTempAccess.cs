@@ -1628,5 +1628,13 @@ namespace Dia_CoreAPI.DataAccess
             return _connection.Query<string>(sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).FirstOrDefault();
         }
 
+        /// <summary>MVC SqlTempAccess.GetLotJewData — GetLotNoDataForAll @Type='GetJewStockDetails'.</summary>
+        public List<Dia_CoreAPI.DTOs.StockAccount.LotNoDataJew> GetLotJewData(string strWhere)
+        {
+            string sql = @" EXEC [GetLotNoDataForAll] @Type = 'GetJewStockDetails',@Where = '" + strWhere + "'";
+            return _connection.Query<Dia_CoreAPI.DTOs.StockAccount.LotNoDataJew>(
+                sql, transaction: _transaction, commandTimeout: CommandTimeoutSeconds).ToList();
+        }
+
     }
 }

@@ -4,7 +4,11 @@ using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Utilities;
 using Microsoft.Data.SqlClient;
+using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
+using System.Linq;
 using BasicDataDto = Dia_CoreAPI.DTOs.BasicDataDto;
 using StockBasic = Dia_CoreAPI.DTOs.StockAccount.BasicDataDto;
 
@@ -786,8 +790,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
         public async Task<MixConsignmentStatusDto?> GetCurrentStatusAsync(string invNo, string companyId)
         {
-            // MVC PrintParcelinvcurrent uses GetParcelConsignmentReportData with TrnType CMemoIn.
-            // Keep API status shape; filter with CMemoIn (same casing as save/print).
+            // Ledger-style status (SoliPrintCurStatusInv). Pending memo print uses GetCurrentStatusPrintAsync.
             string where;
             if (int.TryParse(invNo, out var codeId))
                 where = $"tsp.TrnType = ''CMemoIn'' AND tsp.Code = {codeId}";
@@ -836,6 +839,141 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             }
 
             return result;
+        }
+
+        /// <summary>MVC PrintParcelinvcurrent → EXEC GetParcelConsignmentReportData (ParcelConsignmentPending.rpt)</summary>
+        public async Task<MixConsignmentPrintViewDto?> GetCurrentStatusPrintAsync(string invNo, string companyId)
+        {
+            async Task<List<dynamic>> LoadRows(string where)
+            {
+                var sql = $"EXEC [GetParcelConsignmentReportData] @Where = '{where}'";
+                return (await _sqlDataAccess.SelectDataAdoDynamic(sql, companyId)).ToList();
+            }
+
+            List<dynamic> rows;
+            if (int.TryParse(invNo, out var codeId))
+            {
+                rows = await LoadRows($"and Trntype=''CMemoIn'' and Code=''{codeId}''");
+                if (rows.Count == 0)
+                {
+                    var escaped = (invNo ?? "").Replace("'", "''");
+                    rows = await LoadRows($"and Trntype=''CMemoIn'' and InvNo=''{escaped}''");
+                }
+            }
+            else
+            {
+                var escaped = (invNo ?? "").Replace("'", "''");
+                rows = await LoadRows($"and Trntype=''CMemoIn'' and InvNo=''{escaped}''");
+            }
+
+            if (rows.Count == 0)
+                return null;
+
+            var header = rows[0];
+            var result = new MixConsignmentPrintViewDto
+            {
+                InvNo = ConsStr(header, "Invno", "InvNo", "invno", "invNo") ?? ConsStr(header, "MemoNo", "memoNo"),
+                BillNo = ConsStr(header, "BillNo", "billNo"),
+                TrnDate = FormatConsDate(ConsStr(header, "Date", "date", "ConDATE", "TrnDate", "trnDate")),
+                RoundDate = FormatConsDate(ConsStr(header, "RoundDate", "roundDate"))
+                    ?? DateTime.Now.ToString("MM/dd/yyyy"),
+                PartyName = ConsStr(header, "Party", "PartyName", "party", "partyName"),
+                AddressLine1 = ConsStr(header, "AddressLine1", "addressLine1"),
+                AddressLine2 = ConsStr(header, "AddressLine2", "addressLine2"),
+                AddressLine3 = ConsStr(header, "AddressLine3", "addressLine3"),
+                ShipVia = ConsStr(header, "ShipVia", "shipVia"),
+                Tracking = ConsStr(header, "Tracking", "tracking"),
+                SalesPerson = ConsStr(header, "SalesPerson", "salesPerson"),
+                SalesPersons = ConsStr(header, "SalesPerson", "salesPerson"),
+                Items = new List<MixConsignmentPrintItemDto>()
+            };
+
+            foreach (var dr in rows)
+            {
+                var carats = ConsDbl(dr, "carats", "Carats", "Weight", "weight");
+                var balance = ConsDbl(dr, "Balance", "balance");
+                var balanceAmt = ConsDbl(dr, "BalanceAmt", "balanceAmt");
+                var rate = ConsDbl(dr, "rate", "Rate", "Price", "price");
+                var amount = ConsDbl(dr, "amount", "Amount", "MasterCurrencyAmount");
+
+                result.Items.Add(new MixConsignmentPrintItemDto
+                {
+                    StockNo = ConsStr(dr, "Item", "Lotno", "LotNo", "lotno", "StockNo"),
+                    Description = ConsStr(dr, "ItemName", "itemName", "Description", "description"),
+                    Qty = ConsInt(dr, "Pcs", "pcs"),
+                    Weight = carats,
+                    PricePerCarat = rate,
+                    Amount = balanceAmt != 0 ? balanceAmt : amount,
+                    Balance = balance,
+                    BalanceAmt = balanceAmt
+                });
+            }
+
+            return result;
+        }
+
+        private static object? ConsRaw(dynamic row, params string[] keys)
+        {
+            if (row is IDictionary<string, object> dict)
+            {
+                foreach (var key in keys)
+                {
+                    var match = dict.Keys.FirstOrDefault(k => string.Equals(k, key, StringComparison.OrdinalIgnoreCase));
+                    if (match == null) continue;
+                    var value = dict[match];
+                    if (value != null && value != DBNull.Value) return value;
+                }
+            }
+            return null;
+        }
+
+        private static string? ConsStr(dynamic row, params string[] keys)
+        {
+            var v = ConsRaw(row, keys);
+            var s = v?.ToString();
+            return string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+        }
+
+        private static int ConsInt(dynamic row, params string[] keys)
+        {
+            var s = ConsStr(row, keys);
+            if (string.IsNullOrWhiteSpace(s)) return 0;
+            int n;
+            return int.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out n) ? n : 0;
+        }
+
+        private static double ConsDbl(dynamic row, params string[] keys)
+        {
+            var s = ConsStr(row, keys);
+            if (string.IsNullOrWhiteSpace(s)) return 0;
+            double n;
+            return double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out n) ? n : 0;
+        }
+
+        private static string? FormatConsDate(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return null;
+            var text = value.Trim();
+            var spaceIdx = text.IndexOf(' ');
+            var tIdx = text.IndexOf('T');
+            var cut = -1;
+            if (spaceIdx > 0) cut = spaceIdx;
+            if (tIdx > 0 && (cut < 0 || tIdx < cut)) cut = tIdx;
+            if (cut > 0) text = text.Substring(0, cut);
+
+            DateTime dt;
+            if (DateTime.TryParseExact(
+                    text,
+                    new[] { "dd-MM-yyyy", "dd/MM/yyyy", "MM/dd/yyyy", "yyyy-MM-dd", "dd-MMM-yyyy" },
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out dt))
+                return dt.ToString("MM/dd/yyyy");
+            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
+                return dt.ToString("MM/dd/yyyy");
+            if (DateTime.TryParse(value, out dt))
+                return dt.ToString("MM/dd/yyyy");
+            return text;
         }
 
         #region Private insert/update helpers

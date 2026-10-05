@@ -18,6 +18,8 @@ namespace Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction
         Task<(bool Success, string Message)> EditAsync(MixMemoOutHeaderDto header, List<MixMemoOutItemDto> items, string userId, string companyId);
         Task<(bool Success, string Message)> DeleteAsync(int id, string userId, string companyId);
         Task<MixMemoOutPrintViewDto?> GetPrintViewAsync(string invNo, string companyId);
+        /// <summary>MVC PrintParcelinvcurrent → GetMemoReport + MemoRandumPending.rpt</summary>
+        Task<MixMemoOutPrintViewDto?> GetCurrentStatusAsync(string invNo, string companyId);
         Task<List<MixMemoOutShipViaOptionDto>> GetShipViaAsync(string searchBy, string companyId);
         Task<List<MixMemoOutLotOptionDto>> GetLotsAsync(string? searchBy, string companyId);
     }

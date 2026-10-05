@@ -233,6 +233,9 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction
         public string? AddressLine3 { get; set; }
         public string? ShipVia { get; set; }
         public string? Tracking { get; set; }
+        public double PlusMinusAmount { get; set; }
+        public double BaseRate { get; set; }
+        public double FinalAmount { get; set; }
         public List<SolitaireMemoOutPrintItemDto> Items { get; set; } = new();
     }
 

@@ -215,6 +215,28 @@ namespace Dia_CoreAPI.Controllers.Parcel.Parcel_Transaction
             }
         }
 
+        /// <summary>MVC: MixConsignment/parmixconsignmentcurrent → ParcelConsignmentPending.rpt</summary>
+        [HttpGet("current-status-print/{invNo}")]
+        public async Task<IActionResult> CurrentStatusPrint(string invNo)
+        {
+            try
+            {
+                int permission = await _service.CheckUserPermissionAsync(UserTypeId, "MixConsignment", "select", CompanyId);
+                if (permission != 1)
+                    return Ok(new { success = false, Data = "You are not authorized to perform this task." });
+
+                var data = await _service.GetCurrentStatusPrintAsync(invNo, CompanyId);
+                if (data == null)
+                    return Ok(new { success = false, Data = "Invoice not found." });
+
+                return Ok(new { success = true, Data = data });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { success = false, Data = ex.Message });
+            }
+        }
+
         [HttpGet("lots")]
         public async Task<IActionResult> GetLots([FromQuery] string? searchby)
         {

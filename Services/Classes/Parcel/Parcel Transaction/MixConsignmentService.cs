@@ -48,6 +48,9 @@ namespace Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction
         public Task<MixConsignmentStatusDto?> GetCurrentStatusAsync(string invNo, string companyId)
             => _repository.GetCurrentStatusAsync(invNo, companyId);
 
+        public Task<MixConsignmentPrintViewDto?> GetCurrentStatusPrintAsync(string invNo, string companyId)
+            => _repository.GetCurrentStatusPrintAsync(invNo, companyId);
+
         public Task<List<object>> GetLotsAsync(string? searchBy, string companyId)
             => _repository.GetLotsAsync(searchBy, companyId);
 

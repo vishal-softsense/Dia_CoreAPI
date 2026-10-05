@@ -24,6 +24,9 @@ namespace Dia_CoreAPI.Services.Classes.FinancialTransaction.Payment
         public Task<PaymentDetailDto?> GetDetailAsync(int id, string companyId)
             => _repository.GetDetailAsync(id, companyId);
 
+        public Task<PaymentJvListItemDto?> GetJvDetailAsync(int id, string companyId)
+            => _repository.GetJvDetailAsync(id, companyId);
+
         public Task<(bool Success, string Message)> DeleteAsync(int id, string userId, string companyId)
             => _repository.DeleteAsync(id, userId, companyId);
 

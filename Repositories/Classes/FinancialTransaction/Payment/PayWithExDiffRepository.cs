@@ -67,8 +67,24 @@ namespace Dia_CoreAPI.Repositories.Classes.FinancialTransaction.Payment
             string partyText = isIpay ? row.Account : row.Party;
             long partyValue = isIpay ? row.mainacc : row.trnacc;
 
-            // MVC EditPayWithExDiff: AdjustmentType = disc or "Payment"
-            string adjType = string.IsNullOrEmpty(row.disc) ? "Payment" : row.disc!;
+            // List SP disc may be PayRec Disc (Payment/Adat/Brokerage) OR free-text JV Desc.
+            // MVC #desc binds Model.disc; free-text Description is saved as JV @disc (request.Desc).
+            string rawDisc = FirstNonEmpty(row.disc, row.Desc) ?? "";
+            string adjType = "Payment";
+            if (string.Equals(rawDisc, "Adat", StringComparison.OrdinalIgnoreCase))
+                adjType = "Adat";
+            else if (string.Equals(rawDisc, "Brokerage", StringComparison.OrdinalIgnoreCase))
+                adjType = "Brokerage";
+
+            string description = rawDisc;
+            if (IsReservedPayDisc(rawDisc) || string.IsNullOrWhiteSpace(description))
+            {
+                string? jvDesc = await GetJvDescriptionAsync(id, companyId);
+                if (!string.IsNullOrWhiteSpace(jvDesc) && !IsReservedPayDisc(jvDesc))
+                    description = jvDesc;
+                else if (IsReservedPayDisc(description))
+                    description = ""; // do not show PayType keywords as Description
+            }
 
             int curCode = await ResolveCurCodeAsync(row.CurCode, row.Symbol, companyId);
             if (curCode == 0 && row.Amount > 0)
@@ -114,7 +130,8 @@ namespace Dia_CoreAPI.Repositories.Classes.FinancialTransaction.Payment
                 Symbol = symbol,
                 MasterCurrencyAmount = row.MasterCurrencyAmount,
                 StockCurrencyAmount = row.StockCurrencyAmount,
-                disc = row.disc,
+                disc = description,
+                Desc = description,
                 MasterCurrencyRate = mRate,
                 StockCurrencyRate = sRate,
                 CurCode = curCode,
@@ -730,6 +747,42 @@ namespace Dia_CoreAPI.Repositories.Classes.FinancialTransaction.Payment
                 });
             }
             return jvCodes;
+        }
+
+        /// <summary>
+        /// Free-text Description is saved as JV @disc (request.Desc). List SP disc is often PayRec Disc type.
+        /// </summary>
+        private async Task<string?> GetJvDescriptionAsync(int gcode, string companyId)
+        {
+            string sql =
+                $"SELECT TOP 1 disc FROM TabJv WHERE GCODE = {gcode} AND (vtype = 'IPAY' OR vtype = 'IREC') ORDER BY Code";
+            try
+            {
+                return await _sqlDataAccess.SelectRawSqlSingle<string>(sql, companyId);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static bool IsReservedPayDisc(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return true;
+            return string.Equals(value, "Payment", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "Adat", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "Brokerage", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "Ex. Difference", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "Ex.Difference", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string? FirstNonEmpty(params string?[] values)
+        {
+            foreach (var v in values)
+            {
+                if (!string.IsNullOrWhiteSpace(v)) return v;
+            }
+            return null;
         }
 
         private static async Task InsertJvAsync(

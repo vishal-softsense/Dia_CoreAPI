@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
+using Microsoft.AspNetCore.Http;
 
 namespace Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction
 {
@@ -20,5 +21,13 @@ namespace Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction
         Task<MixPurchaseStatusDto?> GetCurrentStatusAsync(string invNo, string companyId);
         Task<List<object>> GetLotsAsync(string? searchBy, string companyId);
         Task<string> GetMixLotNoDIAsync(string companyId);
+        Task<(bool Success, object? Data)> ImportExcelDataAsync(
+            IFormFile? file,
+            float less1,
+            float less2,
+            float less3,
+            string? curCode,
+            List<MixPurchaseItemDto>? existingItems,
+            string companyId);
     }
 }

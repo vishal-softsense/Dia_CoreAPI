@@ -1,4 +1,4 @@
-﻿using Dia_CoreAPI.DataAccess;
+using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
@@ -502,6 +502,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 InvNo = header.InvNo,
                 BillNo = header.BillNo,
                 TrnDate = header.TrnDate.HasValue ? header.TrnDate.Value.ToString("MM/dd/yyyy") : null,
+                RoundDate = header.RoundDate.HasValue ? header.RoundDate.Value.ToString("MM/dd/yyyy") : null,
                 DueDays = header.DueDays,
                 PartyName = header.PartyName,
                 AddressLine1 = header.AddressLine1,
@@ -510,6 +511,10 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 ShipVia = header.ShipVia,
                 Tracking = header.Tracking,
                 SalesPerson = header.SalesPersons ?? header.SalesPerson,
+                SalesPersons = header.SalesPersons ?? header.SalesPerson,
+                PlusMinusAmount = header.PlusMinusAmount,
+                BaseRate = header.BaseRate,
+                FinalAmount = header.FinalAmount,
                 Items = new List<MixMemoOutPrintItemDto>()
             };
 
@@ -534,14 +539,189 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     CertificateNo = dr.CertificateNo,
                     Rate = dr.Rate,
                     Back = dr.Back,
-                    MasterCurrencyAmount = dr.MasterCurrencyAmount
+                    MasterCurrencyAmount = dr.MasterCurrencyAmount,
+                    ReturnCarats = dr.ReturnCarats,
+                    IssueCarats = dr.IssueCarats
                 });
             }
 
             return result;
         }
 
-        
+        /// <summary>MVC PrintParcelinvcurrent → EXEC GetMemoReportData (MemoRandumPending.rpt)</summary>
+        public async Task<MixMemoOutPrintViewDto?> GetCurrentStatusAsync(string invNo, string companyId)
+        {
+            async Task<List<dynamic>> LoadRows(string where)
+            {
+                var sql = $"EXEC [GetMemoReportData] @Where = '{where}',@Type = ''";
+                return (await _sqlDataAccess.SelectDataAdoDynamic(sql, companyId)).ToList();
+            }
+
+            List<dynamic> rows;
+            if (int.TryParse(invNo, out var codeId))
+            {
+                rows = await LoadRows($"and tm.Trntype=''CMemoOut'' and tm.Code=''{codeId}''");
+                if (rows.Count == 0)
+                {
+                    var escapedInvNo = (invNo ?? "").Replace("'", "''");
+                    rows = await LoadRows($"and tm.Trntype=''CMemoOut'' and tm.InvNo=''{escapedInvNo}''");
+                }
+            }
+            else
+            {
+                var escapedInvNo = (invNo ?? "").Replace("'", "''");
+                rows = await LoadRows($"and tm.Trntype=''CMemoOut'' and tm.InvNo=''{escapedInvNo}''");
+            }
+
+            // Fallback: Mix memo report SP (same columns) if GetMemoReportData has no rows
+            if (rows.Count == 0)
+            {
+                async Task<List<dynamic>> LoadMixRows(string where)
+                {
+                    var sql = $"EXEC [GetMixMemoReportData] @Where = '{where}',@Type = ''";
+                    return (await _sqlDataAccess.SelectDataAdoDynamic(sql, companyId)).ToList();
+                }
+
+                if (int.TryParse(invNo, out var mixCode))
+                {
+                    rows = await LoadMixRows($"and tm.Trntype=''CMemoOut'' and tm.Code=''{mixCode}''");
+                    if (rows.Count == 0)
+                    {
+                        var escapedInvNo = (invNo ?? "").Replace("'", "''");
+                        rows = await LoadMixRows($"and tm.Trntype=''CMemoOut'' and tm.InvNo=''{escapedInvNo}''");
+                    }
+                }
+                else
+                {
+                    var escapedInvNo = (invNo ?? "").Replace("'", "''");
+                    rows = await LoadMixRows($"and tm.Trntype=''CMemoOut'' and tm.InvNo=''{escapedInvNo}''");
+                }
+            }
+
+            if (rows.Count == 0)
+                return null;
+
+            var header = rows[0];
+            var result = new MixMemoOutPrintViewDto
+            {
+                InvNo = StatusStr(header, "MemoNo", "InvNo", "memoNo", "invNo"),
+                BillNo = StatusStr(header, "BillNo", "billNo"),
+                TrnDate = FormatMemoStatusDate(StatusStr(header, "TrnDate", "trnDate", "ConDATE", "ConDate")),
+                RoundDate = FormatMemoStatusDate(StatusStr(header, "RoundDate", "roundDate"))
+                    ?? DateTime.Now.ToString("MM/dd/yyyy"),
+                DueDays = (short)StatusInt(header, "DueDays", "dueDays"),
+                PartyName = StatusStr(header, "Party", "PartyName", "party", "partyName"),
+                AddressLine1 = StatusStr(header, "AddressLine1", "addressLine1"),
+                AddressLine2 = StatusStr(header, "AddressLine2", "addressLine2"),
+                AddressLine3 = StatusStr(header, "AddressLine3", "addressLine3"),
+                ShipVia = StatusStr(header, "ShipVia", "shipVia"),
+                Tracking = StatusStr(header, "Tracking", "tracking"),
+                SalesPerson = StatusStr(header, "SalesPerson", "Seller", "salesPerson", "seller"),
+                SalesPersons = StatusStr(header, "SalesPerson", "Seller", "salesPerson", "seller"),
+                Items = new List<MixMemoOutPrintItemDto>()
+            };
+
+            foreach (var dr in rows)
+            {
+                var carats = StatusDbl(dr, "Carats", "carats");
+                var balance = StatusDbl(dr, "Balance", "balance");
+                var balanceAmt = StatusDbl(dr, "BalanceAmt", "balanceAmt");
+                var price = StatusDbl(dr, "Price", "price", "Rate", "rate");
+                var amount = StatusDbl(dr, "Amount", "amount");
+                var ret = StatusDbl(dr, "Return", "return");
+
+                result.Items.Add(new MixMemoOutPrintItemDto
+                {
+                    StockNo = StatusStr(dr, "Lotno", "LotNo", "lotno", "lotNo"),
+                    Description = StatusStr(dr, "ItemName", "itemName", "Description", "description"),
+                    Qty = StatusInt(dr, "Pcs", "pcs"),
+                    Weight = carats,
+                    PricePerCarat = price,
+                    Rate = price,
+                    Amount = amount,
+                    MasterCurrencyAmount = balanceAmt != 0 ? balanceAmt : amount,
+                    ReturnCarats = ret,
+                    Balance = balance,
+                    BalanceAmt = balanceAmt,
+                    ShapeId = StatusStr(dr, "ShapeId", "shapeId"),
+                    ColorId = StatusStr(dr, "ColorId", "colorId"),
+                    ClarityId = StatusStr(dr, "ClarityId", "clarityId"),
+                    PropId = StatusStr(dr, "PropId", "propId"),
+                    PolishId = StatusStr(dr, "PolishId", "polishId"),
+                    SymId = StatusStr(dr, "SymId", "symId"),
+                    FLId = StatusStr(dr, "FLId", "flId"),
+                    CertId = StatusStr(dr, "CertId", "certId"),
+                    CertificateNo = StatusStr(dr, "CertificateNo", "certificateNo")
+                });
+            }
+
+            return result;
+        }
+
+        private static object? StatusRaw(dynamic row, params string[] keys)
+        {
+            if (row is IDictionary<string, object> dict)
+            {
+                foreach (var key in keys)
+                {
+                    var match = dict.Keys.FirstOrDefault(k => string.Equals(k, key, StringComparison.OrdinalIgnoreCase));
+                    if (match == null) continue;
+                    var value = dict[match];
+                    if (value != null && value != DBNull.Value) return value;
+                }
+            }
+            return null;
+        }
+
+        private static string? StatusStr(dynamic row, params string[] keys)
+        {
+            var v = StatusRaw(row, keys);
+            var s = v?.ToString();
+            return string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+        }
+
+        private static int StatusInt(dynamic row, params string[] keys)
+        {
+            var s = StatusStr(row, keys);
+            if (string.IsNullOrWhiteSpace(s)) return 0;
+            int n;
+            return int.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out n) ? n : 0;
+        }
+
+        private static double StatusDbl(dynamic row, params string[] keys)
+        {
+            var s = StatusStr(row, keys);
+            if (string.IsNullOrWhiteSpace(s)) return 0;
+            double n;
+            return double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out n) ? n : 0;
+        }
+
+        private static string? FormatMemoStatusDate(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return null;
+            var text = value.Trim();
+            // Strip time: "24-01-2026 12:00:00 AM" → "24-01-2026"
+            var spaceIdx = text.IndexOf(' ');
+            var tIdx = text.IndexOf('T');
+            var cut = -1;
+            if (spaceIdx > 0) cut = spaceIdx;
+            if (tIdx > 0 && (cut < 0 || tIdx < cut)) cut = tIdx;
+            if (cut > 0) text = text.Substring(0, cut);
+
+            DateTime dt;
+            if (DateTime.TryParseExact(
+                    text,
+                    new[] { "dd-MM-yyyy", "dd/MM/yyyy", "MM/dd/yyyy", "yyyy-MM-dd", "dd-MMM-yyyy" },
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out dt))
+                return dt.ToString("MM/dd/yyyy");
+            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
+                return dt.ToString("MM/dd/yyyy");
+            if (DateTime.TryParse(value, out dt))
+                return dt.ToString("MM/dd/yyyy");
+            return text;
+        }
 
         public async Task<List<MixMemoOutShipViaOptionDto>> GetShipViaAsync(string searchBy, string companyId)
         {
@@ -692,6 +872,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             public string? InvNo { get; set; }
             public string? BillNo { get; set; }
             public DateTime? TrnDate { get; set; }
+            public DateTime? RoundDate { get; set; }
             public short DueDays { get; set; }
             public string? PartyName { get; set; }
             public string? AddressLine1 { get; set; }
@@ -701,6 +882,9 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             public string? Tracking { get; set; }
             public string? SalesPerson { get; set; }
             public string? SalesPersons { get; set; }
+            public double PlusMinusAmount { get; set; }
+            public double BaseRate { get; set; }
+            public double FinalAmount { get; set; }
             public string? LotNo { get; set; }
             public string? lotno { get; set; }
             public string? ItemName { get; set; }
@@ -708,6 +892,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             public double Carats { get; set; }
             public double Rate { get; set; }
             public double MasterCurrencyAmount { get; set; }
+            public double ReturnCarats { get; set; }
+            public double IssueCarats { get; set; }
             public string? ShapeId { get; set; }
             public string? ColorId { get; set; }
             public string? ClarityId { get; set; }

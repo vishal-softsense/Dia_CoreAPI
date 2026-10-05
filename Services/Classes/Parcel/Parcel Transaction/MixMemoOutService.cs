@@ -51,6 +51,9 @@ namespace Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction
         public Task<MixMemoOutPrintViewDto?> GetPrintViewAsync(string invNo, string companyId)
             => _repository.GetPrintViewAsync(invNo, companyId);
 
+        public Task<MixMemoOutPrintViewDto?> GetCurrentStatusAsync(string invNo, string companyId)
+            => _repository.GetCurrentStatusAsync(invNo, companyId);
+
         public Task<List<MixMemoOutShipViaOptionDto>> GetShipViaAsync(string searchBy, string companyId)
             => _repository.GetShipViaAsync(searchBy, companyId);
 

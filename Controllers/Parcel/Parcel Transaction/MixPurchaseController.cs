@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dia_CoreAPI.Controllers.Parcel.Parcel_Transaction
@@ -268,6 +271,38 @@ namespace Dia_CoreAPI.Controllers.Parcel.Parcel_Transaction
             catch (Exception ex)
             {
                 return Ok(new { success = false, lotNo = "", Data = ex.Message });
+            }
+        }
+
+        /// <summary>MVC: POST mix-purchase/import-excel-data (GetItemParcelDetails).</summary>
+        [HttpPost("import-excel-data")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ImportExcelData([FromForm] MixPurchaseImportExcelDto? importData)
+        {
+            try
+            {
+                List<MixPurchaseItemDto>? existing = null;
+                if (!string.IsNullOrWhiteSpace(importData?.ExistingItems))
+                {
+                    existing = JsonSerializer.Deserialize<List<MixPurchaseItemDto>>(
+                        importData.ExistingItems,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+
+                var (success, data) = await _service.ImportExcelDataAsync(
+                    importData?.ImportFile,
+                    importData?.Less1 ?? 0,
+                    importData?.Less2 ?? 0,
+                    importData?.Less3 ?? 0,
+                    importData?.CurCode,
+                    existing,
+                    CompanyId);
+
+                return Ok(new { success, Data = data });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { success = false, Data = ex.Message });
             }
         }
     }

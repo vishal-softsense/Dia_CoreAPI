@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 
 namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
 {
@@ -333,6 +334,18 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
     public class MixPurchaseDeleteRequest
     {
         public int Id { get; set; }
+    }
+
+    /// <summary>MVC ParcelInputExcel — multipart form for mix-purchase/import-excel-data.</summary>
+    public class MixPurchaseImportExcelDto
+    {
+        public IFormFile? ImportFile { get; set; }
+        public float Less1 { get; set; }
+        public float Less2 { get; set; }
+        public float Less3 { get; set; }
+        public string? CurCode { get; set; }
+        /// <summary>JSON-serialized existing grid rows (Core session equivalent of MVC TempData).</summary>
+        public string? ExistingItems { get; set; }
     }
 
     public class MixPurchaseAddLotRequest

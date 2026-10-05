@@ -210,6 +210,15 @@ namespace Dia_CoreAPI.Repositories.Classes.FinancialTransaction.Payment
             };
         }
 
+        public async Task<PaymentJvListItemDto?> GetJvDetailAsync(int id, string companyId)
+        {
+            // MVC EditJVPayment: GetJVPaymentsLists(" And GCODE = " + id, 1)
+            string sql =
+                $" EXEC [GetJVPaymentListUsingPageNo] @Where = ' And GCODE = {id}', @PageNo = '1'";
+            var row = (await _sqlDataAccess.SelectRawSql<PaymentJvListRow>(sql, companyId)).FirstOrDefault();
+            return row == null ? null : MapJvItem(row);
+        }
+
         public async Task<List<PaymentJvListItemDto>> GetJvEntriesAsync(string? transDate, string companyId)
         {
             // MVC: EXEC [GetJVPaymentListUsingPageNo] @PageNo = '1'
@@ -218,32 +227,44 @@ namespace Dia_CoreAPI.Repositories.Classes.FinancialTransaction.Payment
 
             if (!string.IsNullOrWhiteSpace(transDate))
             {
-                if (!DateTime.TryParse(transDate, out DateTime parsedDate))
+                // Prefer calendar date from yyyy-MM-dd to avoid timezone shifts
+                DateTime parsedDate;
+                if (DateTime.TryParseExact(
+                        transDate.Length >= 10 ? transDate.Substring(0, 10) : transDate,
+                        "yyyy-MM-dd",
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.None,
+                        out parsedDate)
+                    || DateTime.TryParse(transDate, out parsedDate))
+                {
+                    rows = rows.Where(x => x.Date.Date == parsedDate.Date).ToList();
+                }
+                else
                     throw new ArgumentException("Invalid date format");
-
-                rows = rows.Where(x => x.Date.Date == parsedDate.Date).ToList();
             }
 
-            return rows.Select(r => new PaymentJvListItemDto
-            {
-                GCODE = r.GCODE,
-                code = r.code,
-                Date = r.Date,
-                Vtype = r.Vtype,
-                DAccount = r.DAccount,
-                CAccount = r.CAccount,
-                mainacc = r.mainacc,
-                trnacc = r.trnacc,
-                Amount = r.Amount,
-                Symbol = r.Symbol,
-                MasterCurrencyAmount = r.MasterCurrencyAmount,
-                StockCurrencyAmount = r.StockCurrencyAmount,
-                CurCode = r.CurCode,
-                disc = r.disc,
-                MasterCurrencyRate = r.MasterCurrencyRate,
-                StockCurrencyRate = r.StockCurrencyRate
-            }).ToList();
+            return rows.Select(MapJvItem).ToList();
         }
+
+        private static PaymentJvListItemDto MapJvItem(PaymentJvListRow r) => new()
+        {
+            GCODE = r.GCODE,
+            code = r.code,
+            Date = r.Date,
+            Vtype = r.Vtype,
+            DAccount = r.DAccount,
+            CAccount = r.CAccount,
+            mainacc = r.mainacc,
+            trnacc = r.trnacc,
+            Amount = r.Amount,
+            Symbol = r.Symbol,
+            MasterCurrencyAmount = r.MasterCurrencyAmount,
+            StockCurrencyAmount = r.StockCurrencyAmount,
+            CurCode = r.CurCode,
+            disc = r.disc,
+            MasterCurrencyRate = r.MasterCurrencyRate,
+            StockCurrencyRate = r.StockCurrencyRate
+        };
 
         public async Task<List<PaymentPendingInvDto>> GetPendingInvoicesAsync(PaymentPendingInvRequest request, string companyId)
         {

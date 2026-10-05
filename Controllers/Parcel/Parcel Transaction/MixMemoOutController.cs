@@ -221,6 +221,28 @@ namespace Dia_CoreAPI.Controllers.Parcel.Parcel_Transaction
             }
         }
 
+        /// <summary>MVC: mixmemoform/parcelmixprintinvcurrent → GetMemoReport + MemoRandumPending.rpt</summary>
+        [HttpGet("current-status/{invNo}")]
+        public async Task<IActionResult> CurrentStatus(string invNo)
+        {
+            try
+            {
+                int permission = await _service.CheckUserPermissionAsync(UserTypeId, FormName, "select", CompanyId);
+                if (permission != 1)
+                    return Ok(new { success = false, Data = "You are not authorized to perform this task." });
+
+                var data = await _service.GetCurrentStatusAsync(invNo, CompanyId);
+                if (data == null)
+                    return Ok(new { success = false, Data = "Invoice not found." });
+
+                return Ok(new { success = true, Data = data });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { success = false, Data = ex.Message });
+            }
+        }
+
         [HttpGet("ship-via")]
         public async Task<IActionResult> GetShipVia([FromQuery] string searchby)
         {

@@ -142,6 +142,8 @@ namespace Dia_CoreAPI.Services.Classes.Parcel.Parcel_Reports
                         where += " And onhand>0.01 And CurStatus in ('S') "; break;
                     case "OnMemo":
                         where += " And CurStatus in ('M','I','L','PS') "; break;
+                    case "OnHand + OnMemo":
+                        where += " And (CurStatus in ('M','I','L','PS') OR ISNULL(MemoOut, 0) > 0) "; break;
                     case "OnHand&Int.Memo":
                         where += " And CurStatus in ('S','I') "; break;
                     case "OnHand + Memo In":

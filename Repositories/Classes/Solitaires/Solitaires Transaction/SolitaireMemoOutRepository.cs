@@ -489,6 +489,9 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 AddressLine3 = header.AddressLine3,
                 ShipVia = header.ShipVia,
                 Tracking = header.Tracking,
+                PlusMinusAmount = header.PlusMinusAmount != 0 ? header.PlusMinusAmount : header.PlusMinAmount,
+                BaseRate = header.BaseRate,
+                FinalAmount = header.FinalAmount,
                 Items = new List<SolitaireMemoOutPrintItemDto>()
             };
 
@@ -670,6 +673,10 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             public string? CertificateNo { get; set; }
             public string? Back { get; set; }
             public double Amount { get; set; }
+            public double PlusMinAmount { get; set; }
+            public double PlusMinusAmount { get; set; }
+            public double BaseRate { get; set; }
+            public double FinalAmount { get; set; }
         }
 
         private class ShipViaRow

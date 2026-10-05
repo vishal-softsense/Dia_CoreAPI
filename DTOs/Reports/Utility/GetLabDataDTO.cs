@@ -106,6 +106,8 @@ namespace Dia_CoreAPI.DTOs.Reports.Utility
         public string Measurement1 { get; set; } = string.Empty;
         public string Measurement2 { get; set; } = string.Empty;
         public string Measurement3 { get; set; } = string.Empty;
+        /// <summary>IGI COMMENTS — shown as LabComments in the grid (MVC IGIdata.Comments).</summary>
+        public string Comments { get; set; } = string.Empty;
         public string Cert { get; set; } = string.Empty;
         public string LotNo { get; set; } = string.Empty;
     }

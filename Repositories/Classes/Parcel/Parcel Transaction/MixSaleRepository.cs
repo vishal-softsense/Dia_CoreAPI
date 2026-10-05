@@ -1,4 +1,4 @@
-﻿using Dia_CoreAPI.DataAccess;
+using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
@@ -149,6 +149,26 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             }).ToList();
         }
 
+        /// <summary>
+        /// GetSalepurRecord returns CGSTAmount/SGSTAmount/IGSTAmount (MVC aliases AS CGSTAmt).
+        /// </summary>
+        private static void NormalizeHeader(MixSaleHeaderDto header)
+        {
+            if (header == null) return;
+
+            if (header.CGSTAmt == 0 && header.CGSTAmount != 0)
+                header.CGSTAmt = header.CGSTAmount;
+            if (header.SGSTAmt == 0 && header.SGSTAmount != 0)
+                header.SGSTAmt = header.SGSTAmount;
+            if (header.IGSTAmt == 0 && header.IGSTAmount != 0)
+                header.IGSTAmt = header.IGSTAmount;
+
+            if (string.IsNullOrWhiteSpace(header.Description) && !string.IsNullOrWhiteSpace(header.InvDisc))
+                header.Description = header.InvDisc;
+            else if (string.IsNullOrWhiteSpace(header.InvDisc) && !string.IsNullOrWhiteSpace(header.Description))
+                header.InvDisc = header.Description;
+        }
+
         public async Task<MixSaleDetailDto?> GetDetailAsync(int id, string companyId)
         {
             var headerParams = new Dictionary<string, object>
@@ -163,6 +183,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             if (header == null)
                 return null;
+
+            NormalizeHeader(header);
 
             var itemParams = new Dictionary<string, object>
             {
@@ -1114,7 +1136,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             var result = new MixSaleStatusDto
             {
-                InvNo = invNo,
+                InvNo = !string.IsNullOrWhiteSpace(header.InvNo) ? header.InvNo : invNo,
                 InvDate = invoiceRow.Date,
                 Status = invoiceRow.Status,
                 Party = header.Party,
@@ -1136,11 +1158,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     Date = row.Date,
                     Qty = row.Qty != null && row.Qty != 0 ? row.Qty : null,
                     Wt = row.Wt != null && row.Wt != 0 ? row.Wt : null,
+                    Lotno = row.Lotno,
                     Description = row.Description,
                     Rate = row.Rate != null && row.Rate != 0 ? row.Rate : null,
                     Tax = row.Tax != null && row.Tax != 0 ? row.Tax : null,
                     Amount = row.Amount != null && row.Amount != 0 ? row.Amount : null,
-                    IsPayment = row.IsPayment
+                    IsPayment = row.IsPayment,
+                    InvStatus = row.InvStatus
                 });
             }
 
@@ -1433,8 +1457,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     cmd.Parameters.Add(new SqlParameter("@PSieve", pSieve));
                     cmd.Parameters.Add(new SqlParameter("@PColor", pColor));
                     cmd.Parameters.Add(new SqlParameter("@PClarity", pClarity));
-                    cmd.Parameters.Add(new SqlParameter("@COGS", im.COGS));
-                    cmd.Parameters.Add(new SqlParameter("@StockType", stockType));
+                    //cmd.Parameters.Add(new SqlParameter("@COGS", im.COGS));
+                    //cmd.Parameters.Add(new SqlParameter("@StockType", stockType));
                     cmd.Parameters.Add(new SqlParameter("@COGS", 0.0f));
                     cmd.Parameters.Add(new SqlParameter("@StockType", im.StockType ?? "Diamond"));
                     cmd.Parameters.Add(new SqlParameter("@InvDescription", im.InvDescription ?? ""));
@@ -1754,11 +1778,14 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             public DateTime? Date { get; set; }
             public int? Qty { get; set; }
             public double? Wt { get; set; }
+            public string? Lotno { get; set; }
             public string? Description { get; set; }
             public double? Rate { get; set; }
             public double? Tax { get; set; }
             public double? Amount { get; set; }
             public int IsPayment { get; set; }
+            public string? InvStatus { get; set; }
+            public string? InvNo { get; set; }
             public string? Party { get; set; }
             public string? AddLine1 { get; set; }
             public string? AddLine2 { get; set; }

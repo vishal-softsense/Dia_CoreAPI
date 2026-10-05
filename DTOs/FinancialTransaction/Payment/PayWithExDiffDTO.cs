@@ -41,7 +41,10 @@ namespace Dia_CoreAPI.DTOs.FinancialTransaction.Payment
         public string? Symbol { get; set; }
         public double MasterCurrencyAmount { get; set; }
         public double StockCurrencyAmount { get; set; }
+        /// <summary>MVC EditPayWithExDiff #desc — free-text Description (TabJv.disc / list disc).</summary>
         public string? disc { get; set; }
+        /// <summary>SP may return Desc; normalized into disc for API/UI.</summary>
+        public string? Desc { get; set; }
         public float MasterCurrencyRate { get; set; }
         public float StockCurrencyRate { get; set; }
         public int CurCode { get; set; }
@@ -155,6 +158,8 @@ namespace Dia_CoreAPI.DTOs.FinancialTransaction.Payment
         public double MasterCurrencyAmount { get; set; }
         public double StockCurrencyAmount { get; set; }
         public string? disc { get; set; }
+        /// <summary>GetPaymentExDiffList may return Desc (JV description) instead of disc.</summary>
+        public string? Desc { get; set; }
         public float MasterCurrencyRate { get; set; }
         public float StockCurrencyRate { get; set; }
         public double CurCode { get; set; }

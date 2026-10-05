@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
@@ -235,6 +235,12 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public double Rate { get; set; }
         public string? Back { get; set; }
         public double MasterCurrencyAmount { get; set; }
+        /// <summary>MVC MixMemoDualPrint Return Cts / Kept Cts</summary>
+        public double ReturnCarats { get; set; }
+        public double IssueCarats { get; set; }
+        /// <summary>MVC MemoRandumPending / GetMemoReportData — remaining carats &amp; amount</summary>
+        public double Balance { get; set; }
+        public double BalanceAmt { get; set; }
     }
 
     public class MixMemoOutPrintViewDto
@@ -252,6 +258,10 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? Tracking { get; set; }
         public string? SalesPerson { get; set; }
         public string? SalesPersons { get; set; }
+        /// <summary>MVC Dual Round Off = PlusMinusAmount * BaseRate; grand total = FinalAmount</summary>
+        public double PlusMinusAmount { get; set; }
+        public double BaseRate { get; set; }
+        public double FinalAmount { get; set; }
         public List<MixMemoOutPrintItemDto> Items { get; set; } = new();
     }
 

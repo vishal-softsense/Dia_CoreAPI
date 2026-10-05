@@ -9,6 +9,7 @@ namespace Dia_CoreAPI.Services.Interfaces.FinancialTransaction.Payment
         Task<int> CheckUserPermissionAsync(string userTypeId, string actionType, string companyId);
         Task<List<PaymentListItemDto>> GetListAsync(string companyId);
         Task<PaymentDetailDto?> GetDetailAsync(int id, string companyId);
+        Task<PaymentJvListItemDto?> GetJvDetailAsync(int id, string companyId);
         Task<(bool Success, string Message)> DeleteAsync(int id, string userId, string companyId);
         Task<PaymentPageDataDto> GetPageDataAsync(string companyId);
         Task<List<PaymentJvListItemDto>> GetJvEntriesAsync(string? transDate, string companyId);

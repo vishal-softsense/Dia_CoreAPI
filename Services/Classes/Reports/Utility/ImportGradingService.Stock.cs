@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -714,7 +715,16 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
 
         private async Task<ImportGradingResult> UploadJewelleryFullInternalAsync(ImportGradingDTO dto, string companyId, string userId, string userTypeId)
         {
-            var tableOrError = ReadExcel(dto.ImportFile);
+            // MVC ImportGradingController.UploadJewelleryFull (data/upload-jewellery-full)
+            var file = dto?.ImportFile;
+            if (file == null || file.Length == 0)
+                return new ImportGradingResult(false, "No file uploaded");
+
+            string extension = Path.GetExtension(file.FileName)?.ToLower().Trim() ?? "";
+            if (extension != ".xls" && extension != ".xlsx")
+                return new ImportGradingResult(false, "Invalid Excel file format");
+
+            var tableOrError = ReadExcel(file);
             if (!tableOrError.Success) return tableOrError.Error;
             var dt = tableOrError.Table!;
             if (dt.Rows.Count == 0)
@@ -744,6 +754,15 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                     string stockWhere = " AND Stock_ID = ''" + stockId.Replace("'", "''") + "''";
                     string jewCodeWhere = "and Stock_ID=''" + stockId.Replace("'", "''") + "''";
                     bool isNewStock = !sql.JewStockExists(stockWhere);
+
+                    // MVC: NetWeight + MetalAmount are calculated (not taken from Excel NetWeight/MetalAmount)
+                    var diamondCarats = group.Sum(x => ColDbl(x, "DiamondCarat"));
+                    var grossWeight = ColDbl(first, "GrossWeight");
+                    var calculatedNetWeight = Math.Abs((diamondCarats / 5) - grossWeight);
+                    var metalRate = ColDbl(first, "MetalRate");
+                    var purityRatio = ColDbl(first, "PureRatio");
+                    var metalAmount = metalRate * calculatedNetWeight * purityRatio;
+
                     long jewCode;
 
                     if (isNewStock)
@@ -753,8 +772,8 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                             Trndate: "",
                             stockid: stockId,
                             serialno: 0,
-                            DesignId: "",
-                            DesignName: "",
+                            DesignId: null!,
+                            DesignName: null!,
                             DesignPriority: 0,
                             CreatedBy: userId,
                             ModifyBy: userId,
@@ -768,7 +787,7 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                             purity: Col(first, "Purity"),
                             pureratio: ColDbl(first, "PureRatio"),
                             grossweight: ColDbl(first, "GrossWeight"),
-                            netweight: ColDbl(first, "NetWeight"),
+                            netweight: calculatedNetWeight,
                             metalpricegm: ColDbl(first, "MetalRate"),
                             makingtype: Col(first, "MakingType"),
                             makingrate: ColFlt(first, "MakingRate"),
@@ -781,7 +800,7 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                             certificatecharges: ColFlt(first, "CertificateCharges"),
                             othercharges: ColFlt(first, "OtherCharges"),
                             hallmarkcharges: ColFlt(first, "HallmarkCharges"),
-                            totmetalamount: ColDbl(first, "MetalAmount"),
+                            totmetalamount: metalAmount,
                             totdiamondamt: (float)group.Sum(x => ColDbl(x, "DiamondAmount")),
                             totdiamondcarat: (float)group.Sum(x => ColDbl(x, "DiamondCarat")),
                             totstonecarat: (float)group.Sum(x => ColDbl(x, "StoneCarat")),
@@ -816,8 +835,8 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                             Trndate: "",
                             stockid: stockId,
                             serialno: 0,
-                            DesignId: "",
-                            DesignName: "",
+                            DesignId: null!,
+                            DesignName: null!,
                             DesignPriority: 0,
                             CreatedBy: userId,
                             ModifyBy: userId,
@@ -831,7 +850,7 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                             purity: Col(first, "Purity"),
                             pureratio: ColDbl(first, "PureRatio"),
                             grossweight: ColDbl(first, "GrossWeight"),
-                            netweight: ColDbl(first, "NetWeight"),
+                            netweight: calculatedNetWeight,
                             metalpricegm: ColDbl(first, "MetalRate"),
                             makingtype: Col(first, "MakingType"),
                             makingrate: ColFlt(first, "MakingRate"),
@@ -844,7 +863,7 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                             certificatecharges: ColFlt(first, "CertificateCharges"),
                             othercharges: ColFlt(first, "OtherCharges"),
                             hallmarkcharges: ColFlt(first, "HallmarkCharges"),
-                            totmetalamount: ColDbl(first, "MetalAmount"),
+                            totmetalamount: metalAmount,
                             totdiamondamt: (float)group.Sum(x => ColDbl(x, "DiamondAmount")),
                             totdiamondcarat: (float)group.Sum(x => ColDbl(x, "DiamondCarat")),
                             totstonecarat: (float)group.Sum(x => ColDbl(x, "StoneCarat")),
@@ -874,7 +893,9 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
 
                     foreach (var row in group)
                     {
-                        string diamondLotNo = Col(row, "DiamondLotNo");
+                        string diamondLotNo = Col(row, "DiamondLotNo").Trim();
+
+                        // MVC: Diamond Lot Number is required for every detail row
                         if (string.IsNullOrWhiteSpace(diamondLotNo))
                             return FailJewelleryUpload(sql, $"Diamond Lot Number is missing for Stock ID : {stockId}");
 
@@ -884,22 +905,57 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
 
                         int maxItemCode = Convert.ToInt32(itemCode);
 
+                        // MVC DIAMOND SAVE: shape/size/sieve/color/clarity from GetLotJewData (lot master), not Excel
                         if (!string.IsNullOrWhiteSpace(Col(row, "DiamondLotNo")))
                         {
-                            sql.SaveStockDiamondDetailsData(null, Convert.ToInt32(jewCode), maxItemCode, Col(row, "DiamondLotNo"),
-                                Col(row, "DiamondType"), Col(row, "DiamondShape"), Col(row, "DiamondSize"), Col(row, "DiamondSieve"),
-                                Col(row, "DiamondColor"), Col(row, "DiamondClarity"),
-                                ColInt(row, "DiamondPcs"), ColDbl(row, "DiamondCarat"), ColFlt(row, "DiamondPrice"), ColDbl(row, "DiamondAmount"),
-                                Col(row, "DiamondLab"), "InsertStockDiamond", companyid);
+                            var data = sql.GetLotJewData(
+                                " AND LotNo = ''" + diamondLotNo.Replace("'", "''") + "'' ");
+
+                            if (data != null && data.Count > 0)
+                            {
+                                var lot = data[0];
+                                sql.SaveStockDiamondDetailsData(
+                                    null,
+                                    Convert.ToInt32(jewCode),
+                                    maxItemCode,
+                                    diamondLotNo,
+                                    Col(row, "DiamondType"),
+                                    lot.ShapeId,
+                                    lot.SizeId,
+                                    lot.SieveId,
+                                    lot.ColorId,
+                                    lot.ClarityId,
+                                    ColInt(row, "DiamondPcs"),
+                                    ColDbl(row, "DiamondCarat"),
+                                    (float)ColDbl(row, "DiamondPrice"),
+                                    ColDbl(row, "DiamondAmount"),
+                                    Col(row, "DiamondLab"),
+                                    "InsertStockDiamond",
+                                    companyid);
+                            }
                         }
 
+                        // MVC STONE SAVE
                         if (!string.IsNullOrWhiteSpace(Col(row, "StoneLotNo")))
                         {
-                            sql.SaveStockDiamondDetailsData(null, Convert.ToInt32(jewCode), maxItemCode, Col(row, "StoneLotNo"),
-                                Col(row, "StoneShape"), Col(row, "StoneShape"), "", "",
-                                Col(row, "StoneColor"), Col(row, "StoneClarity"),
-                                ColInt(row, "StonePcs"), ColDbl(row, "StoneCarat"), ColFlt(row, "StonePrice"), ColDbl(row, "StoneAmount"),
-                                Col(row, "StoneLab"), "InsertStockStone", companyid);
+                            sql.SaveStockDiamondDetailsData(
+                                null,
+                                Convert.ToInt32(jewCode),
+                                maxItemCode,
+                                Col(row, "StoneLotNo"),
+                                Col(row, "StoneShape"),
+                                Col(row, "StoneShape"),
+                                "",
+                                "",
+                                Col(row, "StoneColor"),
+                                Col(row, "StoneClarity"),
+                                ColInt(row, "StonePcs"),
+                                ColDbl(row, "StoneCarat"),
+                                (float)ColDbl(row, "StonePrice"),
+                                ColDbl(row, "StoneAmount"),
+                                Col(row, "StoneLab"),
+                                "InsertStockStone",
+                                companyid);
                         }
                     }
                 }

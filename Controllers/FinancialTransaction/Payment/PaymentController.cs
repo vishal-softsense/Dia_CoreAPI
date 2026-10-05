@@ -130,6 +130,30 @@ namespace Dia_CoreAPI.Controllers.FinancialTransaction.Payment
             }
         }
 
+        /// <summary>MVC: GET /Payment/GetJVEdit?id= — JVPay / JVREC edit header</summary>
+        [HttpGet("jv-detail/{id:int}")]
+        public async Task<IActionResult> GetJvDetail(int id)
+        {
+            try
+            {
+                int permission = await _service.CheckUserPermissionAsync(UserTypeId, "edit", CompanyId);
+                if (permission != 1)
+                    permission = await _service.CheckUserPermissionAsync(UserTypeId, "select", CompanyId);
+                if (permission != 1)
+                    return Ok(new { success = false, Data = "You are not authorized to perform this task." });
+
+                var data = await _service.GetJvDetailAsync(id, CompanyId);
+                if (data == null)
+                    return Ok(new { success = false, Data = "JV Payment record not found." });
+
+                return Ok(new { success = true, Data = data });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { success = false, Data = ex.Message });
+            }
+        }
+
         /// <summary>MVC: POST /payments/save-payment</summary>
         [HttpPost("add")]
         public async Task<IActionResult> Add([FromBody] PaymentSaveRequest request)

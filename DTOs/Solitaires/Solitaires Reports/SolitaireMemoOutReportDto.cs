@@ -80,5 +80,7 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
         public string? Invtype { get; set; }
         public string? MemoTime { get; set; }
         public string? MemoReturnTime { get; set; }
+        /// <summary>MVC MemoExcelGenerate column Z (Prio).</summary>
+        public string? Prio { get; set; }
     }
 }
