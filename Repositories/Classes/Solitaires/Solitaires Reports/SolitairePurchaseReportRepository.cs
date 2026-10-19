@@ -179,6 +179,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 Less3 = GetDouble(row, "Less3", "less3"),
                 AdatPer = GetDouble(row, "AdatPer", "adatPer"),
                 Brokerper = GetDouble(row, "Brokerper", "brokerper"),
+                BrokerAmount = GetDouble(row, "brokeramount", "BrokerAmount", "brokerAmount"),
                 Amount = GetDouble(row, "Amount", "amount"),
                 MasterCurrencyRate = GetDouble(row, "MasterCurrencyRate", "masterCurrencyRate"),
                 MasterCurrencyAmount = GetDouble(row, "MasterCurrencyAmount", "masterCurrencyAmount"),
@@ -187,14 +188,25 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 Cert = GetString(row, "Cert", "cert"),
                 CertificateNo = GetString(row, "CertificateNo", "certificateNo"),
                 Carats2Dec = GetDouble(row, "Carats2Dec", "carats2Dec"),
-                ShapeId = GetString(row, "ShapeId", "shapeId"),
+                ShapeId = GetString(row, "ShapeId", "shapeId", "shp"),
                 ColorId = GetString(row, "ColorId", "colorId"),
                 SizeId = GetString(row, "SizeId", "sizeId"),
                 ClarityId = GetString(row, "ClarityId", "clarityId"),
                 User = GetString(row, "User", "user"),
                 ExportNo = GetString(row, "ExportNo", "exportNo"),
                 SinglePcs = GetString(row, "SinglePcs", "singlePcs"),
-                MRPAmt = GetString(row, "MRPAmt", "mrpAmt")
+                MRPAmt = GetString(row, "MRPAmt", "mrpAmt"),
+                MfgSeriesID = GetString(row, "MfgSeriesID", "mfgSeriesID", "ClientRef", "clientRef"),
+                ProductType = GetString(row, "ProductType", "productType"),
+                LABComments = GetString(row, "LABComments", "LabComments", "labComments"),
+                L = GetString(row, "Length", "L", "length"),
+                W = GetString(row, "Width", "W", "width"),
+                D = GetString(row, "Depth", "D", "depth"),
+                TotDepth = GetString(row, "TotDepth", "TotalDepthPer", "DepthPer", "totDepth"),
+                TablePer = GetString(row, "TablePer", "Table", "tablePer"),
+                Dia = GetString(row, "Dia", "dia"),
+                Size = GetString(row, "Size", "size"),
+                Remarks = GetString(row, "Remarks", "REMARKS", "remarks")
             };
         }
 

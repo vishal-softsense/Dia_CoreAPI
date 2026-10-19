@@ -117,6 +117,30 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             return 0f;
         }
 
+        /// <summary>
+        /// MVC GetStockAndMasterCurrencyRate: Symbol from TabCurrencyMaster where MasterCurrencyRate=1.
+        /// </summary>
+        public async Task<string> GetMasterSymbolAsync(string companyId)
+        {
+            var result = await _sqlDataAccess.ExecuteQuerySingle<string>(
+                "SELECT TOP 1 Symbol FROM TabCurrencyMaster WHERE MasterCurrencyRate = 1",
+                new { },
+                companyId);
+            return result ?? string.Empty;
+        }
+
+        /// <summary>
+        /// MVC GetStockAndMasterCurrencyRate: Symbol from TabCurrencyMaster where StockCurrencyRate=1.
+        /// </summary>
+        public async Task<string> GetStockSymbolAsync(string companyId)
+        {
+            var result = await _sqlDataAccess.ExecuteQuerySingle<string>(
+                "SELECT TOP 1 Symbol FROM TabCurrencyMaster WHERE StockCurrencyRate = 1",
+                new { },
+                companyId);
+            return result ?? string.Empty;
+        }
+
         public async Task<string> GetDefaultCurrencyCodeAsync(string companyId)
         {
             var result = await _sqlDataAccess.ExecuteQuerySingle<string>(

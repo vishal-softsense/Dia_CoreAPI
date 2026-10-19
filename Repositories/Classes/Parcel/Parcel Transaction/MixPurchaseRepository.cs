@@ -159,6 +159,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             if (header == null)
                 return null;
 
+            NormalizeHeader(header);
+
             var itemParams = new Dictionary<string, object>
             {
                 { "@Where", $" AND InvCode = {id}" }
@@ -177,6 +179,30 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 Header = header,
                 Items = items
             };
+        }
+
+        /// <summary>
+        /// GetSalepurRecord returns invoice MasterCurrencyRate/StockCurrencyRate.
+        /// MVC Edit binds those to #BaseRate/#SBaseRate — keep both in sync for React Edit.
+        /// </summary>
+        private static void NormalizeHeader(MixPurchaseHeaderDto header)
+        {
+            if (header == null) return;
+
+            if (header.MasterCurrencyRate != 0)
+                header.BaseRate = header.MasterCurrencyRate;
+            else if (header.BaseRate != 0)
+                header.MasterCurrencyRate = header.BaseRate;
+
+            if (header.StockCurrencyRate != 0)
+                header.SBaseRate = header.StockCurrencyRate;
+            else if (header.SBaseRate != 0)
+                header.StockCurrencyRate = header.SBaseRate;
+
+            if (string.IsNullOrWhiteSpace(header.Description) && !string.IsNullOrWhiteSpace(header.InvDisc))
+                header.Description = header.InvDisc;
+            else if (string.IsNullOrWhiteSpace(header.InvDisc) && !string.IsNullOrWhiteSpace(header.Description))
+                header.InvDisc = header.Description;
         }
 
         public async Task<List<MixPurchaseLotDetailDto>> GetLotDetailAsync(string lotNo, string companyId)
@@ -356,6 +382,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 RMK = item.RMK
             };
 
+            // MVC MixPurchaseController add-single-lot: duplicate LotNo check is commented out —
+            // always append a new row unless editing by editIndex.
             var list = item.Items ?? new List<MixPurchaseItemDto>();
             bool isEdit = item.editIndex >= 0 && item.editIndex < list.Count;
 
@@ -365,12 +393,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             }
             else
             {
-                if (!string.IsNullOrWhiteSpace(item.LotNo) &&
-                    list.Any(x => string.Equals(x.LotNo, item.LotNo, StringComparison.OrdinalIgnoreCase)))
-                {
-                    throw new Exception($"Lot number {item.LotNo} already exists.");
-                }
-
                 list.Add(pur);
             }
 

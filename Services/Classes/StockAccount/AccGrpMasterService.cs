@@ -46,6 +46,16 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
             return await _repository.GetScurBaseRateAsync(code, companyId);
         }
 
+        public async Task<string> GetMasterSymbolAsync(string companyId)
+        {
+            return await _repository.GetMasterSymbolAsync(companyId);
+        }
+
+        public async Task<string> GetStockSymbolAsync(string companyId)
+        {
+            return await _repository.GetStockSymbolAsync(companyId);
+        }
+
         public async Task<string> GetDefaultCurrencyCodeAsync(string companyId)
         {
             return await _repository.GetDefaultCurrencyCodeAsync(companyId);

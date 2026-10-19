@@ -30,5 +30,7 @@ namespace Dia_CoreAPI.Services.Interfaces.StockAccount
         Task<IEnumerable<BasicDataDto>> GetAllLotNoListAllAsync(string searchby, string stoneType, string companyId);
         Task<(JewStockMasterDto? data, List<DiamondDetails> diamondList)> GetAllMountingDetailsAsync(int id, string companyId);
         Task<List<LotNoDataJew>> GetJewLotNoDataAsync(string lotNo, string companyId);
+        /// <summary>Populate response-only ImageDriveLinks / VideoDriveLinks from stored file names.</summary>
+        Task ApplyDriveShareLinksAsync(JewStockMasterDto dto, string companyId);
     }
 }

@@ -9,5 +9,6 @@ namespace Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Reports
     {
         Task<IEnumerable<BasicDataDto>> GetDropdownsAsync(string companyId);
         Task<IEnumerable<GradingComparisonReportRowDto>> GetReportAsync(GradingComparisonReportFilterDto filter, string companyId);
+        Task<MakeLabWeightDiffEntryResultDto> MakeLabWeightDiffEntryAsync(MakeLabWeightDiffEntryRequestDto request, string companyId);
     }
 }

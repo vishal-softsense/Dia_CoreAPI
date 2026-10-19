@@ -75,6 +75,7 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
         public double Less3 { get; set; }
         public double AdatPer { get; set; }
         public double Brokerper { get; set; }
+        public double BrokerAmount { get; set; }
         public double Amount { get; set; }
         public double MasterCurrencyRate { get; set; }
         public double MasterCurrencyAmount { get; set; }
@@ -91,5 +92,19 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
         public string? ExportNo { get; set; }
         public string? SinglePcs { get; set; }
         public string? MRPAmt { get; set; }
+
+        // SPR Excel (SolitairePurchaseExcelGenerate) — mapped from GetPurchaseReportData when present
+        public string? MfgSeriesID { get; set; }
+        public string? ProductType { get; set; }
+        /// <summary>Growth column in Solitaire Purchase Report Print (MVC: LABComments).</summary>
+        public string? LABComments { get; set; }
+        public string? L { get; set; }
+        public string? W { get; set; }
+        public string? D { get; set; }
+        public string? TotDepth { get; set; }
+        public string? TablePer { get; set; }
+        public string? Dia { get; set; }
+        public string? Size { get; set; }
+        public string? Remarks { get; set; }
     }
 }

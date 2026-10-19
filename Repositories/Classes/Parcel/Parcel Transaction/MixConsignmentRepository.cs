@@ -363,6 +363,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 RMK = item.RMK
             };
 
+            // MVC MixConsignmentController add-single-lot: duplicate LotNo check is commented out —
+            // always append a new row unless editing by editIndex.
             var list = item.Items ?? new List<MixConsignmentItemDto>();
             bool isEdit = item.editIndex >= 0 && item.editIndex < list.Count;
 
@@ -372,12 +374,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             }
             else
             {
-                if (!string.IsNullOrWhiteSpace(item.LotNo) &&
-                    list.Any(x => string.Equals(x.LotNo, item.LotNo, StringComparison.OrdinalIgnoreCase)))
-                {
-                    throw new Exception($"Lot number {item.LotNo} already exists.");
-                }
-
                 list.Add(pur);
             }
 

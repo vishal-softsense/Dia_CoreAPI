@@ -102,6 +102,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             if (header == null) return null;
 
+            NormalizeHeader(header);
+
             var items = (await _sqlDataAccess.SelectDataFromSP<MixPurchaseReturnItemDto>(
                 "GetSalepurTran_Sale",
                 new Dictionary<string, object> { { "@Where", $" AND InvCode = {id}" } },
@@ -111,6 +113,25 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 NormalizeDetailItem(item);
 
             return new MixPurchaseReturnDetailDto { Header = header, Items = items };
+        }
+
+        /// <summary>
+        /// GetSalepurRecord returns invoice MasterCurrencyRate/StockCurrencyRate.
+        /// MVC Edit binds those to #BaseRate/#SBaseRate — keep both in sync for React Edit.
+        /// </summary>
+        private static void NormalizeHeader(MixPurchaseReturnHeaderDto header)
+        {
+            if (header == null) return;
+
+            if (header.MasterCurrencyRate != 0)
+                header.BaseRate = header.MasterCurrencyRate;
+            else if (header.BaseRate != 0)
+                header.MasterCurrencyRate = header.BaseRate;
+
+            if (header.StockCurrencyRate != 0)
+                header.SBaseRate = header.StockCurrencyRate;
+            else if (header.SBaseRate != 0)
+                header.StockCurrencyRate = header.SBaseRate;
         }
 
         public async Task<List<MixPurchaseReturnLotDetailDto>> GetLotDetailAsync(string lotNo, string companyId)

@@ -95,6 +95,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             if (header == null) return null;
 
+            NormalizeHeader(header);
+
             // MVC EditMemoD uses GetSalepurTran_SaleWithStatus → GetSalepurTran_MemoWithStatus with InvCode only
             string itemsSql =
                 $" EXEC [GetSalepurTran_MemoWithStatus] @Where = ' AND InvCode = {id}'";
@@ -112,6 +114,25 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             }
 
             return new MixMemoOutDetailDto { Header = header, Items = items };
+        }
+
+        /// <summary>
+        /// GetSalepurRecord returns invoice MasterCurrencyRate/StockCurrencyRate.
+        /// MVC Edit binds those to #BaseRate/#SBaseRate — keep both in sync for React Edit.
+        /// </summary>
+        private static void NormalizeHeader(MixMemoOutHeaderDto header)
+        {
+            if (header == null) return;
+
+            if (header.MasterCurrencyRate != 0)
+                header.BaseRate = header.MasterCurrencyRate;
+            else if (header.BaseRate != 0)
+                header.MasterCurrencyRate = header.BaseRate;
+
+            if (header.StockCurrencyRate != 0)
+                header.SBaseRate = header.StockCurrencyRate;
+            else if (header.SBaseRate != 0)
+                header.StockCurrencyRate = header.SBaseRate;
         }
 
         public async Task<List<MixMemoOutLotDetailDto>> GetLotDetailAsync(
@@ -197,6 +218,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             if (carat < alertThreshold && !isShipping)
                 alert += " Lotno On Memo or Sold: " + item.LotNo;
 
+            // MVC GeneralMemoController add-single-lot: duplicate LotNo check is commented out —
+            // always append a new row unless editing by editIndex.
             bool isEdit = item.editIndex >= 0 && item.editIndex < list.Count;
             if (isEdit)
             {
@@ -204,10 +227,6 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             }
             else
             {
-                if (!string.IsNullOrWhiteSpace(item.LotNo) &&
-                    list.Any(x => string.Equals(x.LotNo, item.LotNo, StringComparison.OrdinalIgnoreCase)))
-                    throw new Exception($"Lot number {item.LotNo} already exists.");
-
                 list.Add(row);
             }
 

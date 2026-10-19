@@ -52,6 +52,10 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public int CurCode { get; set; }
         public float BaseRate { get; set; }
         public float SBaseRate { get; set; }
+        /// <summary>Invoice master (INR) rate from GetSalepurRecord — MVC Edit binds this to #BaseRate.</summary>
+        public float MasterCurrencyRate { get; set; }
+        /// <summary>Invoice stock (USD) rate from GetSalepurRecord — MVC Edit binds this to #SBaseRate.</summary>
+        public float StockCurrencyRate { get; set; }
         public long PartyCode { get; set; }
         public string? PartyName { get; set; }
         public long? AdatCode { get; set; }
