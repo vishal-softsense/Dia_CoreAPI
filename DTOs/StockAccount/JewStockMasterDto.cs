@@ -46,6 +46,19 @@ namespace Dia_CoreAPI.DTOs.StockAccount
         public string? ImagePath { get; set; }
         public string? VideoPath { get; set; }
         public string? CertPath { get; set; }
+
+        /// <summary>
+        /// Response-only: full Google Drive share links for ImagePath file names (JSON array).
+        /// Not saved to DB — ImagePath remains file names only.
+        /// </summary>
+        public List<string> ImageDriveLinks { get; set; } = new();
+
+        /// <summary>
+        /// Response-only: Google Drive share links for VideoPath.
+        /// Example: https://drive.google.com/file/d/{fileId}/view?usp=drive_link
+        /// Not saved to DB — VideoPath remains file name only.
+        /// </summary>
+        public List<string> VideoDriveLinks { get; set; } = new();
         public float FinalAmount { get; set; }
 
         public string? CreatedBy { get; set; }
@@ -223,6 +236,7 @@ namespace Dia_CoreAPI.DTOs.StockAccount
         public double GrossWeight { get; set; }
         public double NetWeight { get; set; }
         public float TotalMetalAmount { get; set; }
+        public float FinalAmount { get; set; }
     }
 
     public class JewDiamondDetails

@@ -1,4 +1,5 @@
 using Dia_CoreAPI.DataAccess;
+using Dia_CoreAPI.Utilities;
 using Dia_CoreAPI.Repositories;
 using Dia_CoreAPI.Repositories.Classes;
 using Dia_CoreAPI.Repositories.Classes.Dashboard;
@@ -37,6 +38,11 @@ using System.Text;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Google Drive (same credential file / folder settings pattern as MVC)
+GoogleDriveHelper.Configure(
+    builder.Environment.ContentRootPath,
+    builder.Configuration["GoogleDrive:CredentialPath"]);
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -485,7 +491,13 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(
+                  "https://jewel.softoncloud.com",
+                  "https://diar.softoncloud.com",
+                  "http://jewel.softoncloud.com",
+                  "http://diar.softoncloud.com",
+                  "http://localhost:3000",
+                  "https://localhost:3000")
               .AllowAnyMethod()
               .AllowAnyHeader();
     });

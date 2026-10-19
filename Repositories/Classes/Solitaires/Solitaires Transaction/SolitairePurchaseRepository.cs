@@ -1437,11 +1437,11 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                     cmd.Parameters.Add(new SqlParameter("@StockCurrencyAmount", Convert.ToDouble(PurSCurAmt.ToString("N2"))));
                     cmd.Parameters.Add(new SqlParameter("@CreatedBy", userId ?? ""));
                     cmd.Parameters.Add(new SqlParameter("@CompanyID", int.Parse(companyId)));
-                    cmd.Parameters.Add(new SqlParameter("@PShape", ""));
-                    cmd.Parameters.Add(new SqlParameter("@PSize", ""));
+                    cmd.Parameters.Add(new SqlParameter("@PShape", im.Shape));
+                    cmd.Parameters.Add(new SqlParameter("@PSize", im.Size));
                     cmd.Parameters.Add(new SqlParameter("@PSieve", ""));
-                    cmd.Parameters.Add(new SqlParameter("@PColor", ""));
-                    cmd.Parameters.Add(new SqlParameter("@PClarity", ""));
+                    cmd.Parameters.Add(new SqlParameter("@PColor", im.Color));
+                    cmd.Parameters.Add(new SqlParameter("@PClarity", im.Clarity));
                     cmd.Parameters.Add(new SqlParameter("@COGS", 0.0f));
                     cmd.Parameters.Add(new SqlParameter("@StockType", ""));
                     cmd.Parameters.Add(new SqlParameter("@InvDescription", ""));
@@ -1485,7 +1485,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                         cmd.Parameters.Add(new SqlParameter("@MfgSeriesID", im.MfgSeriesID ?? ""));
                         cmd.Parameters.Add(new SqlParameter("@MfgPacketID", im.MfgPacketID ?? ""));
                         cmd.Parameters.Add(new SqlParameter("@ECutCode", im.Shape ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@GraderName", "Selected"));
+                        cmd.Parameters.Add(new SqlParameter("@GraderName", "PURCHASE"));
                         cmd.Parameters.Add(new SqlParameter("@EColorCode", im.Color ?? ""));
                         cmd.Parameters.Add(new SqlParameter("@EClarityCode", im.Clarity ?? ""));
                         cmd.Parameters.Add(new SqlParameter("@carats", Convert.ToDouble(im.Weight.ToString("N3"))));
@@ -1535,7 +1535,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                         cmd.Parameters.Add(new SqlParameter("@CertificateNo", im.CertificateNo ?? ""));
                         cmd.Parameters.Add(new SqlParameter("@KeyToSymbols", im.KeyToSymbols ?? ""));
                         cmd.Parameters.Add(new SqlParameter("@GDate", salePur.TrnDate));
-                        cmd.Parameters.Add(new SqlParameter("@Status", "PURCHASE"));
+                        cmd.Parameters.Add(new SqlParameter("@Status", "Selected"));
                         cmd.Parameters.Add(new SqlParameter("@UpdateFlag", false));
                         cmd.Parameters.Add(new SqlParameter("@Sync_Date", ""));
                         cmd.Parameters.Add(new SqlParameter("@SinglePcs", true));

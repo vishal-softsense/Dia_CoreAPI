@@ -1,7 +1,10 @@
 using Dia_CoreAPI.DTOs.StockAccount;
 using Dia_CoreAPI.Repositories.Interfaces.StockAccount;
 using Dia_CoreAPI.Services.Interfaces.StockAccount;
+using Dia_CoreAPI.Utilities;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 
 namespace Dia_CoreAPI.Services.Classes.StockAccount
 {
@@ -9,11 +12,19 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
     {
         private readonly IJewStockMasterRepository _repository;
         private readonly IWebHostEnvironment _env;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IConfiguration _configuration;
 
-        public JewStockMasterService(IJewStockMasterRepository repository, IWebHostEnvironment env)
+        public JewStockMasterService(
+            IJewStockMasterRepository repository,
+            IWebHostEnvironment env,
+            IHttpContextAccessor httpContextAccessor,
+            IConfiguration configuration)
         {
             _repository = repository;
             _env = env;
+            _httpContextAccessor = httpContextAccessor;
+            _configuration = configuration;
         }
 
         public async Task<int> CheckUserPermissionAsync(string userTypeId, string formName, string actionType, string companyId)
@@ -68,7 +79,10 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
         // Mounting-specific service methods
         public async Task<JewStockMasterDto?> GetMountingStockByIdAsync(int id, string companyId)
         {
-            return await _repository.GetMountingStockByIdAsync(id, companyId);
+            var data = await _repository.GetMountingStockByIdAsync(id, companyId);
+            if (data != null)
+                await ApplyDriveShareLinksAsync(data, companyId);
+            return data;
         }
 
         public async Task<(bool success, string message)> SaveMountingStockAsync(JewStockMasterDto model, List<DiamondDetails> diamond, List<SettingDetails> setting, string actionType, string userTypeId, string companyId)
@@ -270,7 +284,53 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
 
         public async Task<(JewStockMasterDto? data, List<DiamondDetails> diamondList)> GetAllMountingDetailsAsync(int id, string companyId)
         {
-            return await _repository.GetAllMountingDetailsAsync(id, companyId);
+            var result = await _repository.GetAllMountingDetailsAsync(id, companyId);
+            if (result.data != null)
+                await ApplyDriveShareLinksAsync(result.data, companyId);
+            return result;
+        }
+
+        /// <summary>
+        /// Fills ImageDriveLinks / VideoDriveLinks for API response.
+        /// Does not change ImagePath / VideoPath (DB file names stay as stored).
+        /// </summary>
+        public async Task ApplyDriveShareLinksAsync(JewStockMasterDto dto, string companyId)
+        {
+            if (dto == null) return;
+            try
+            {
+                var settings = await GetJewSettingValueAsync(companyId);
+                var pairs = (settings ?? new List<SettingMasterDto>())
+                    .Select(s => new KeyValuePair<string, string?>(s.Name ?? "", s.Value));
+
+                string imgSetting;
+                string? imgFolder = GoogleDriveHelper.ResolveFolderIdFromSettings(pairs, false, out imgSetting);
+                dto.ImageDriveLinks = GoogleDriveHelper.ResolvePathsToShareLinks(imgFolder, dto.ImagePath, imgSetting, useImageCdn: true)
+                    ?? new List<string>();
+
+                string vidSetting;
+                string? vidFolder = GoogleDriveHelper.ResolveFolderIdFromSettings(pairs, true, out vidSetting);
+                // Option B: full HTTP API stream URL (never Drive /preview, never lh3 image CDN)
+                string? apiBase = GoogleDriveHelper.ResolvePublicApiBaseUrl(
+                    _httpContextAccessor.HttpContext?.Request, _configuration);
+                var videoLinks = GoogleDriveHelper.ResolvePathsToShareLinks(
+                    vidFolder, dto.VideoPath, vidSetting,
+                    useImageCdn: false, useVideoPreview: true, apiBaseUrl: apiBase);
+                // Video fallback: resolve from image folder if video folder miss
+                if ((videoLinks == null || videoLinks.Count == 0)
+                    && !string.IsNullOrWhiteSpace(dto.VideoPath)
+                    && !string.IsNullOrWhiteSpace(imgFolder))
+                {
+                    videoLinks = GoogleDriveHelper.ResolvePathsToShareLinks(
+                        imgFolder, dto.VideoPath, imgSetting,
+                        useImageCdn: false, useVideoPreview: true, apiBaseUrl: apiBase);
+                }
+                dto.VideoDriveLinks = videoLinks ?? new List<string>();
+            }
+            catch
+            {
+                // Leave drive link fields empty if Setting Master / Drive unavailable
+            }
         }
 
         public async Task<List<LotNoDataJew>> GetJewLotNoDataAsync(string lotNo, string companyId)
@@ -280,6 +340,7 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
 
         /// <summary>
         /// Same as MVC SaveMountingStock: read file bytes from ImagePath on server disk.
+        /// Skip Google Drive / http(s) paths — store path only (ImageBinary empty).
         /// </summary>
         private byte[] ResolveImageBinary(string? imagePath, byte[]? existingBinary)
         {
@@ -290,10 +351,27 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
 
             try
             {
+                // Primary path only when pipe/semicolon-separated (MVC GetPrimaryImagePath)
                 string trimmed = imagePath.Trim().Replace('\\', '/');
+                var primary = trimmed.Split(new[] { '|', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(p => p.Trim())
+                    .FirstOrDefault(p => !string.IsNullOrWhiteSpace(p)) ?? trimmed;
+
+                if (primary.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                    || primary.Contains("drive.google.com", StringComparison.OrdinalIgnoreCase)
+                    || primary.Contains("googleusercontent.com", StringComparison.OrdinalIgnoreCase)
+                    || LooksLikeDriveFileName(primary))
+                {
+                    return Array.Empty<byte>();
+                }
+
                 if (trimmed.StartsWith("~/", StringComparison.Ordinal))
                 {
                     trimmed = trimmed[2..];
+                }
+                else
+                {
+                    trimmed = primary;
                 }
 
                 var candidates = new List<string>();
@@ -343,6 +421,18 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
             }
 
             return existingBinary ?? Array.Empty<byte>();
+        }
+
+        private static bool LooksLikeDriveFileName(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return false;
+            var val = value.Trim();
+            if (val.StartsWith("http", StringComparison.OrdinalIgnoreCase) || val.Contains('/') || val.Contains('\\'))
+                return false;
+            return System.Text.RegularExpressions.Regex.IsMatch(
+                val,
+                @"\.(png|jpe?g|gif|bmp|webp|mp4|mov|avi|mkv|webm|pdf)$",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         }
     }
 }

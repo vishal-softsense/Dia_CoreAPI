@@ -17,6 +17,8 @@ namespace Dia_CoreAPI.Repositories.Interfaces.StockAccount
         Task<string> GetSCurOperatorAsync(int currencyId, string companyId);
         Task<float> GetMcurBaseRateAsync(string code, string companyId);
         Task<float> GetScurBaseRateAsync(string code, string companyId);
+        Task<string> GetMasterSymbolAsync(string companyId);
+        Task<string> GetStockSymbolAsync(string companyId);
         Task<string> GetDefaultCurrencyCodeAsync(string companyId);
         Task<string> GetAccEffCodeAsync(int accType, string companyId);
         Task<string> GetAccEffSideAsync(int accType, string companyId);

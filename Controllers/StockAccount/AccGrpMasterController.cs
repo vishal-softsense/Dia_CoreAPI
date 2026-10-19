@@ -175,6 +175,9 @@ namespace Dia_CoreAPI.Controllers.StockAccount
                 var companyId = GetCompanyId();
                 var baseRate = await _service.GetMcurBaseRateAsync(code, companyId);
                 var sBaseRate = await _service.GetScurBaseRateAsync(code, companyId);
+                // MVC /common/get-currency-rate → GetStockAndMasterCurrencyRate also returns MasterSymbol / StockSymbol
+                var masterSymbol = await _service.GetMasterSymbolAsync(companyId);
+                var stockSymbol = await _service.GetStockSymbolAsync(companyId);
 
                 string mCurOperator = "*";
                 string sCurOperator = "*";
@@ -189,7 +192,9 @@ namespace Dia_CoreAPI.Controllers.StockAccount
                     BaseRate = baseRate, 
                     SBaseRate = sBaseRate,
                     MasterCurrencyOperator = mCurOperator,
-                    StockCurrencyOperator = sCurOperator
+                    StockCurrencyOperator = sCurOperator,
+                    MasterSymbol = masterSymbol,
+                    StockSymbol = stockSymbol
                 });
             }
             catch (Exception ex)

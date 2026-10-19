@@ -151,6 +151,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
         /// <summary>
         /// GetSalepurRecord returns CGSTAmount/SGSTAmount/IGSTAmount (MVC aliases AS CGSTAmt).
+        /// MVC Edit displays MasterCurrencyRate/StockCurrencyRate on INR/USD fields.
         /// </summary>
         private static void NormalizeHeader(MixSaleHeaderDto header)
         {
@@ -162,6 +163,17 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 header.SGSTAmt = header.SGSTAmount;
             if (header.IGSTAmt == 0 && header.IGSTAmount != 0)
                 header.IGSTAmt = header.IGSTAmount;
+
+            // MVC Edit binds #BaseRate/#SBaseRate from MasterCurrencyRate/StockCurrencyRate
+            if (header.MasterCurrencyRate != 0)
+                header.BaseRate = header.MasterCurrencyRate;
+            else if (header.BaseRate != 0)
+                header.MasterCurrencyRate = header.BaseRate;
+
+            if (header.StockCurrencyRate != 0)
+                header.SBaseRate = header.StockCurrencyRate;
+            else if (header.SBaseRate != 0)
+                header.StockCurrencyRate = header.SBaseRate;
 
             if (string.IsNullOrWhiteSpace(header.Description) && !string.IsNullOrWhiteSpace(header.InvDisc))
                 header.Description = header.InvDisc;

@@ -56,6 +56,12 @@ namespace Dia_CoreAPI.DTOs.Jewellery.JewelleryReports
         public string? ImagePath { get; set; }
         public string? VideoPath { get; set; }
         public string? CertPath { get; set; }
+
+        /// <summary>Response-only Drive share links for ImagePath names (JSON array). Not saved to DB.</summary>
+        public List<string> ImageDriveLinks { get; set; } = new();
+
+        /// <summary>Response-only Google Drive share links for videos. Not saved to DB.</summary>
+        public List<string> VideoDriveLinks { get; set; } = new();
         public string? HeartsImagePath { get; set; }
         public string? ArrowsImagePath { get; set; }
         public string? AssetImagePath { get; set; }
@@ -103,6 +109,7 @@ namespace Dia_CoreAPI.DTOs.Jewellery.JewelleryReports
         public int JewCode { get; set; }
         public string? JewColor { get; set; }
         public string? JewPurity { get; set; }
+        public float MetalPriceGm { get; set; }
     }
 
     public class JewelleryStockDiamondDetailDto

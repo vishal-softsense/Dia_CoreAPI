@@ -40,6 +40,24 @@ namespace Dia_CoreAPI.Controllers.Solitaires.Solitaires_Reports
             }
         }
 
+        [HttpPost("make-lab-weight-diff-entry")]
+        public async Task<IActionResult> MakeLabWeightDiffEntry([FromBody] MakeLabWeightDiffEntryRequestDto request)
+        {
+            try
+            {
+                var companyId = GetCompanyId();
+                var result = await _service.MakeLabWeightDiffEntryAsync(request, companyId);
+                if (!result.Success)
+                    return BadRequest(new { success = false, Message = result.Message });
+
+                return Ok(new { success = true, Message = result.Message, InsertedCount = result.InsertedCount });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, Message = ex.Message });
+            }
+        }
+
         [HttpGet("dropdowns")]
         public async Task<IActionResult> GetDropdowns()
         {

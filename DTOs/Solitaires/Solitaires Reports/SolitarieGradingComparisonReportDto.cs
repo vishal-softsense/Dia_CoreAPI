@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
 {
@@ -16,6 +17,37 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
         public List<string>? LAB { get; set; }
         public List<string>? Fluorescence { get; set; }
         public List<string>? Polish { get; set; }
+        /// <summary>When true, search returns Lab Weight Difference rows derived from grading comparison pairs.</summary>
+        public bool LabWeightDifference { get; set; }
+    }
+
+    public class LabWeightDiffRowDto
+    {
+        public string? LotNo { get; set; }
+        public decimal OldWeight { get; set; }
+        public decimal NewWeight { get; set; }
+        public decimal Difference { get; set; }
+    }
+
+    public class LabWeightDiffEntryRowDto
+    {
+        public string? LotNo { get; set; }
+        public decimal OldWeight { get; set; }
+        public decimal NewWeight { get; set; }
+    }
+
+    public class MakeLabWeightDiffEntryRequestDto
+    {
+        public bool UseLabWeightDate { get; set; }
+        public DateTime? LabWeightDate { get; set; }
+        public List<LabWeightDiffEntryRowDto>? Rows { get; set; }
+    }
+
+    public class MakeLabWeightDiffEntryResultDto
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public int InsertedCount { get; set; }
     }
 
     public class GradingComparisonReportRowDto

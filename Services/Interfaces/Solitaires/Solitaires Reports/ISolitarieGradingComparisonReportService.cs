@@ -8,6 +8,7 @@ namespace Dia_CoreAPI.Services.Interfaces.Solitaires.Solitaires_Reports
     public interface ISolitarieGradingComparisonReportService
     {
         Task<IEnumerable<BasicDataDto>> GetDropdownsAsync(string companyId);
-        Task<IEnumerable<GradingComparisonReportRowDto>> GetReportAsync(GradingComparisonReportFilterDto filter, string companyId);
+        Task<object> GetReportAsync(GradingComparisonReportFilterDto filter, string companyId);
+        Task<MakeLabWeightDiffEntryResultDto> MakeLabWeightDiffEntryAsync(MakeLabWeightDiffEntryRequestDto request, string companyId);
     }
 }
