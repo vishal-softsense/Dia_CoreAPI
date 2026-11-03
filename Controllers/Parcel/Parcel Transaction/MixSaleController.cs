@@ -201,6 +201,21 @@ namespace Dia_CoreAPI.Controllers.Parcel.Parcel_Transaction
             }
         }
 
+        /// <summary>MVC MixController.GetItemDetails (/mixsale/import-excel-data) — Get Back from Excel.</summary>
+        [HttpPost("get-back-from-excel")]
+        public async Task<IActionResult> GetBackFromExcel([FromBody] MixSaleGetBackFromExcelRequest request)
+        {
+            try
+            {
+                var data = await _service.GetBackFromExcelAsync(request, CompanyId);
+                return Ok(new { success = true, Data = data });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { success = false, Data = ex.Message });
+            }
+        }
+
         [HttpGet("print-view/{invNo}")]
         public async Task<IActionResult> PrintView(string invNo)
         {

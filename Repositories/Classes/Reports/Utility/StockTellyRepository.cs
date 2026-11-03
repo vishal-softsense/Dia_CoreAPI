@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -112,26 +112,35 @@ namespace Dia_CoreAPI.Repositories.Classes.Reports.Utility
                 foreach (var from in request.spList)
                 {
                     int maxFItemCode = from.ItemCode;
+                    if (maxFItemCode == 0 && !string.IsNullOrEmpty(from.Fromlotno))
+                    {
+                        string itemCodeStr = sql.GetLotNo(" AND LotNo = ''" + from.Fromlotno.Replace("'", "''") + "''");
+                        if (!string.IsNullOrEmpty(itemCodeStr))
+                            maxFItemCode = Convert.ToInt32(itemCodeStr);
+                    }
                     int maxTItemCode = Convert.ToInt32(sql.GetLOTNO("AND LotNo=''TempMixingLot''"));
 
-                    if (from.Carats > 0)
+                    double qty = from.OnHand > 0 ? from.OnHand : from.Carats;
+                    double amt = from.Amount > 0 ? from.Amount : Math.Round(qty * from.Rate, 2);
+
+                    if (qty > 0)
                     {
                         sql.InsertSalePurTran(
                             from.TrnDate, "StkTrn", "", 0, 0, "",
-                            float.Parse(from.Carats.ToString("N3")), from.Pcs,
+                            float.Parse(qty.ToString("N3")), from.Pcs,
                             Convert.ToDouble(from.Rate.ToString("N2")), 0, 0, 0, 0,
-                            Convert.ToDouble(from.Amount.ToString("N2")), "", 0, 0, 0, "0", 0,
+                            amt, "", 0, 0, 0, "0", 0,
                             true, false, 0, maxFItemCode, maxTItemCode,
                             from.FromPrice, from.ToPrice, 0, 0, 0, "",
                             userId, 0, 0, 0, 0, userName, companyId);
                     }
-                    else if (from.Carats < 0)
+                    else if (qty < 0)
                     {
                         sql.InsertSalePurTran(
                             from.TrnDate, "StkTrn", "", 0, 0, "",
-                            float.Parse(from.Carats.ToString("N3")) * -1, from.Pcs,
+                            float.Parse(qty.ToString("N3")) * -1, from.Pcs,
                             Convert.ToDouble(from.Rate.ToString("N2")), 0, 0, 0, 0,
-                            Convert.ToDouble(from.Amount.ToString("N2")), "", 0, 0, 0, "0", 0,
+                            amt, "", 0, 0, 0, "0", 0,
                             true, false, 0, maxTItemCode, maxFItemCode,
                             from.FromPrice, from.ToPrice, 0, 0, 0, "",
                             userId, 0, 0, 0, 0, userName, companyId);
@@ -142,15 +151,35 @@ namespace Dia_CoreAPI.Repositories.Classes.Reports.Utility
                 {
                     int maxFItemCode = Convert.ToInt32(sql.GetLOTNO("AND LotNo=''TempMixingLot''"));
                     int maxTItemCode = to.ItemCode;
+                    if (maxTItemCode == 0 && !string.IsNullOrEmpty(to.Tolotno))
+                    {
+                        string itemCodeStr = sql.GetLotNo(" AND LotNo = ''" + to.Tolotno.Replace("'", "''") + "''");
+                        if (!string.IsNullOrEmpty(itemCodeStr))
+                            maxTItemCode = Convert.ToInt32(itemCodeStr);
+                    }
 
-                    if (to.Carats > 0)
+                    double qty = to.OnHand > 0 ? to.OnHand : to.Carats;
+                    double amt = to.Amount > 0 ? to.Amount : Math.Round(qty * to.Rate, 2);
+
+                    if (qty > 0)
                     {
                         sql.InsertSalePurTran(
                             to.TrnDate, "StkTrn", "", 0, 0, "",
-                            float.Parse(to.Carats.ToString("N3")), to.Pcs,
+                            float.Parse(qty.ToString("N3")), to.Pcs,
                             Convert.ToDouble(to.Rate.ToString("N2")), 0, 0, 0, 0,
-                            Convert.ToDouble(to.Amount.ToString("N2")), "", 0, 0, 0, "0", 0,
+                            amt, "", 0, 0, 0, "0", 0,
                             true, false, 0, maxFItemCode, maxTItemCode,
+                            to.FromPrice, to.ToPrice, 0, 0, 0, "",
+                            userId, 0, 0, 0, 0, userName, companyId);
+                    }
+                    else if (qty < 0)
+                    {
+                        sql.InsertSalePurTran(
+                            to.TrnDate, "StkTrn", "", 0, 0, "",
+                            float.Parse(qty.ToString("N3")) * -1, to.Pcs,
+                            Convert.ToDouble(to.Rate.ToString("N2")), 0, 0, 0, 0,
+                            amt, "", 0, 0, 0, "0", 0,
+                            true, false, 0, maxTItemCode, maxFItemCode,
                             to.FromPrice, to.ToPrice, 0, 0, 0, "",
                             userId, 0, 0, 0, 0, userName, companyId);
                     }

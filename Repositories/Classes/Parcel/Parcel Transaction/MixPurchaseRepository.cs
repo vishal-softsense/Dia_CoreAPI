@@ -230,6 +230,15 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
         {
             if (item == null) return;
 
+            // MVC EditMixPurchaseD: Diamond/Shipping keep LotNo; else LotNo = stockid (jewellery Stock_ID)
+            string? stockId = !string.IsNullOrWhiteSpace(item.stockid) ? item.stockid : item.Stock_ID;
+            bool isParcelLot = string.Equals(item.StockType, "Diamond", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(item.StockType, "Shipping", StringComparison.OrdinalIgnoreCase);
+            if (!isParcelLot && !string.IsNullOrWhiteSpace(stockId))
+                item.LotNo = stockId;
+            else if (string.IsNullOrWhiteSpace(item.LotNo) && !string.IsNullOrWhiteSpace(stockId))
+                item.LotNo = stockId;
+
             // GetSalepurTran may return MemoTranCode instead of MemoTransCode (same as MixSaleReturn)
             if (item.MemoTransCode == 0 && item.MemoTranCode != 0)
                 item.MemoTransCode = item.MemoTranCode;
@@ -829,7 +838,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
                 result.Items.Add(new MixPurchasePrintItemDto
                 {
-                    StockNo = GetPrintDictString(row, "lotno", "LotNo", "Lotno"),
+                    // MVC MixPurchasePrint_USA Stock # = lotno; jewellery often has Stock_ID / name prefix instead
+                    StockNo = ResolvePrintStockNo(row),
                     Description = GetPrintDictString(row, "ItemName"),
                     Qty = (int)GetPrintDictDouble(row, "Pcs"),
                     Weight = GetPrintDictDouble(row, "Carats"),
@@ -839,6 +849,35 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Same idea as MixSale ResolvePrintLotNo / MVC EditMixDetails:
+        /// Diamond/Shipping → lotno; else Stock_ID; jewellery fallback → first word of ItemName.
+        /// </summary>
+        private static string? ResolvePrintStockNo(IDictionary<string, object> row)
+        {
+            string? lot = GetPrintDictString(row, "lotno", "LotNo", "Lotno", "Stock_ID", "Stock_Id", "StockId", "JewItem", "StockNo");
+            if (!string.IsNullOrWhiteSpace(lot))
+                return lot;
+
+            string? stockType = GetPrintDictString(row, "StockType", "SubType", "Category")?.ToLowerInvariant();
+            string? itemName = GetPrintDictString(row, "ItemName");
+            if (string.IsNullOrWhiteSpace(itemName))
+                return null;
+
+            bool isJewellery =
+                stockType is "jewellery" or "jew" or "jewelry"
+                || GetPrintDictDouble(row, "GrossWeight") != 0
+                || GetPrintDictDouble(row, "TotalDiamondCarat") != 0
+                || System.Text.RegularExpressions.Regex.IsMatch(itemName, @"\b\d+\s*KT\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            // Jewellery description often starts with stock id: "STD1001 White 14KT Ring"
+            if (!isJewellery)
+                return null;
+
+            string[] parts = itemName.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length > 0 ? parts[0] : null;
         }
 
         private async Task<(string stockSymbol, string masterSymbol, float sCurId)> ResolvePrintSymbolsAsync(string companyId)
@@ -1217,24 +1256,28 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 var b2cRateRes = GetConvertAmount(curCode, B2CRate, mCurBaseRate, mCurOperator, sCurBaseRate, sCurOperator, mCurCode, sCurCode);
                 double B2CRateSCur = b2cRateRes.SCurAmt;
 
-                string LotAlready = await ExecuteCommonDataScalarAsync(conn, trans, "LotExist", " AND LotNo = ''" + im.LotNo + "''");
+                bool isJewellery = string.Equals(im.StockType, "Jewellery", StringComparison.OrdinalIgnoreCase);
+                bool isParcelLot = string.Equals(im.StockType, "Diamond", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(im.StockType, "Shipping", StringComparison.OrdinalIgnoreCase)
+                    || string.IsNullOrWhiteSpace(im.StockType);
 
-                string ItemSrno = await ExecuteCommonDataScalarAsync(conn, trans, "MaxItemSrNo");
+                // LotExist / ItemMaster apply to parcel lots only — never insert Jewellery StockID into ItemMaster (MVC MixPurchaseController)
+                string LotAlready = "1";
                 int MaxItemSrno = 0;
-                int.TryParse(ItemSrno, out MaxItemSrno);
-                MaxItemSrno = MaxItemSrno + 1;
+                if (!isJewellery)
+                {
+                    LotAlready = await ExecuteCommonDataScalarAsync(conn, trans, "LotExist", " AND LotNo = ''" + im.LotNo + "''") ?? "1";
+                    string ItemSrno = await ExecuteCommonDataScalarAsync(conn, trans, "MaxItemSrNo");
+                    int.TryParse(ItemSrno, out MaxItemSrno);
+                    MaxItemSrno = MaxItemSrno + 1;
 
-                string lotStr;
-                if (string.IsNullOrWhiteSpace(im.LotNo))
-                    lotStr = generateLotno + MaxItemSrno.ToString();
-                else
-                    lotStr = im.LotNo;
-
-                im.LotNo = lotStr;
+                    if (string.IsNullOrWhiteSpace(im.LotNo))
+                        im.LotNo = generateLotno + MaxItemSrno.ToString();
+                }
 
                 float rtnCarats = im.RtnCarats != 0 ? im.RtnCarats : im.ReturnCarats;
 
-                if (LotAlready.ToString() == "0")
+                if (!isJewellery && LotAlready.ToString() == "0")
                 {
                     int singlerPcs = (im.Pcs <= 1) ? 1 : 0;
 
@@ -1386,13 +1429,26 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     }
                 }
 
-                string ItemCodeStr = await ExecuteCommonDataScalarAsync(conn, trans, "ItemCode", " AND LotNo = ''" + im.LotNo + "''");
+                // MVC: Diamond/Shipping → ItemCode by LotNo; Jewellery → StockCode by Stock_ID (= LotNo in UI)
                 int MaxItemCode = 0;
-                int.TryParse(ItemCodeStr, out MaxItemCode);
+                if (isJewellery)
+                {
+                    string itemCodeStr = await ExecuteCommonDataScalarAsync(conn, trans, "StockCode", " AND Stock_ID = ''" + im.LotNo + "''");
+                    int.TryParse(itemCodeStr, out MaxItemCode);
+                }
+                else if (isParcelLot)
+                {
+                    string itemCodeStr = await ExecuteCommonDataScalarAsync(conn, trans, "ItemCode", " AND LotNo = ''" + im.LotNo + "''");
+                    int.TryParse(itemCodeStr, out MaxItemCode);
+                }
+                else
+                {
+                    string itemCodeStr = await ExecuteCommonDataScalarAsync(conn, trans, "StockCode", " AND Stock_ID = ''" + im.LotNo + "''");
+                    int.TryParse(itemCodeStr, out MaxItemCode);
+                }
 
-                string itemName = !string.IsNullOrWhiteSpace(im.ItemName)
-                    ? im.ItemName
-                    : $"{im.LotNo} {im.Shape} {im.Size} {im.Color} {im.Clarity}";
+                // MVC ItemName = ItemName if set, else LotNo
+                string itemName = !string.IsNullOrWhiteSpace(im.ItemName) ? im.ItemName : (im.LotNo ?? "");
 
                 using (var cmd = new SqlCommand("SP_InsertSalePurTran", conn, trans))
                 {

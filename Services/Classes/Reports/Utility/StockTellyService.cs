@@ -86,16 +86,25 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
 
                 string lotNo = dt.Rows[i][0].ToString() ?? string.Empty;
                 string itemCode = await _repository.GetLotNoAsync(" AND LotNo = '" + lotNo.Replace("'", "''") + "'", companyId) ?? "0";
+                int.TryParse(itemCode, out int parsedItemCode);
+
+                double pcs = ParseExcelNumber(dt.Rows[i], 1);
+                double carats = ParseExcelNumber(dt.Rows[i], 2);
+                double onHand = ParseExcelNumber(dt.Rows[i], 3);
+                double rate = ParseExcelNumber(dt.Rows[i], 4);
+                double amount = dt.Columns.Count > 5 ? ParseExcelNumber(dt.Rows[i], 5) : 0;
+                if (amount == 0 && onHand > 0 && rate > 0)
+                    amount = Math.Round(onHand * rate, 2);
 
                 importRows.Add(new StockTellyListDto
                 {
-                    ItemCode = Convert.ToInt32(itemCode),
+                    ItemCode = parsedItemCode,
                     LotNo = lotNo,
-                    Pcs = Convert.ToInt32(dt.Rows[i][1]),
-                    carats = Convert.ToDouble(float.Parse(dt.Rows[i][2].ToString() ?? "0", CultureInfo.InvariantCulture)),
-                    OnHand = Convert.ToDouble(float.Parse(dt.Rows[i][3].ToString() ?? "0", CultureInfo.InvariantCulture)),
-                    Rate = Convert.ToDouble(float.Parse(dt.Rows[i][4].ToString() ?? "0", CultureInfo.InvariantCulture)),
-                    Amount = Convert.ToDouble(float.Parse(dt.Rows[i][5].ToString() ?? "0", CultureInfo.InvariantCulture))
+                    Pcs = (int)pcs,
+                    carats = carats,
+                    OnHand = onHand,
+                    Rate = rate,
+                    Amount = amount
                 });
             }
 
@@ -152,6 +161,7 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
         private static string BuildWhere(StockTellyFilterDto filter)
         {
             string where = " and singlepcs = 0 and  Lotno NOT IN ('TempMixingLot')";
+            //string where = " and singlepcs = 0 AND LotNo IN ('add556') ";
             //string where = " and singlepcs = 0 AND LotNo IN ('xyz123') ";
 
             where += BuildInClause("Shp", filter?.Shape);
@@ -188,25 +198,43 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
 
             if (backPer != 0)
             {
-                return $" Rapa+(Rapa*({backPer})/100) AS AskingRate,(Rapa+(Rapa*({backPer})/100)) * Round((CONVERT(decimal(9,3),TotCarats + MemoIn )),3,1) AS AskingAmount,{backPer} As AskingBack ";
+                return $" Rapa+(Rapa*({backPer})/100) AS AskingRate,(Rapa+(Rapa*({backPer})/100)) * Round((CONVERT(decimal(9,3),OnHandCarats )),3,1) AS AskingAmount,{backPer} As AskingBack ";
             }
 
             if (backPlusMinus != 0)
             {
-                return $" Rapa+(Rapa*(ViewStockReport.back+{backPlusMinus})/100) AS AskingRate,(Rapa+(Rapa*(ViewStockReport.back+{backPlusMinus})/100)) * Round((CONVERT(decimal(9,3),TotCarats + MemoIn )),3,1) AS AskingAmount,ViewStockReport.Back+{backPlusMinus} As AskingBack ";
+                return $" Rapa+(Rapa*(ViewStockReport.back+{backPlusMinus})/100) AS AskingRate,(Rapa+(Rapa*(ViewStockReport.back+{backPlusMinus})/100)) * Round((CONVERT(decimal(9,3),OnHandCarats )),3,1) AS AskingAmount,ViewStockReport.Back+{backPlusMinus} As AskingBack ";
             }
 
             if (ratePer != 0)
             {
-                return $" (ROUND(((Rate+(Rate*({ratePer})/100))/10)+.49,0))*10 AS AskingRate,(ROUND(((Rate+(Rate*({ratePer})/100))/10)+.49,0))*10 * Round((CONVERT(decimal(9,3),TotCarats + MemoIn )),3,1) AS AskingAmount,CASE WHEN Rapa = 0 OR Rapa IS NULL THEN 0 ELSE (ROUND(((Rate+(Rate*({ratePer})/100))/10)+.49,0))*10 * 100 / Rapa - 100 END AS AskingBack ";
+                return $" (ROUND(((Rate+(Rate*({ratePer})/100))/10)+.49,0))*10 AS AskingRate,(ROUND(((Rate+(Rate*({ratePer})/100))/10)+.49,0))*10 * Round((CONVERT(decimal(9,3),OnHandCarats )),3,1) AS AskingAmount,CASE WHEN Rapa = 0 OR Rapa IS NULL THEN 0 ELSE (ROUND(((Rate+(Rate*({ratePer})/100))/10)+.49,0))*10 * 100 / Rapa - 100 END AS AskingBack ";
             }
 
             if (ratePlusMinus != 0)
             {
-                return $" Rate+{ratePlusMinus} AS AskingRate, ((rate+{ratePlusMinus}) * Round((CONVERT(decimal(9,3),TotCarats + MemoIn )),3,1)) AS AskingAmount,CASE WHEN Rapa = 0 OR Rapa IS NULL THEN 0 ELSE ((((Rate+{ratePlusMinus} )*100) / Rapa) - 100) END As AskingBack ";
+                return $" Rate+{ratePlusMinus} AS AskingRate, ((rate+{ratePlusMinus}) * Round((CONVERT(decimal(9,3),OnHandCarats )),3,1)) AS AskingAmount,CASE WHEN Rapa = 0 OR Rapa IS NULL THEN 0 ELSE ((((Rate+{ratePlusMinus} )*100) / Rapa) - 100) END As AskingBack ";
             }
 
-            return " Rate AS AskingRate,Back As AskingBack,Round((CONVERT(decimal(18, 2), Round((CONVERT(decimal(18, 3), TotCarats + MemoIn)), 3, 1) * ISNULL(Rate, 0))), 2, 1) AS AskingAmount ";
+            return " Rate AS AskingRate,Back As AskingBack,Round((CONVERT(decimal(18, 2), Round((CONVERT(decimal(18, 3), OnHandCarats)), 3, 1) * ISNULL(Rate, 0))), 2, 1) AS AskingAmount ";
+        }
+
+        private static double ParseExcelNumber(DataRow row, int columnIndex)
+        {
+            if (row == null || columnIndex >= row.Table.Columns.Count || row[columnIndex] == null || row[columnIndex] == DBNull.Value)
+                return 0;
+
+            var text = row[columnIndex].ToString();
+            if (string.IsNullOrWhiteSpace(text))
+                return 0;
+
+            if (float.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out var invariant))
+                return Convert.ToDouble(invariant);
+
+            if (float.TryParse(text, NumberStyles.Any, CultureInfo.CurrentCulture, out var current))
+                return Convert.ToDouble(current);
+
+            return 0;
         }
 
         private static (bool Success, DataTable? Table, string? ErrorMessage) ReadExcel(IFormFile file)

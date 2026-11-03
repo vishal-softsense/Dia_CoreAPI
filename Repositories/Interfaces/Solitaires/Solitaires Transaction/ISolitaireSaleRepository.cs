@@ -13,6 +13,7 @@ namespace Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction
         Task<List<SolitaireSaleLotDetailDto>> GetLotDetailAsync(SolitaireSaleLotRequest request, string companyId);
         Task<SolitaireSaleGridViewDto> AddItemInGridAsync(SolitaireSaleAddLotRequest request, string companyId);
         Task<SolitaireSaleGridViewDto> GetItemFromListAsync(SolitaireSaleGetItemFromListRequest request, string companyId);
+        Task<SolitaireSaleGridViewDto> GetBackFromExcelAsync(SolitaireSaleGetBackFromExcelRequest request, string companyId);
         Task<SolitaireSaleGridViewDto> RefreshBackAsync(SolitaireSaleRefreshBackRequest request, string companyId);
         Task<List<SolitaireSaleMemoRowDto>> GetMemoToSaleAsync(string? partyCode, string? memoNo, string companyId);
         Task<(bool Success, string Message)> AddAsync(SolitaireSaleHeaderDto header, List<SolitaireSaleItemDto> items, string userId, string companyId);
