@@ -742,6 +742,11 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
             }
 
             int companyid = ParseCompanyId(companyId);
+            var settings = await _repository.GetSettingMasterListAsync(companyId);
+            // MVC UploadJewelleryFull: TabSettingMaster Addperinother / Addperinasking
+            double otherPer = SettingValue(settings, "Addperinother");
+            double askingPer = SettingValue(settings, "Addperinasking");
+
             using var sql = await CreateSqlTempAsync(companyId);
             sql.StartTransaction();
             try
@@ -762,6 +767,16 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                     var metalRate = ColDbl(first, "MetalRate");
                     var purityRatio = ColDbl(first, "PureRatio");
                     var metalAmount = metalRate * calculatedNetWeight * purityRatio;
+
+                    // MVC: OtherCharges = Round(CostAmount * OtherPer * 100 / 100, 2)
+                    // FinalAmount = Excel FinalAmount + OtherCharges
+                    // AskingRate = FinalAmount + Round(FinalAmount * AskingPer * 100 / 100, 2)
+                    // Actual/Purchase/Bottom/B2B/B2C rates stay Excel "Asking Rate"
+                    var costAmount = ColDbl(first, "CostAmount");
+                    var otherCharges = Math.Round(costAmount * otherPer * 100 / 100, 2);
+                    var finalAmount = ColDbl(first, "FinalAmount") + otherCharges;
+                    var askingRate = finalAmount + Math.Round(finalAmount * askingPer * 100 / 100, 2);
+                    var excelAskingRate = ColFlt(first, "Asking Rate");
 
                     long jewCode;
 
@@ -798,7 +813,7 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                             totalhandlingcharges: ColFlt(first, "HandlingCharges"),
                             jewcertificate: Col(first, "JewCert"),
                             certificatecharges: ColFlt(first, "CertificateCharges"),
-                            othercharges: ColFlt(first, "OtherCharges"),
+                            othercharges: (float)otherCharges,
                             hallmarkcharges: ColFlt(first, "HallmarkCharges"),
                             totmetalamount: metalAmount,
                             totdiamondamt: (float)group.Sum(x => ColDbl(x, "DiamondAmount")),
@@ -810,20 +825,20 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                             ImageBinary: Array.Empty<byte>(),
                             Video: Col(first, "VideoPath"),
                             Cert: "",
-                            finalamount: ColDbl(first, "FinalAmount"),
-                            askingrate: ColFlt(first, "Asking Rate"),
-                            actualrate: ColFlt(first, "Asking Rate"),
-                            purchaserate: ColFlt(first, "Asking Rate"),
-                            bottomrate: ColFlt(first, "Asking Rate"),
-                            b2brate: ColFlt(first, "Asking Rate"),
-                            b2crate: ColFlt(first, "Asking Rate"),
+                            finalamount: finalAmount,
+                            askingrate: (float)askingRate,
+                            actualrate: excelAskingRate,
+                            purchaserate: excelAskingRate,
+                            bottomrate: excelAskingRate,
+                            b2brate: excelAskingRate,
+                            b2crate: excelAskingRate,
                             totaldiamondqty: group.Sum(x => ColInt(x, "DiamondPcs")),
                             totalstoneqty: group.Sum(x => ColInt(x, "StonePcs")),
                             pcs: ColDbl(first, "Pcs"),
                             Description: Col(first, "ItemName"),
                             MountCategory: Col(first, "JewCategory"),
                             UseMounting: "",
-                            costamount: 0,
+                            costamount: costAmount,
                             ActionType: "insert");
                         jewCode = sql.GetJewCode(jewCodeWhere);
                     }
@@ -861,7 +876,7 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                             totalhandlingcharges: ColFlt(first, "HandlingCharges"),
                             jewcertificate: Col(first, "JewCert"),
                             certificatecharges: ColFlt(first, "CertificateCharges"),
-                            othercharges: ColFlt(first, "OtherCharges"),
+                            othercharges: (float)otherCharges,
                             hallmarkcharges: ColFlt(first, "HallmarkCharges"),
                             totmetalamount: metalAmount,
                             totdiamondamt: (float)group.Sum(x => ColDbl(x, "DiamondAmount")),
@@ -873,20 +888,20 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                             ImageBinary: Array.Empty<byte>(),
                             Video: Col(first, "VideoPath"),
                             Cert: "",
-                            finalamount: ColDbl(first, "FinalAmount"),
-                            askingrate: ColFlt(first, "Asking Rate"),
-                            actualrate: ColFlt(first, "Asking Rate"),
-                            purchaserate: ColFlt(first, "Asking Rate"),
-                            bottomrate: ColFlt(first, "Asking Rate"),
-                            b2brate: ColFlt(first, "Asking Rate"),
-                            b2crate: ColFlt(first, "Asking Rate"),
+                            finalamount: finalAmount,
+                            askingrate: (float)askingRate,
+                            actualrate: excelAskingRate,
+                            purchaserate: excelAskingRate,
+                            bottomrate: excelAskingRate,
+                            b2brate: excelAskingRate,
+                            b2crate: excelAskingRate,
                             totaldiamondqty: group.Sum(x => ColInt(x, "DiamondPcs")),
                             totalstoneqty: group.Sum(x => ColInt(x, "StonePcs")),
                             pcs: ColDbl(first, "Pcs"),
                             Description: Col(first, "ItemName"),
                             MountCategory: Col(first, "JewCategory"),
                             UseMounting: "",
-                            costamount: 0,
+                            costamount: costAmount,
                             ActionType: "update");
                         sql.Deleteboth(Convert.ToInt32(jewCode), "deletestockdiamondandsetting");
                     }
@@ -974,6 +989,13 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
         {
             sql.RollbackTransaction();
             return new ImportGradingResult(false, message);
+        }
+
+        private static double SettingValue(IList<SettingMasterItemDto> settings, string name)
+        {
+            var match = settings?.FirstOrDefault(s =>
+                string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase));
+            return ToDouble(match?.Value);
         }
     }
 }

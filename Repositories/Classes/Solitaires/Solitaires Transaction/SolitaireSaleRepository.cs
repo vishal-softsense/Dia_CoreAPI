@@ -3,7 +3,10 @@ using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction;
 using Microsoft.Data.SqlClient;
+using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using BasicDataDto = Dia_CoreAPI.DTOs.BasicDataDto;
 using StockBasic = Dia_CoreAPI.DTOs.StockAccount.BasicDataDto;
 
@@ -275,6 +278,136 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             }
 
             return BuildGridView(list, alert, false);
+        }
+
+        /// <summary>
+        /// MVC SaleController.GetItemDetails (route sale/import-excel-data) — Accept on Get Back from Excel modal.
+        /// Applies Excel Back/Rate/MRP onto stock lots and recalculates Amount with Less1–3.
+        /// </summary>
+        public async Task<SolitaireSaleGridViewDto> GetBackFromExcelAsync(
+            SolitaireSaleGetBackFromExcelRequest request, string companyId)
+        {
+            var excelRows = (request.Items ?? new List<SolitaireSaleExcelBackRowDto>())
+                .Where(x => !string.IsNullOrWhiteSpace(x.LotNo))
+                .Select(x => new SolitaireSaleExcelBackRowDto
+                {
+                    LotNo = (x.LotNo ?? "").Trim(),
+                    Back = x.Back,
+                    Rate = x.Rate,
+                    MRP = x.MRP
+                })
+                .Where(x => !string.IsNullOrWhiteSpace(x.LotNo))
+                .ToList();
+
+            if (excelRows.Count == 0)
+                throw new Exception("No valid rows found in Excel.");
+
+            // MVC: clean spaces/newlines when building LotNo IN (...) clause
+            var lotNos = new List<string>();
+            foreach (var row in excelRows)
+            {
+                string cleaned = row.LotNo!.Replace(" ", "").Replace("\r\n", ",").Replace("\n", ",");
+                foreach (var part in cleaned.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                {
+                    if (!string.IsNullOrWhiteSpace(part))
+                        lotNos.Add(part);
+                }
+            }
+
+            string strWhere;
+            if (lotNos.Count > 0)
+            {
+                string joined = string.Join("'',''", lotNos.Select(l => l.Replace("'", "''")));
+                strWhere = $" AND LotNo IN (''{joined}'')";
+            }
+            else
+            {
+                strWhere = " AND LotNo IN ('''')";
+            }
+
+            List<SolitaireSaleLotDetailDto> lots;
+            if (request.SBaseRate == 1)
+            {
+                string sql = $" EXEC [GetLotNoDataForAll] @Type = 'SaleMemo',@Where = '{strWhere}'";
+                lots = (await _sqlDataAccess.SelectRawSql<SolitaireSaleLotDetailDto>(sql, companyId)).ToList();
+            }
+            else
+            {
+                string sCurOperator = await GetSCurOperatorAsync(request.CurCode, companyId);
+                string sCurOperatorToCon = GetSCurOperatorToCon(sCurOperator);
+                string sql = BuildSaleMemoOtherCurSql(strWhere, request.SBaseRate, sCurOperatorToCon);
+                lots = (await _sqlDataAccess.SelectRawSql<SolitaireSaleLotDetailDto>(sql, companyId)).ToList();
+            }
+
+            NormalizeLotWeights(lots);
+
+            var itemsToAdd = new List<SolitaireSaleItemDto>();
+            string alert = "";
+
+            foreach (var reportItem in lots)
+            {
+                string lotNoString = reportItem.LotNo?.ToString() ?? "";
+                // MVC matches Excel LotNo to stock LotNo (exact); also allow cleaned / multi-lot cells
+                var matching = excelRows.FirstOrDefault(s =>
+                {
+                    if (string.Equals(s.LotNo, lotNoString, StringComparison.OrdinalIgnoreCase))
+                        return true;
+                    string cleaned = (s.LotNo ?? "").Replace(" ", "").Replace("\r\n", ",").Replace("\n", ",");
+                    return cleaned.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .Any(p => string.Equals(p, lotNoString, StringComparison.OrdinalIgnoreCase)
+                               || string.Equals(p.Replace(" ", ""), lotNoString.Replace(" ", ""), StringComparison.OrdinalIgnoreCase));
+                });
+
+                if (matching == null)
+                    continue;
+
+                float back = matching.Back;
+                float carat = RoundCarat(reportItem.Weight);
+                if (carat <= 0)
+                    continue;
+
+                float mrp = matching.MRP;
+                if (mrp == 0 && reportItem.MRP != 0)
+                    mrp = reportItem.MRP;
+
+                float newRate = matching.Rate;
+                if (newRate == 0 && back != 0)
+                    newRate = ((100 + back) * mrp) / 100;
+
+                if (back == 0 && newRate != 0 && mrp != 0)
+                    back = ((newRate * 100) / mrp) - 100;
+
+                float amount = carat * newRate;
+                float l1 = request.Less1 != 0 ? amount * (100 + request.Less1) / 100 : amount;
+                float l2 = request.Less2 != 0 ? l1 * (100 + request.Less2) / 100 : l1;
+                float l3 = request.Less3 != 0 ? l2 * (100 + request.Less3) / 100 : l2;
+
+                float rtnCarats = reportItem.ReturnCarats != 0 ? reportItem.ReturnCarats : reportItem.RtnCarats;
+
+                itemsToAdd.Add(new SolitaireSaleItemDto
+                {
+                    ItemName = reportItem.ItemName,
+                    LotNo = reportItem.LotNo,
+                    Less1 = request.Less1,
+                    Less2 = request.Less2,
+                    Less3 = request.Less3,
+                    Amount = l3,
+                    Weight = reportItem.Weight,
+                    MRP = mrp,
+                    Pcs = reportItem.Pcs,
+                    Back = back,
+                    Rate = newRate,
+                    ExportNo = reportItem.ExportNo,
+                    MemoTransCode = reportItem.MemoTransCode,
+                    ReturnCarats = rtnCarats,
+                    RtnCarats = rtnCarats
+                });
+            }
+
+            if (itemsToAdd.Count == 0)
+                throw new Exception("No matching lots found for Excel LotNo values.");
+
+            return BuildGridView(itemsToAdd, alert, false);
         }
 
         public Task<SolitaireSaleGridViewDto> RefreshBackAsync(

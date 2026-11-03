@@ -111,6 +111,10 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
     {
         public int SrNo { get; set; }
         public string? LotNo { get; set; }
+        /// <summary>SP GetSalepurTran column (MVC SalePursParcelTra.stockid) — jewellery display LotNo on edit.</summary>
+        public string? stockid { get; set; }
+        /// <summary>Alternate casing from some SPs; prefer stockid when both present.</summary>
+        public string? Stock_ID { get; set; }
         public string? ItemName { get; set; }
         public string? Shape { get; set; }
         public string? ShapeId { get; set; }

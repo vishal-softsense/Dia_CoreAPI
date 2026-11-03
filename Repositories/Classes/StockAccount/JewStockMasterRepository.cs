@@ -224,10 +224,19 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             return await _sqlDataAccess.SelectDataFromSPSingle<JewStockMasterDto>("GetALLMasterList", param, companyId);
         }
 
-        public async Task<bool> CheckStockIdExistsAsync(string stockId, string companyId)
+        public async Task<bool> CheckStockIdExistsAsync(string stockId, string companyId, int? excludeId = null)
         {
+            if (string.IsNullOrWhiteSpace(stockId))
+                return false;
+
             var param = new Dictionary<string, object>();
-            param.Add("@Where", $" AND Stock_ID = '{stockId}' ");
+            string where = $" AND Stock_ID = '{stockId.Trim()}' ";
+            if (excludeId.HasValue && excludeId.Value > 0)
+            {
+                where += $" AND JewCode != {excludeId.Value} ";
+            }
+
+            param.Add("@Where", where);
             param.Add("@Type", "JewStock");
 
             var result = await _sqlDataAccess.SelectDataFromSPSingle<JewStockMasterDto>("GetALLMasterList", param, companyId);

@@ -85,6 +85,11 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
             return data;
         }
 
+        public async Task<bool> CheckStockIdExistsAsync(string stockId, string companyId, int? excludeId = null)
+        {
+            return await _repository.CheckStockIdExistsAsync(stockId, companyId, excludeId);
+        }
+
         public async Task<(bool success, string message)> SaveMountingStockAsync(JewStockMasterDto model, List<DiamondDetails> diamond, List<SettingDetails> setting, string actionType, string userTypeId, string companyId)
         {
             if (string.IsNullOrWhiteSpace(model.DesignID) && string.IsNullOrWhiteSpace(model.Stock_ID))
@@ -94,9 +99,9 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
 
             if (model.JewCode == 0 && actionType == "insert")
             {
-                if (string.IsNullOrWhiteSpace(model.DesignID))
+                // Check if stock ID already exists
+                if (!string.IsNullOrWhiteSpace(model.Stock_ID))
                 {
-                    // Check if stock ID already exists
                     bool exists = await _repository.CheckStockIdExistsAsync(model.Stock_ID.Trim(), companyId);
                     if (exists)
                     {
@@ -123,6 +128,16 @@ namespace Dia_CoreAPI.Services.Classes.StockAccount
             }
             else if (actionType == "update")
             {
+                // Check if stock ID already exists in another record
+                if (!string.IsNullOrWhiteSpace(model.Stock_ID))
+                {
+                    bool exists = await _repository.CheckStockIdExistsAsync(model.Stock_ID.Trim(), companyId, model.JewCode);
+                    if (exists)
+                    {
+                        return (false, "This Stock ID already exists. Please use a different Stock ID.");
+                    }
+                }
+
                 // Permission check for update
                 int permission = await _repository.CheckUserPermissionAsync(userTypeId, "Jew Stock Master", "edit", companyId);
                 if (permission != 1)

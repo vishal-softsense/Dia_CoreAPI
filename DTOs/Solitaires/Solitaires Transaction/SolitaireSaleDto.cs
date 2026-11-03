@@ -149,6 +149,29 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction
         public float Rate { get; set; }
         public float Amount { get; set; }
         public string? FinalAmount { get; set; }
+        public string? ExportNo { get; set; }
+        public float MemoTransCode { get; set; }
+        public float RtnCarats { get; set; }
+        public float ReturnCarats { get; set; }
+    }
+
+    /// <summary>MVC SaleController.GetItemDetails — Excel row for Get Back from Excel (LotNo/Back/Rate/MRP).</summary>
+    public class SolitaireSaleExcelBackRowDto
+    {
+        public string? LotNo { get; set; }
+        public float Back { get; set; }
+        public float Rate { get; set; }
+        public float MRP { get; set; }
+    }
+
+    public class SolitaireSaleGetBackFromExcelRequest
+    {
+        public List<SolitaireSaleExcelBackRowDto> Items { get; set; } = new();
+        public float Less1 { get; set; }
+        public float Less2 { get; set; }
+        public float Less3 { get; set; }
+        public int CurCode { get; set; }
+        public float SBaseRate { get; set; } = 1;
     }
 
     public class SolitaireSaleLotRequest

@@ -526,6 +526,26 @@ namespace Dia_CoreAPI.Controllers.StockAccount
             }
         }
 
+        [HttpGet("check-stockid")]
+        public async Task<IActionResult> CheckStockId([FromQuery] string stockId, [FromQuery] int? excludeId = null)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(stockId))
+                {
+                    return Ok(new { Success = true, Exists = false });
+                }
+
+                var companyId = GetCompanyId();
+                bool exists = await _service.CheckStockIdExistsAsync(stockId.Trim(), companyId, excludeId);
+                return Ok(new { Success = true, Exists = exists });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Success = false, Message = ex.Message });
+            }
+        }
+
         [HttpPost("save-mounting-stock")]
         public async Task<IActionResult> SaveMountingStock([FromBody] JewStockMasterSaveRequest request)
         {
