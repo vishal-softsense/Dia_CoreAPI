@@ -29,6 +29,40 @@ namespace Dia_CoreAPI.Services.Classes.Masters
             return await _userRepository.GetUserByIdAsync(userId, companyId);
         }
 
+        /// <summary>
+        /// Validates new/changed passwords only. Login continues to accept existing (legacy) stored credentials.
+        /// </summary>
+        private static bool IsStrongPassword(string password, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            if (string.IsNullOrEmpty(password) || password.Length < 8)
+            {
+                errorMessage = "Password must be at least 8 characters.";
+                return false;
+            }
+            if (!System.Text.RegularExpressions.Regex.IsMatch(password, "[a-z]"))
+            {
+                errorMessage = "Password must contain at least one lowercase letter.";
+                return false;
+            }
+            if (!System.Text.RegularExpressions.Regex.IsMatch(password, "[A-Z]"))
+            {
+                errorMessage = "Password must contain at least one uppercase letter.";
+                return false;
+            }
+            if (!System.Text.RegularExpressions.Regex.IsMatch(password, "[0-9]"))
+            {
+                errorMessage = "Password must contain at least one number.";
+                return false;
+            }
+            if (!System.Text.RegularExpressions.Regex.IsMatch(password, "[^A-Za-z0-9]"))
+            {
+                errorMessage = "Password must contain at least one special symbol.";
+                return false;
+            }
+            return true;
+        }
+
         public async Task<(bool Success, string Message)> CreateUserAsync(UserMasterDto user, string createdBy)
         {
             if (string.IsNullOrWhiteSpace(user.UserName))
@@ -37,12 +71,15 @@ namespace Dia_CoreAPI.Services.Classes.Masters
             if (string.IsNullOrWhiteSpace(user.Password) || user.Password != user.ConfirmPassword)
                 return (false, "Password and Confirm Password must match and cannot be empty.");
 
+            if (!IsStrongPassword(user.Password, out string strengthError))
+                return (false, strengthError);
+
             // Check duplicate username
             bool exists = await _userRepository.CheckUsernameExistsAsync(user.UserName, user.CompanyID.ToString());
             if (exists)
                 return (false, $"User with username '{user.UserName}' already exists.");
 
-            // Encrypt passwords securely using AES
+            // Encrypt passwords securely using AES (never store plaintext)
             user.Password = _securityService.EncryptPassword(user.Password);
             user.ConfirmPassword = _securityService.EncryptPassword(user.ConfirmPassword);
 
@@ -64,18 +101,21 @@ namespace Dia_CoreAPI.Services.Classes.Masters
             if (exists)
                 return (false, $"User with username '{user.UserName}' already exists.");
 
-            // If password is provided, it means they are updating it
+            // If password is provided, validate strength then encrypt (legacy passwords left unchanged when blank)
             if (!string.IsNullOrWhiteSpace(user.Password))
             {
                 if (user.Password != user.ConfirmPassword)
                     return (false, "Password and Confirm Password must match.");
+
+                if (!IsStrongPassword(user.Password, out string strengthError))
+                    return (false, strengthError);
 
                 user.Password = _securityService.EncryptPassword(user.Password);
                 user.ConfirmPassword = _securityService.EncryptPassword(user.ConfirmPassword);
             }
             else
             {
-                // Fetch existing user to retain current password
+                // Fetch existing user to retain current password (no re-encryption / no strength check)
                 var existingUser = await _userRepository.GetUserByIdAsync(user.UserID, user.CompanyID.ToString());
                 if (existingUser != null)
                 {

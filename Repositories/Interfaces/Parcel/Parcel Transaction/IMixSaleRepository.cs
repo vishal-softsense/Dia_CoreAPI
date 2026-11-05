@@ -13,6 +13,7 @@ namespace Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction
         Task<List<MixSaleLotDetailDto>> GetLotDetailAsync(string lotNo, string companyId);
         Task<List<MixConsignmentRowDto>> GetConsignmentAsync(string? partyCode, string? memoNo, string companyId);
         Task<MixSaleGridViewDto> AddItemInGridAsync(MixSaleAddLotRequest request, string companyId);
+        Task<MixSaleGridViewDto> GetBackFromExcelAsync(MixSaleGetBackFromExcelRequest request, string companyId);
         Task<(bool Success, string Message)> AddAsync(MixSaleHeaderDto header, List<MixSaleItemDto> items, string userId, string companyId);
         Task<(bool Success, string Message)> EditAsync(MixSaleHeaderDto header, List<MixSaleItemDto> items, string userId, string companyId);
         Task<(bool Success, string Message)> DeleteAsync(int id, string userId, string companyId);

@@ -21,6 +21,7 @@ namespace Dia_CoreAPI.Services.Interfaces.StockAccount
 
         // Mounting-specific methods
         Task<JewStockMasterDto?> GetMountingStockByIdAsync(int id, string companyId);
+        Task<bool> CheckStockIdExistsAsync(string stockId, string companyId, int? excludeId = null);
         Task<(bool success, string message)> SaveMountingStockAsync(JewStockMasterDto model, List<DiamondDetails> diamond, List<SettingDetails> setting, string actionType, string userTypeId, string companyId);
         Task<(bool success, string message)> DeleteMountingStockMasterAsync(int id, string companyId);
         Task<(bool success, string message, JewGridData? data)> AddMountingItemInGridAsync(AddJewLotNo item, List<JewDiamondDetails> existingGrid);

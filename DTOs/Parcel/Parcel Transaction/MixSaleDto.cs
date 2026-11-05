@@ -122,6 +122,8 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
     {
         public int SrNo { get; set; }
         public string? LotNo { get; set; }
+        /// <summary>SP GetSalepurTran_Sale: jewellery / non-parcel lines store stock id here (MVC Stock_Id → LotNo on edit).</summary>
+        public string? Stock_ID { get; set; }
         public string? ItemName { get; set; }
         public string? Shape { get; set; }
         public string? ShapeId { get; set; }
@@ -378,6 +380,25 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public double TotalAmountWithoutless { get; set; }
         public string? Alert { get; set; }
         public List<MixSaleItemDto> ExcelData { get; set; } = new();
+    }
+
+    /// <summary>MVC MixController.GetItemDetails — Excel row for Get Back from Excel (LotNo/Back/Rate/MRP).</summary>
+    public class MixSaleExcelBackRowDto
+    {
+        public string? LotNo { get; set; }
+        public float Back { get; set; }
+        public float Rate { get; set; }
+        public float MRP { get; set; }
+    }
+
+    public class MixSaleGetBackFromExcelRequest
+    {
+        public List<MixSaleExcelBackRowDto> Items { get; set; } = new();
+        public float Less1 { get; set; }
+        public float Less2 { get; set; }
+        public float Less3 { get; set; }
+        public int CurCode { get; set; }
+        public float SBaseRate { get; set; } = 1;
     }
 
     public class MixSalePrintItemDto

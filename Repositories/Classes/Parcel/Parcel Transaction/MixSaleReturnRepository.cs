@@ -104,8 +104,10 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             NormalizeHeader(header);
 
+            // MVC EditMixSaleReturnParcelD → GetSalepurTran_SaleParcel → GetSalepurTran_Sale
+            // (GetSalepurTran does not return Stock_Id for jewellery lines)
             var items = (await _sqlDataAccess.SelectDataFromSP<MixSaleReturnItemDto>(
-                "GetSalepurTran",
+                "GetSalepurTran_Sale",
                 new Dictionary<string, object> { { "@Where", $" AND InvCode = {id}" } },
                 companyId)).ToList();
 
@@ -708,7 +710,31 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
         {
             if (item == null) return;
 
-            // GetSalepurTran may return MemoTranCode instead of MemoTransCode (same as SolitaireSaleReturn)
+            // MVC EditMixSaleReturnParcelD:
+            // LotNo = (StockType == Diamond || Shipping) ? LotNo : Stock_Id
+            bool isParcelLot = string.Equals(item.StockType, "Diamond", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(item.StockType, "Shipping", StringComparison.OrdinalIgnoreCase);
+
+            if (!isParcelLot)
+            {
+                if (!string.IsNullOrWhiteSpace(item.Stock_ID))
+                    item.LotNo = item.Stock_ID;
+                else if (string.IsNullOrWhiteSpace(item.LotNo)
+                    && string.Equals(item.StockType, "Jewellery", StringComparison.OrdinalIgnoreCase)
+                    && !string.IsNullOrWhiteSpace(item.ItemName))
+                {
+                    // Last resort: stock id is often the first token of ItemName (e.g. TestPPP White 18KT…)
+                    var first = item.ItemName.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+                    if (first.Length > 0)
+                        item.LotNo = first[0];
+                }
+            }
+            else if (string.IsNullOrWhiteSpace(item.LotNo) && !string.IsNullOrWhiteSpace(item.Stock_ID))
+            {
+                item.LotNo = item.Stock_ID;
+            }
+
+            // GetSalepurTran_Sale may return MemoTranCode instead of MemoTransCode
             if (item.MemoTransCode == 0 && item.MemoTranCode != 0)
                 item.MemoTransCode = item.MemoTranCode;
 

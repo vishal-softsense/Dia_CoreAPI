@@ -36,6 +36,9 @@ namespace Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Transaction
         public Task<SolitaireSaleGridViewDto> GetItemFromListAsync(SolitaireSaleGetItemFromListRequest request, string companyId)
             => _repository.GetItemFromListAsync(request, companyId);
 
+        public Task<SolitaireSaleGridViewDto> GetBackFromExcelAsync(SolitaireSaleGetBackFromExcelRequest request, string companyId)
+            => _repository.GetBackFromExcelAsync(request, companyId);
+
         public Task<SolitaireSaleGridViewDto> RefreshBackAsync(SolitaireSaleRefreshBackRequest request, string companyId)
             => _repository.RefreshBackAsync(request, companyId);
 

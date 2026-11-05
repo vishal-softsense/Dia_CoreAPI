@@ -110,6 +110,8 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
     {
         public int SrNo { get; set; }
         public string? LotNo { get; set; }
+        /// <summary>SP GetSalepurTran: jewellery / non-parcel lines store stock id here (MVC Stock_Id → LotNo on edit).</summary>
+        public string? Stock_ID { get; set; }
         public string? ItemName { get; set; }
         public string? Shape { get; set; }
         public string? ShapeId { get; set; }

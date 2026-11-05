@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
 
@@ -54,6 +54,7 @@ namespace Dia_CoreAPI.DTOs.Reports.Utility
         public string? Tolotno { get; set; }
         public int Pcs { get; set; }
         public double Carats { get; set; }
+        public double OnHand { get; set; }
         public double Rate { get; set; }
         public double Amount { get; set; }
         public double FromPrice { get; set; }

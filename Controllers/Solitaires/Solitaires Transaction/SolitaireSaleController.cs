@@ -185,6 +185,21 @@ namespace Dia_CoreAPI.Controllers.Solitaires.Solitaires_Transaction
             }
         }
 
+        /// <summary>MVC SaleController.GetItemDetails (/sale/import-excel-data) — Get Back from Excel.</summary>
+        [HttpPost("get-back-from-excel")]
+        public async Task<IActionResult> GetBackFromExcel([FromBody] SolitaireSaleGetBackFromExcelRequest request)
+        {
+            try
+            {
+                var data = await _service.GetBackFromExcelAsync(request, CompanyId);
+                return Ok(new { success = true, Data = data });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { success = false, Data = ex.Message });
+            }
+        }
+
         [HttpPost("refresh-back")]
         public async Task<IActionResult> RefreshBack([FromBody] SolitaireSaleRefreshBackRequest request)
         {

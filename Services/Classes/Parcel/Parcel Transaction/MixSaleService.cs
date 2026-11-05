@@ -36,6 +36,9 @@ namespace Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction
         public Task<MixSaleGridViewDto> AddItemInGridAsync(MixSaleAddLotRequest request, string companyId)
             => _repository.AddItemInGridAsync(request, companyId);
 
+        public Task<MixSaleGridViewDto> GetBackFromExcelAsync(MixSaleGetBackFromExcelRequest request, string companyId)
+            => _repository.GetBackFromExcelAsync(request, companyId);
+
         public Task<(bool Success, string Message)> AddAsync(MixSaleSaveRequest request, string userId, string companyId)
             => _repository.AddAsync(request.SalePur, request.Items ?? new(), userId, companyId);
 

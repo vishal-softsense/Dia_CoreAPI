@@ -2,9 +2,14 @@ using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
+using Dia_CoreAPI.Utilities;
 using Microsoft.Data.SqlClient;
+using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
+using System.Linq;
+using System.Text.RegularExpressions;
 using BasicDataDto = Dia_CoreAPI.DTOs.BasicDataDto;
 using StockBasic = Dia_CoreAPI.DTOs.StockAccount.BasicDataDto;
 
@@ -352,6 +357,16 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
         {
             if (item == null) return;
 
+            // MVC MixController.EditMixDetails: Diamond/Shipping use LotNo; else LotNo = Stock_Id
+            // (same as MixMemoOut GetDetailAsync)
+            bool isParcelLot = string.Equals(item.StockType, "Diamond", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(item.StockType, "Shipping", StringComparison.OrdinalIgnoreCase)
+                || string.IsNullOrWhiteSpace(item.StockType);
+            if (!isParcelLot && !string.IsNullOrWhiteSpace(item.Stock_ID))
+                item.LotNo = item.Stock_ID;
+            else if (string.IsNullOrWhiteSpace(item.LotNo) && !string.IsNullOrWhiteSpace(item.Stock_ID))
+                item.LotNo = item.Stock_ID;
+
             if (item.MemoTransCode == 0 && item.MemoTranCode != 0)
                 item.MemoTransCode = item.MemoTranCode;
 
@@ -601,6 +616,198 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 return float.Parse(weight3D);
             string weight2D = weight3D.Substring(0, weight3D.Length - 1);
             return float.Parse(weight2D);
+        }
+
+        private static float ToFloat(object? value)
+        {
+            if (value == null || value is DBNull) return 0;
+            if (value is float f) return f;
+            if (value is double d) return (float)d;
+            if (value is decimal m) return (float)m;
+            if (value is int i) return i;
+            return float.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture),
+                NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed) ? parsed : 0;
+        }
+
+        private static int ToInt(object? value)
+        {
+            if (value == null || value is DBNull) return 0;
+            if (value is int i) return i;
+            return int.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture),
+                NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed) ? parsed : 0;
+        }
+
+        /// <summary>
+        /// MVC MixController.GetItemDetails (route mixsale/import-excel-data) — Accept on Get Back from Excel.
+        /// Looks up Mix lots, applies Excel Rate (and Excel Back when non-zero), recalculates Amount with Less1–3.
+        /// </summary>
+        public async Task<MixSaleGridViewDto> GetBackFromExcelAsync(
+            MixSaleGetBackFromExcelRequest request, string companyId)
+        {
+            var excelRows = (request.Items ?? new List<MixSaleExcelBackRowDto>())
+                .Where(x => !string.IsNullOrWhiteSpace(x.LotNo))
+                .Select(x => new MixSaleExcelBackRowDto
+                {
+                    LotNo = (x.LotNo ?? "").Trim(),
+                    Back = x.Back,
+                    Rate = x.Rate,
+                    MRP = x.MRP
+                })
+                .Where(x => !string.IsNullOrWhiteSpace(x.LotNo))
+                .ToList();
+
+            if (excelRows.Count == 0)
+                throw new Exception("No valid rows found in Excel.");
+
+            var lotNos = new List<string>();
+            foreach (var row in excelRows)
+            {
+                string cleaned = row.LotNo!.Replace(" ", "").Replace("\r\n", ",").Replace("\n", ",");
+                foreach (var part in cleaned.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                {
+                    if (!string.IsNullOrWhiteSpace(part))
+                        lotNos.Add(part);
+                }
+            }
+
+            string strWhere;
+            if (lotNos.Count > 0)
+            {
+                string joined = string.Join("'',''", lotNos.Select(l => l.Replace("'", "''")));
+                strWhere = $" AND LotNo IN (''{joined}'')";
+            }
+            else
+            {
+                strWhere = " AND LotNo IN ('''')";
+            }
+
+            // MVC GetMixPPurData → EXEC GetLotNoDataForAll @Type='Mix'
+            string sql = $" EXEC [GetLotNoDataForAll] @Type = 'Mix',@Where = '{strWhere}'";
+            var lots = (await _sqlDataAccess.SelectRawSql<MixSaleLotDetailDto>(sql, companyId)).ToList();
+            foreach (var lot in lots)
+                NormalizeLotDetail(lot);
+
+            var caratFormat = await _sqlDataAccess.ExecuteQuerySingle<string>(
+                "SELECT Value FROM TabSettingMaster WHERE Name = 'CaratFormatNew'",
+                new { },
+                companyId) ?? "0.000";
+
+            var itemsToAdd = new List<MixSaleItemDto>();
+            double totalCarats = 0;
+            double totalAmount = 0;
+            double totalMRPAmount = 0;
+            double totalAmountWithoutless = 0;
+
+            foreach (var reportItem in lots)
+            {
+                string lotNoString = reportItem.LotNo ?? "";
+                var matching = excelRows.FirstOrDefault(s =>
+                {
+                    if (string.Equals(s.LotNo, lotNoString, StringComparison.OrdinalIgnoreCase))
+                        return true;
+                    string cleaned = (s.LotNo ?? "").Replace(" ", "").Replace("\r\n", ",").Replace("\n", ",");
+                    return cleaned.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .Any(p => string.Equals(p, lotNoString, StringComparison.OrdinalIgnoreCase)
+                               || string.Equals(p.Replace(" ", ""), lotNoString.Replace(" ", ""), StringComparison.OrdinalIgnoreCase));
+                });
+
+                if (matching == null)
+                    continue;
+
+                float tempCarat = reportItem.Weight != 0
+                    ? reportItem.Weight
+                    : ToFloat(reportItem.Carats);
+                if (tempCarat <= 0)
+                    continue;
+
+                // MVC: MRP/Back from stock; Rate from Excel. Apply Excel Back when non-zero (Get Item From List pattern).
+                float mrp = reportItem.MRP != 0 ? reportItem.MRP : ToFloat(reportItem.PurchaseMRP);
+                float back = reportItem.PurchaseBack;
+                float newRate = matching.Rate;
+                int pcs = reportItem.Pcs;
+
+                if (matching.Back != 0)
+                    back = matching.Back;
+                if (matching.MRP != 0)
+                    mrp = matching.MRP;
+
+                float carat = FormatSelectionCarats(tempCarat, caratFormat);
+
+                if (newRate == 0 && back != 0 && mrp != 0)
+                    newRate = ((100 + back) * mrp) / 100;
+
+                if (back == 0 && newRate != 0 && mrp != 0)
+                    back = ((newRate * 100) / mrp) - 100;
+
+                float amount = carat * newRate;
+                if (request.Less1 != 0)
+                    amount = amount * (100 + request.Less1) / 100;
+                if (request.Less2 != 0)
+                    amount = amount * (100 + request.Less2) / 100;
+                if (request.Less3 != 0)
+                    amount = amount * (100 + request.Less3) / 100;
+
+                string shapeId = reportItem.ShapeId ?? reportItem.Shape ?? "";
+                string colorId = reportItem.ColorId ?? reportItem.Color ?? "";
+                string sizeId = reportItem.Size ?? "";
+                string sieveId = reportItem.SieveId ?? reportItem.Sieve ?? "";
+                string clarityId = reportItem.ClarityId ?? reportItem.Clarity ?? "";
+
+                itemsToAdd.Add(new MixSaleItemDto
+                {
+                    ItemName = reportItem.ItemName,
+                    LotNo = reportItem.LotNo,
+                    Less1 = request.Less1,
+                    Less2 = request.Less2,
+                    Less3 = request.Less3,
+                    Amount = amount,
+                    PurAmount = amount,
+                    Weight = carat,
+                    Carats = carat,
+                    IssueCarats = carat,
+                    MRP = mrp,
+                    PurchaseMRP = mrp,
+                    Pcs = pcs,
+                    PurchaseBack = back,
+                    Rate = newRate,
+                    PurchaseRate = newRate,
+                    SRate = newRate,
+                    Shape = shapeId,
+                    ShapeId = shapeId,
+                    PShape = shapeId,
+                    Color = colorId,
+                    ColorId = colorId,
+                    PColor = colorId,
+                    Size = sizeId,
+                    PSize = sizeId,
+                    Sieve = sieveId,
+                    SieveId = sieveId,
+                    PSieve = sieveId,
+                    Clarity = clarityId,
+                    ClarityId = clarityId,
+                    PClarity = clarityId,
+                    StockType = string.IsNullOrWhiteSpace(reportItem.StockType) ? "Diamond" : reportItem.StockType,
+                    InvDescription = reportItem.InvDescription
+                });
+
+                totalCarats += carat;
+                totalAmount += amount;
+                totalMRPAmount += carat * mrp;
+                totalAmountWithoutless += carat * newRate;
+            }
+
+            if (itemsToAdd.Count == 0)
+                throw new Exception("No matching lots found for Excel LotNo values.");
+
+            return new MixSaleGridViewDto
+            {
+                TotalCarats = Math.Round(totalCarats, 3),
+                TotalAmount = Math.Round(totalAmount, 2),
+                TotalMRPAmount = Math.Round(totalMRPAmount, 3),
+                TotalAmountWithoutless = Math.Round(totalAmountWithoutless, 3),
+                Alert = "",
+                ExcelData = itemsToAdd
+            };
         }
 
         public async Task<(bool Success, string Message)> AddAsync(
@@ -1017,6 +1224,9 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 Items = new List<MixSalePrintItemDto>()
             };
 
+            // Cache AddJewImages folder settings once per print (Drive name → fileId)
+            List<KeyValuePair<string, string?>>? driveSettings = null;
+
             foreach (var dr in rows)
             {
                 if (dr is not IDictionary<string, object> rowDict)
@@ -1024,12 +1234,25 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
                 string? lotNo = ResolvePrintLotNo(rowDict);
                 byte[]? imageFromRow = GetPrintBytes(rowDict, "ImageFullPath", "ImagePath", "AssetImagePath");
-                var imageResult = await ResolvePrintItemImageAsync(lotNo, imageFromRow, companyId);
+                // String path from sale row (SP often returns ImagePath as varchar, not byte[])
+                string? pathFromRow = GetPrintString(rowDict, "ImagePath", "AssetImagePath", "Image");
+                var imageResult = await ResolvePrintItemImageAsync(lotNo, imageFromRow, companyId, pathFromRow);
                 string? itemName = GetPrintString(rowDict, "ItemName");
                 var pcs = GetPrintInt(rowDict, "Pcs");
                 var carats = GetPrintDouble(rowDict, "Carats");
                 var rate = GetPrintDouble(rowDict, "Rate");
                 var amount = GetPrintDouble(rowDict, "MasterCurrencyAmount", "Amount");
+
+                // First/main image only (pipe-separated ImagePath → primary). Embed for print.
+                byte[]? imgBytes = imageResult.Item1;
+                string? imgPath = GetPrimaryImagePath(imageResult.Item2);
+                if ((imgBytes == null || imgBytes.Length == 0) && !string.IsNullOrWhiteSpace(imgPath))
+                {
+                    driveSettings ??= await LoadPrintJewSettingPairsAsync(companyId);
+                    imgBytes = TryLoadDrivePrintImageBytes(imgPath, driveSettings);
+                }
+                if (imgBytes != null && imgBytes.Length > 0)
+                    imgPath = $"data:image/jpeg;base64,{Convert.ToBase64String(imgBytes)}";
 
                 result.Items.Add(new MixSalePrintItemDto
                 {
@@ -1048,8 +1271,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     MasterCurrencyAmount = amount,
                     Amount = amount,
                     StockType = GetPrintString(rowDict, "StockType", "SubType", "Category"),
-                    ImageFullPath = imageResult.Item1,
-                    ImagePath = imageResult.Item2
+                    ImageFullPath = imgBytes,
+                    ImagePath = imgPath
                 });
             }
 
@@ -1142,6 +1365,34 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                         continue;
                     if (kvp.Value is byte[] bytes && bytes.Length > 0)
                         return bytes;
+                    // Some SPs return ImageFullPath as base64 text (not a file path)
+                    if (!IsPrintColumnMatch(kvp.Key, "ImageFullPath") || kvp.Value is not string s ||
+                        string.IsNullOrWhiteSpace(s))
+                        continue;
+                    var text = s.Trim();
+                    if (text.StartsWith("data:image", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var comma = text.IndexOf(',');
+                        if (comma > 0)
+                            text = text[(comma + 1)..];
+                    }
+                    // Skip file paths / URLs (base64 alphabet includes / but not \ or image extensions)
+                    if (text.Contains('\\') ||
+                        text.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
+                        System.Text.RegularExpressions.Regex.IsMatch(
+                            text, @"\.(png|jpe?g|gif|bmp|webp)$",
+                            System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                        continue;
+                    try
+                    {
+                        var decoded = Convert.FromBase64String(text.Replace("\r", "").Replace("\n", "").Replace(" ", ""));
+                        if (decoded.Length > 0)
+                            return decoded;
+                    }
+                    catch
+                    {
+                        // not base64
+                    }
                 }
             }
             return null;
@@ -1191,65 +1442,185 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
         }
         #endregion
 
+        /// <summary>MVC GetPrimaryImagePath — first segment of pipe/semicolon ImagePath list.</summary>
+        private static string? GetPrimaryImagePath(string? imagePath)
+        {
+            if (string.IsNullOrWhiteSpace(imagePath))
+                return null;
+            var primary = imagePath.Split(new[] { '|', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(p => p.Trim())
+                .FirstOrDefault(p => !string.IsNullOrWhiteSpace(p));
+            return string.IsNullOrWhiteSpace(primary) ? null : primary;
+        }
+
+        private static bool LooksLikeDriveImagePath(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return false;
+            var val = path.Trim();
+            if (val.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                return false;
+            if (GoogleDriveHelper.ExtractFileId(val) != null)
+                return true;
+            if (val.IndexOf("drive.google.com", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                val.IndexOf("googleusercontent.com", StringComparison.OrdinalIgnoreCase) >= 0)
+                return true;
+            // Bare Drive file name: Test.png / KJB23115-3.00CT.jpg (no folder separators)
+            if (val.IndexOf('/') < 0 && val.IndexOf('\\') < 0 &&
+                Regex.IsMatch(val, @"\.(png|jpe?g|gif|bmp|webp)$", RegexOptions.IgnoreCase))
+                return true;
+            return false;
+        }
+
+        /// <summary>
+        /// Download the first/main Google Drive image as bytes for print embedding
+        /// (name → AddJewImages folder resolve → DownloadFileBytes).
+        /// </summary>
+        private static byte[]? TryLoadDrivePrintImageBytes(
+            string imagePath,
+            List<KeyValuePair<string, string?>> settings)
+        {
+            var primary = GetPrimaryImagePath(imagePath);
+            if (string.IsNullOrWhiteSpace(primary) || !LooksLikeDriveImagePath(primary))
+                return null;
+
+            try
+            {
+                string? fileId = GoogleDriveHelper.ExtractFileId(primary);
+                if (string.IsNullOrWhiteSpace(fileId))
+                {
+                    string settingName;
+                    string? folderId = GoogleDriveHelper.ResolveFolderIdFromSettings(settings, false, out settingName);
+                    if (string.IsNullOrWhiteSpace(folderId))
+                        return null;
+
+                    if (!GoogleDriveHelper.TryResolveFileByName(folderId, primary, settingName, out var file, out _)
+                        || file == null || string.IsNullOrEmpty(file.Id))
+                        return null;
+
+                    fileId = file.Id;
+                }
+
+                var bytes = GoogleDriveHelper.DownloadFileBytes(fileId, out _);
+                return bytes != null && bytes.Length > 0 ? bytes : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private async Task<List<KeyValuePair<string, string?>>> LoadPrintJewSettingPairsAsync(string companyId)
+        {
+            try
+            {
+                var settings = (await _sqlDataAccess.SelectDataFromSP<Dia_CoreAPI.DTOs.StockAccount.SettingMasterDto>(
+                    "GetALLMasterList",
+                    new Dictionary<string, object>
+                    {
+                        { "@Type", "Setting" },
+                        { "@Where", "" }
+                    },
+                    companyId)).ToList();
+
+                var pairs = settings
+                    .Where(s => !string.IsNullOrWhiteSpace(s.Name))
+                    .Select(s => new KeyValuePair<string, string?>(s.Name!, s.Value))
+                    .ToList();
+
+                if (pairs.Count > 0)
+                    return pairs;
+
+                // Fallback: direct Setting Master rows used by jewellery Drive folders
+                foreach (var settingName in new[] { "AddJewImages", "AddJewlImages", "AddJewImage", "AddJewlImage" })
+                {
+                    var val = await _sqlDataAccess.ExecuteQuerySingle<string>(
+                        $"SELECT TOP 1 Value FROM TabSettingMaster WHERE Name = '{settingName.Replace("'", "''")}'",
+                        new { },
+                        companyId);
+                    if (!string.IsNullOrWhiteSpace(val))
+                        pairs.Add(new KeyValuePair<string, string?>(settingName, val));
+                }
+                return pairs;
+            }
+            catch
+            {
+                return new List<KeyValuePair<string, string?>>();
+            }
+        }
+
         /// <summary>MVC Jewellery_SaleUSA_Print: ImageFullPath byte[]; JewStockData fallback uses Stock_ID only.</summary>
         private async Task<(byte[]? ImageFullPath, string? ImagePath)> ResolvePrintItemImageAsync(
             string? lotNo,
             byte[]? imageBytes,
-            string companyId)
+            string companyId,
+            string? imagePathFromRow = null)
         {
             if (imageBytes != null && imageBytes.Length > 0)
                 return (imageBytes, null);
 
-            if (string.IsNullOrWhiteSpace(lotNo))
-                return (null, null);
-
-            try
+            if (!string.IsNullOrWhiteSpace(lotNo))
             {
-                // MVC GetLotNoDataForAll JewStockData — ViewJewelleryClosingStockDateWise has Stock_ID, not LOTNO
-                var escaped = lotNo.Replace("'", "''");
-                var sql = $"EXEC [GetLotNoDataForAll] @Type = 'JewStockData', @Where = ' AND Stock_ID = ''{escaped}'' '";
-                var lotRows = (await _sqlDataAccess.SelectDataAdoDynamic(sql, companyId)).ToList();
-                foreach (var row in lotRows)
+                try
                 {
-                    if (row is not IDictionary<string, object> dict)
-                        continue;
-
-                    byte[]? foundBytes = null;
-                    string? foundPath = null;
-
-                    foreach (var kvp in dict)
+                    // MVC GetLotNoDataForAll JewStockData — ViewJewelleryClosingStockDateWise has Stock_ID, not LOTNO
+                    var escaped = lotNo.Replace("'", "''");
+                    var sql = $"EXEC [GetLotNoDataForAll] @Type = 'JewStockData', @Where = ' AND Stock_ID = ''{escaped}'' '";
+                    var lotRows = (await _sqlDataAccess.SelectDataAdoDynamic(sql, companyId)).ToList();
+                    foreach (var row in lotRows)
                     {
-                        if (kvp.Key.StartsWith("ImageFullPath", StringComparison.OrdinalIgnoreCase) &&
-                            kvp.Value is byte[] bytes && bytes.Length > 0)
-                        {
-                            foundBytes = bytes;
-                            break;
-                        }
-                    }
-
-                    if (foundBytes != null)
-                        return (foundBytes, null);
-
-                    foreach (var kvp in dict)
-                    {
-                        if (!kvp.Key.StartsWith("ImagePath", StringComparison.OrdinalIgnoreCase) ||
-                            kvp.Key.StartsWith("ImageFullPath", StringComparison.OrdinalIgnoreCase))
+                        if (row is not IDictionary<string, object> dict)
                             continue;
-                        var path = kvp.Value?.ToString()?.Trim();
-                        if (!string.IsNullOrEmpty(path) && !string.Equals(path, "null", StringComparison.OrdinalIgnoreCase))
-                        {
-                            foundPath = path;
-                            break;
-                        }
-                    }
 
-                    if (!string.IsNullOrEmpty(foundPath))
-                        return (null, foundPath);
+                        byte[]? foundBytes = null;
+                        string? foundPath = null;
+
+                        foreach (var kvp in dict)
+                        {
+                            if (kvp.Key.StartsWith("ImageFullPath", StringComparison.OrdinalIgnoreCase) &&
+                                kvp.Value is byte[] bytes && bytes.Length > 0)
+                            {
+                                foundBytes = bytes;
+                                break;
+                            }
+                        }
+
+                        if (foundBytes != null)
+                            return (foundBytes, null);
+
+                        foreach (var kvp in dict)
+                        {
+                            if (!kvp.Key.StartsWith("ImagePath", StringComparison.OrdinalIgnoreCase) ||
+                                kvp.Key.StartsWith("ImageFullPath", StringComparison.OrdinalIgnoreCase))
+                                continue;
+                            var path = kvp.Value?.ToString()?.Trim();
+                            if (!string.IsNullOrEmpty(path) && !string.Equals(path, "null", StringComparison.OrdinalIgnoreCase))
+                            {
+                                // Primary only when pipe-separated
+                                var primary = path.Split(new[] { '|', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                                    .Select(p => p.Trim())
+                                    .FirstOrDefault(p => !string.IsNullOrWhiteSpace(p)) ?? path;
+                                foundPath = primary;
+                                break;
+                            }
+                        }
+
+                        if (!string.IsNullOrEmpty(foundPath))
+                            return (null, foundPath);
+                    }
+                }
+                catch
+                {
+                    // Image lookup must not block invoice print
                 }
             }
-            catch
+
+            if (!string.IsNullOrWhiteSpace(imagePathFromRow))
             {
-                // Image lookup must not block invoice print
+                var primary = imagePathFromRow.Split(new[] { '|', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(p => p.Trim())
+                    .FirstOrDefault(p => !string.IsNullOrWhiteSpace(p)) ?? imagePathFromRow.Trim();
+                return (null, primary);
             }
 
             return (null, null);
