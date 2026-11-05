@@ -152,6 +152,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             if (header == null)
                 return null;
 
+            NormalizePurchaseHeader(header);
+
             if (isConsignment)
                 header.Mode = "consignment";
 
@@ -241,6 +243,69 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
 
             if (string.IsNullOrWhiteSpace(item.Clarity) && !string.IsNullOrWhiteSpace(item.ClarityId))
                 item.Clarity = item.ClarityId;
+        }
+
+        private static void NormalizePurchaseHeader(SolitairePurchaseHeaderDto header)
+        {
+            if (header == null) return;
+
+            if (header.PlusMinusAmount == 0 && header.PlusMinAmount != 0)
+                header.PlusMinusAmount = header.PlusMinAmount;
+            else if (header.PlusMinAmount == 0 && header.PlusMinusAmount != 0)
+                header.PlusMinAmount = header.PlusMinusAmount;
+
+            if (header.CGSTAmt == 0 && header.CGSTAmount != 0)
+                header.CGSTAmt = header.CGSTAmount;
+            if (header.SGSTAmt == 0 && header.SGSTAmount != 0)
+                header.SGSTAmt = header.SGSTAmount;
+            if (header.IGSTAmt == 0 && header.IGSTAmount != 0)
+                header.IGSTAmt = header.IGSTAmount;
+        }
+
+        private async Task ApplyCurrentStatusInvoiceTotalsAsync(
+            SolitairePurchaseStatusDto result,
+            string invNo,
+            string companyId)
+        {
+            if (result?.Items == null || result.Items.Count == 0)
+                return;
+
+            double plusMinus = 0;
+            try
+            {
+                var esc = (invNo ?? string.Empty).Replace("'", "''");
+                var headerAdj = await _sqlDataAccess.SelectDataFromSPSingle<SolitairePurchaseHeaderDto>(
+                    "GetSalepurRecord",
+                    new Dictionary<string, object>
+                    {
+                        { "@Where", $" tsp.TrnType = 'PUR' AND tsp.InvNo = '{esc}'" }
+                    },
+                    companyId);
+
+                NormalizePurchaseHeader(headerAdj);
+                if (headerAdj != null)
+                    plusMinus = headerAdj.PlusMinusAmount;
+            }
+            catch
+            {
+                plusMinus = 0;
+            }
+
+            bool plusMinusApplied = false;
+            foreach (var item in result.Items)
+            {
+                if (item.IsPayment == 1)
+                    continue;
+                if (!string.Equals(item.Type, "Invoice", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                double amt = item.Amount ?? 0;
+                double tax = item.Tax ?? 0;
+                double extra = plusMinusApplied ? 0 : plusMinus;
+                plusMinusApplied = true;
+                double total = Math.Round(amt + tax + extra, 2);
+                item.Amount = total == 0 ? null : total;
+            }
         }
 
         private static void NormalizeLotDetail(SolitairePurchaseLotDetailDto lot)
@@ -919,6 +984,9 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                     IsPayment = row.IsPayment
                 });
             }
+
+            // SP line Amount is goods only. Current Status Total/Balance must include Tax + +/- Amount.
+            await ApplyCurrentStatusInvoiceTotalsAsync(result, invNo, companyId);
 
             return result;
         }

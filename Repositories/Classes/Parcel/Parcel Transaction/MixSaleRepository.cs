@@ -181,6 +181,95 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 header.InvDisc = header.Description;
         }
 
+        /// <summary>
+        /// SoliPrintCurStatusInv Tax is often 0 for CSALE. Fill from saved sale GST (GetSalepurRecord). No SP change.
+        /// Tax USD = FinalMPayRecAmount − NetAmount.
+        /// </summary>
+        private async Task FillCurrentStatusTaxFromSaleHeaderAsync(
+            MixSaleStatusDto result,
+            string invNo,
+            string companyId)
+        {
+            if (result?.Items == null || result.Items.Count == 0)
+                return;
+
+            MixSaleHeaderDto? header = null;
+            int? saleCode = null;
+            try
+            {
+                if (int.TryParse(invNo, out var codeId))
+                {
+                    saleCode = codeId;
+                    header = await _sqlDataAccess.SelectDataFromSPSingle<MixSaleHeaderDto>(
+                        "GetSalepurRecord",
+                        new Dictionary<string, object>
+                        {
+                            { "@Where", $" tsp.TrnType = 'CSALE' AND Code = {codeId}" }
+                        },
+                        companyId);
+                }
+                if (header == null && !string.IsNullOrWhiteSpace(invNo))
+                {
+                    var esc = invNo.Replace("'", "''");
+                    header = await _sqlDataAccess.SelectDataFromSPSingle<MixSaleHeaderDto>(
+                        "GetSalepurRecord",
+                        new Dictionary<string, object>
+                        {
+                            { "@Where", $" tsp.TrnType = 'CSALE' AND tsp.InvNo = '{esc}'" }
+                        },
+                        companyId);
+                    if (header != null && header.Code > 0)
+                        saleCode = header.Code;
+                }
+                NormalizeHeader(header);
+            }
+            catch
+            {
+                header = null;
+            }
+
+            double taxTxn = 0;
+            if (header != null)
+                taxTxn = Math.Round(header.FinalMPayRecAmount - header.NetAmount, 2);
+
+            int? pcs = null;
+            if (saleCode.HasValue)
+            {
+                try
+                {
+                    var saleItems = (await _sqlDataAccess.SelectDataFromSP<MixSaleItemDto>(
+                        "GetSalepurTran_Sale",
+                        new Dictionary<string, object>
+                        {
+                            { "@Where", $" AND InvCode = {saleCode.Value}" }
+                        },
+                        companyId)).ToList();
+                    var totPcs = saleItems.Sum(x => x.Pcs);
+                    if (totPcs != 0)
+                        pcs = totPcs;
+                }
+                catch
+                {
+                    pcs = null;
+                }
+            }
+
+            if (taxTxn == 0 && !pcs.HasValue)
+                return;
+
+            foreach (var item in result.Items)
+            {
+                if (item.IsPayment == 1)
+                    continue;
+                if (!string.Equals(item.Type, "Invoice", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if ((item.Tax == null || item.Tax == 0) && taxTxn != 0)
+                    item.Tax = taxTxn;
+                if ((item.Qty == null || item.Qty == 0) && pcs.HasValue)
+                    item.Qty = pcs;
+            }
+        }
+
         public async Task<MixSaleDetailDto?> GetDetailAsync(int id, string companyId)
         {
             var headerParams = new Dictionary<string, object>
@@ -236,6 +325,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                         lot.StockType ??= "Jewellery";
                         NormalizeLotDetail(lot);
                     }
+                    await ApplyOnHandWeightsAsync(jewResult, companyId);
                     return jewResult;
                 }
             }
@@ -254,6 +344,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             foreach (var lot in result)
                 NormalizeLotDetail(lot);
 
+            await ApplyOnHandWeightsAsync(result, companyId);
             return result;
         }
 
@@ -332,8 +423,15 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             if (!string.IsNullOrWhiteSpace(lot.Stock_ID) && string.IsNullOrWhiteSpace(lot.StockType))
                 lot.StockType = "Jewellery";
 
+            float onHand = RoundCarat(lot.OnHandCarats3Dec);
+            if (onHand == 0) onHand = RoundCarat(lot.BalanceCarats3Dec);
+            if (onHand != 0)
+            {
+                lot.OnHandCarats3Dec = onHand;
+                lot.Weight = onHand;
+            }
             // GetLotNoDataForAll Type=Mix returns Carats / PurchaseMRP (MVC LotNoData)
-            if (lot.Weight == 0 && float.TryParse(lot.Carats, System.Globalization.NumberStyles.Any,
+            else if (lot.Weight == 0 && float.TryParse(lot.Carats, System.Globalization.NumberStyles.Any,
                     System.Globalization.CultureInfo.InvariantCulture, out var carats) && carats != 0)
                 lot.Weight = carats;
 
@@ -394,6 +492,19 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             else if (!(selectionCarats > 0 || selectionCarats == 0))
             {
                 throw new Exception("Carat is invalid.");
+            }
+
+            if (item.MemoTransCode == 0 && !isJewellery && !string.IsNullOrWhiteSpace(item.LotNo))
+            {
+                float saleCts = RoundCarat(Math.Max(issueCarats, selectionCarats));
+                float available = await GetLotOnHandCaratsAsync(item.LotNo, companyId);
+                if (available <= 0)
+                {
+                    var lots = await GetLotDetailAsync(item.LotNo, companyId);
+                    available = GetLotAvailableWeight(lots.FirstOrDefault());
+                }
+                if (saleCts > available + 0.0005f)
+                    throw new Exception(SaleExceedsStockMessage(item.LotNo, saleCts, available));
             }
 
             float amount;
@@ -543,6 +654,14 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                         bool outstanding = salePur.chkoldsale;
                         bool stockEffected = !salePur.chkoldsale;
 
+                        var weightCheck = await ValidateSaleItemWeightsAsync(
+                            items, editInvCode: null, stockEffected, companyId);
+                        if (!weightCheck.Ok)
+                        {
+                            trans.Rollback();
+                            return (false, weightCheck.Message);
+                        }
+
                         await InsertSalePurAsync(
                             conn, trans, MaxInvNo, salePur, Curcode, outstanding, stockEffected,
                             usercode, MCurBaseRate, MCurFinalAmt, SCurBaseRate, SCurFinalAmt,
@@ -623,6 +742,14 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
                         bool outstanding = salePur.chkoldsale;
                         bool stockEffected = !salePur.chkoldsale;
+
+                        var weightCheck = await ValidateSaleItemWeightsAsync(
+                            items, editInvCode: Code, stockEffected, companyId);
+                        if (!weightCheck.Ok)
+                        {
+                            trans.Rollback();
+                            return (false, weightCheck.Message);
+                        }
 
                         int MaxSPCode;
 
@@ -1179,6 +1306,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     InvStatus = row.InvStatus
                 });
             }
+
+            await FillCurrentStatusTaxFromSaleHeaderAsync(result, invNo, companyId);
 
             return result;
         }
@@ -1761,6 +1890,155 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
         }
 
         #endregion
+
+        private static float RoundCarat(float carat)
+        {
+            string carat3D = Convert.ToDouble(carat).ToString("N3");
+            return float.Parse(carat3D);
+        }
+
+        private static float GetSaleCarats(MixSaleItemDto item)
+        {
+            float issue = item.IssueCarats != 0 ? item.IssueCarats : item.Weight;
+            float selection = item.Weight != 0 ? item.Weight : item.Carats;
+            return RoundCarat(Math.Max(issue, selection));
+        }
+
+        private static float GetLotAvailableWeight(MixSaleLotDetailDto? lot)
+        {
+            if (lot == null) return 0f;
+            float onHand = RoundCarat(lot.OnHandCarats3Dec);
+            if (onHand == 0) onHand = RoundCarat(lot.BalanceCarats3Dec);
+            if (onHand == 0) onHand = RoundCarat(lot.Weight);
+            if (onHand == 0 && float.TryParse(lot.Carats, NumberStyles.Any, CultureInfo.InvariantCulture, out var carats))
+                onHand = RoundCarat(carats);
+            return onHand;
+        }
+
+        private static string SaleExceedsStockMessage(string? lotNo, float saleCts, float available) =>
+            $"Sale carats ({saleCts:0.###}) cannot exceed available stock ({available:0.###})" +
+            (string.IsNullOrWhiteSpace(lotNo) ? "." : $" for lot {lotNo}.");
+
+        private sealed class LotOnHandRow
+        {
+            public string? LotNo { get; set; }
+            public string? Stock_ID { get; set; }
+            public float OnHandCarats3Dec { get; set; }
+            public float BalanceCarats3Dec { get; set; }
+        }
+
+        private sealed class MixSaleTranWeightRow
+        {
+            public string? LotNo { get; set; }
+            public float Weight { get; set; }
+            public float Carats { get; set; }
+            public float IssueCarats { get; set; }
+            public float MemoTransCode { get; set; }
+            public float MemoTranCode { get; set; }
+        }
+
+        private async Task<float> GetLotOnHandCaratsAsync(string lotNo, string companyId)
+        {
+            if (string.IsNullOrWhiteSpace(lotNo)) return 0f;
+            try
+            {
+                var escaped = EscapeSql(lotNo);
+                string sql = IsJewelleryLotNo(lotNo)
+                    ? "SELECT TOP 1 Stock_ID, OnHandCarats3Dec, BalanceCarats3Dec FROM ViewJewelleryClosingStockDateWise(GETDATE()) WHERE Stock_ID = '" + escaped + "'"
+                    : "SELECT TOP 1 LotNo, OnHandCarats3Dec, BalanceCarats3Dec FROM ViewItemClosingStockDateWise(GETDATE()) WHERE LotNo = '" + escaped + "'";
+                var row = (await _sqlDataAccess.SelectRawSql<LotOnHandRow>(sql, companyId)).FirstOrDefault();
+                if (row == null) return 0f;
+                float onHand = RoundCarat(row.OnHandCarats3Dec);
+                if (onHand == 0) onHand = RoundCarat(row.BalanceCarats3Dec);
+                return onHand;
+            }
+            catch
+            {
+                return 0f;
+            }
+        }
+
+        private async Task ApplyOnHandWeightsAsync(List<MixSaleLotDetailDto> lots, string companyId)
+        {
+            if (lots == null || lots.Count == 0) return;
+            foreach (var lot in lots)
+            {
+                float onHand = RoundCarat(lot.OnHandCarats3Dec);
+                if (onHand == 0) onHand = RoundCarat(lot.BalanceCarats3Dec);
+                if (onHand == 0)
+                    onHand = await GetLotOnHandCaratsAsync(lot.LotNo ?? lot.Stock_ID ?? "", companyId);
+                if (onHand <= 0) continue;
+                lot.OnHandCarats3Dec = onHand;
+                lot.Weight = onHand;
+            }
+        }
+
+        private async Task<(bool Ok, string Message)> ValidateSaleItemWeightsAsync(
+            List<MixSaleItemDto> items,
+            int? editInvCode,
+            bool stockEffected,
+            string companyId)
+        {
+            if (!stockEffected || items == null || items.Count == 0)
+                return (true, string.Empty);
+
+            Dictionary<string, float>? previousByLot = null;
+            if (editInvCode.HasValue && editInvCode.Value > 0)
+            {
+                previousByLot = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+                var existing = (await _sqlDataAccess.SelectDataFromSP<MixSaleTranWeightRow>(
+                    "GetSalepurTran_Sale",
+                    new Dictionary<string, object> { { "@Where", $" AND InvCode = {editInvCode.Value}" } },
+                    companyId)).ToList();
+
+                foreach (var ex in existing)
+                {
+                    if (string.IsNullOrWhiteSpace(ex.LotNo)) continue;
+                    float memo = ex.MemoTransCode != 0 ? ex.MemoTransCode : ex.MemoTranCode;
+                    if (memo != 0) continue;
+                    float w = RoundCarat(ex.IssueCarats != 0 ? ex.IssueCarats : (ex.Weight != 0 ? ex.Weight : ex.Carats));
+                    if (previousByLot.ContainsKey(ex.LotNo))
+                        previousByLot[ex.LotNo] += w;
+                    else
+                        previousByLot[ex.LotNo] = w;
+                }
+            }
+
+            var saleByLot = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+            foreach (var im in items)
+            {
+                if (string.IsNullOrWhiteSpace(im.LotNo)) continue;
+                if (IsJewelleryItem(im)) continue;
+                float memoTransCode = im.MemoTransCode != 0 ? im.MemoTransCode : im.MemoTranCode;
+                if (memoTransCode != 0) continue;
+                float saleCts = GetSaleCarats(im);
+                if (saleCts <= 0) continue;
+                if (saleByLot.ContainsKey(im.LotNo))
+                    saleByLot[im.LotNo] += saleCts;
+                else
+                    saleByLot[im.LotNo] = saleCts;
+            }
+
+            foreach (var kv in saleByLot)
+            {
+                float onHand = await GetLotOnHandCaratsAsync(kv.Key, companyId);
+                if (onHand <= 0)
+                {
+                    var lots = await GetLotDetailAsync(kv.Key, companyId);
+                    onHand = GetLotAvailableWeight(lots.FirstOrDefault());
+                }
+
+                float previous = 0f;
+                if (previousByLot != null && previousByLot.TryGetValue(kv.Key, out var prevW))
+                    previous = RoundCarat(prevW);
+
+                float available = RoundCarat(onHand + previous);
+                if (kv.Value > available + 0.0005f)
+                    return (false, SaleExceedsStockMessage(kv.Key, kv.Value, available));
+            }
+
+            return (true, string.Empty);
+        }
 
         #region Raw row DTOs
 

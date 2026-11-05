@@ -260,6 +260,9 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public float Weight { get; set; }
         /// <summary>SP GetLotNoDataForAll (Type=Mix) returns Carats as string — mapped to Weight in repository.</summary>
         public string? Carats { get; set; }
+        /// <summary>Closing-stock on-hand / purchase carats (ViewItemClosingStockDateWise).</summary>
+        public float OnHandCarats3Dec { get; set; }
+        public float BalanceCarats3Dec { get; set; }
         public float IssueCarats { get; set; }
         public int Pcs { get; set; }
         public float MRP { get; set; }

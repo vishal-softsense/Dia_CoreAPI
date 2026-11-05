@@ -143,6 +143,9 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction
         public string? ItemName { get; set; }
         public float Weight { get; set; }
         public string? Carats { get; set; }
+        /// <summary>Closing-stock on-hand / purchase carats (ViewItemClosingStockDateWise).</summary>
+        public float OnHandCarats3Dec { get; set; }
+        public float BalanceCarats3Dec { get; set; }
         public int Pcs { get; set; }
         public float MRP { get; set; }
         public float Back { get; set; }

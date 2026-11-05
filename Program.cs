@@ -313,6 +313,10 @@ builder.Services.AddScoped<IParcelStockRegisterReportService, ParcelStockRegiste
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewelleryStockReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewelleryStockReportRepositories>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewelleryStockReportServices, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewelleryStockReportServices>();
 
+// Jewellery Quotation Report (same data as Jewellery Stock Report)
+builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryReports.IJewelleryQuotationReportRepository, Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryReports.JewelleryQuotationReportRepository>();
+builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Jewellery.JewelleryReports.IJewelleryQuotationReportService, Dia_CoreAPI.Services.Classes.Jewellery.JewelleryReports.JewelleryQuotationReportService>();
+
 // Mix Purchase Report
 builder.Services.AddScoped<IMixPurchaseReportRepository, MixPurchaseReportRepository>();
 builder.Services.AddScoped<IMixPurchaseReportService, MixPurchaseReportService>();

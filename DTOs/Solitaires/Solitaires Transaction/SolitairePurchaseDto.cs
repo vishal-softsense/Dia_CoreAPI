@@ -67,6 +67,8 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction
         public float TotCts { get; set; }
         public float TotAmount { get; set; }
         public float PlusMinusAmount { get; set; }
+        /// <summary>GetSalepurRecord column name (maps onto PlusMinusAmount).</summary>
+        public float PlusMinAmount { get; set; }
         public float NetAmount { get; set; }
         public float NetMAmount { get; set; }
         public float RoundAmount { get; set; }
@@ -76,10 +78,13 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction
         public float VatAmount { get; set; }
         public float CGSTPer { get; set; }
         public float CGSTAmt { get; set; }
+        public float CGSTAmount { get; set; }
         public float SGSTPer { get; set; }
         public float SGSTAmt { get; set; }
+        public float SGSTAmount { get; set; }
         public float IGSTPer { get; set; }
         public float IGSTAmt { get; set; }
+        public float IGSTAmount { get; set; }
         public string? Term { get; set; }
         public long ExpPartyCode { get; set; }
         public float InterestPer { get; set; }
