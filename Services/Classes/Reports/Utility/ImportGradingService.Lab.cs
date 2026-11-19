@@ -648,7 +648,7 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                 a.LabComments, a.BrownId, "", a.MilkyId, a.LusterId, a.ButhId, a.NattsId, "", "", "", "", a.OIT, a.OIC, a.OIP, a.OIG, "",
                 "", a.ColorDisc, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 0, a.MfgSeriesID, a.MfgPacketID, "", "", DateTime.Now, 0, 0, 0, a.CompanyID, "UpdateGrading", 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, "", 1);
+                0, 0, 0, "", 1,a.Weight);
             sql.CommitTransaction();
         }
 

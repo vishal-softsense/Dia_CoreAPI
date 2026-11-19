@@ -325,18 +325,21 @@ namespace Dia_CoreAPI.Repositories.Classes.FinancialTransaction.Payment
                                 usercode, userId, companyId);
                         }
 
-                        // MVC: ExDiff != 0 || ExDiff.ToString() != null → always true for float
-                        await InsertPayRecAsync(conn, trans, request.TransDate,
-                            Convert.ToInt64(payment.InvCode), jvCode,
-                            payment.ExDiff, mCurId.ToString(),
-                            Math.Round(request.SRate, 4), "Ex. Difference",
-                            Math.Round(request.SRate, 4), Math.Round(payment.ExDiff, 4),
-                            0, 0,
-                            usercode, userId, companyId);
+                        if (payment.ExDiff != 0)
+                        {
+                            await InsertPayRecAsync(conn, trans, request.TransDate,
+                                Convert.ToInt64(payment.InvCode), jvCode,
+                                payment.ExDiff, mCurId.ToString(),
+                                Math.Round(request.SRate, 4), "Ex. Difference",
+                                Math.Round(request.SRate, 4), Math.Round(payment.ExDiff, 4),
+                                0, 0,
+                                usercode, userId, companyId);
+                        }
                     }
 
+                    await InsertExDiffJvAsync(conn, trans, request, mCurId, maxGcode,
+                        "IPAYX", usercode, userId, companyId);
                     _ = vouNo;
-                    _ = request.TotalExDiff;
                 }
 
                 if (request.Rec > 0)
@@ -387,17 +390,21 @@ namespace Dia_CoreAPI.Repositories.Classes.FinancialTransaction.Payment
                                 usercode, userId, companyId);
                         }
 
-                        await InsertPayRecAsync(conn, trans, request.TransDate,
-                            Convert.ToInt64(payment.InvCode), jvCode,
-                            payment.ExDiff, mCurId.ToString(),
-                            Math.Round(request.SRate, 4), "Ex. Difference",
-                            Math.Round(request.SRate, 4), Math.Round(payment.ExDiff, 4),
-                            0, 0,
-                            usercode, userId, companyId);
+                        if (payment.ExDiff != 0)
+                        {
+                            await InsertPayRecAsync(conn, trans, request.TransDate,
+                                Convert.ToInt64(payment.InvCode), jvCode,
+                                payment.ExDiff, mCurId.ToString(),
+                                Math.Round(request.SRate, 4), "Ex. Difference",
+                                Math.Round(request.SRate, 4), Math.Round(payment.ExDiff, 4),
+                                0, 0,
+                                usercode, userId, companyId);
+                        }
                     }
 
+                    await InsertExDiffJvAsync(conn, trans, request, mCurId, maxGcode,
+                        "IRECX", usercode, userId, companyId);
                     _ = vouNo;
-                    _ = request.TotalExDiff;
                 }
 
                 trans.Commit();
@@ -783,6 +790,41 @@ namespace Dia_CoreAPI.Repositories.Classes.FinancialTransaction.Payment
                 if (!string.IsNullOrWhiteSpace(v)) return v;
             }
             return null;
+        }
+
+        /// <summary>
+        /// MVC SavePayment: IPAYX / IRECX against AccGrpName EX. DIFFERENCE.
+        /// Profit: trnacc → EX.DIFFERENCE; Loss: EX.DIFFERENCE → trnacc. Same GCode as IPAY/IREC.
+        /// </summary>
+        private static async Task InsertExDiffJvAsync(
+            SqlConnection conn, SqlTransaction trans,
+            PayWithExDiffSaveRequest request, long mCurId, int maxGcode,
+            string vType, int usercode, string userId, string companyId)
+        {
+            float totalExDiff = request.TotalExDiff;
+            if (totalExDiff == 0) return;
+
+            // SqlParameter @Where is concatenated as-is (same as JVCode / VouNo in this file).
+            // Doubled quotes (MVC string-embed style) become AccGrpName='' + EX. DIFFERENCE → "Incorrect syntax near 'EX'."
+            string partyStr = await ExecuteCommonDataScalarAsync(
+                conn, trans, "Party", " And AccGrpName='EX. DIFFERENCE'");
+            if (!long.TryParse(partyStr, out var exDiffParty) || exDiffParty == 0)
+                throw new InvalidOperationException("EX. DIFFERENCE account is not configured.");
+
+            float absAmt = Math.Abs(totalExDiff);
+            bool profit = totalExDiff > 0;
+            long debit = profit ? request.trnacc : exDiffParty;
+            long credit = profit ? exDiffParty : request.trnacc;
+            string disc = (request.Desc ?? "") + (profit ? "-Ex.Diff Profit" : "-Ex.Diff Loss");
+
+            await InsertJvAsync(conn, trans,
+                request.TransDate, request.TransDate,
+                debit, credit,
+                absAmt, mCurId.ToString(),
+                vType, 0, disc,
+                Math.Round(request.SRate, 4), Math.Round(absAmt, 4),
+                0, 0,
+                maxGcode, usercode, userId, companyId, "insert");
         }
 
         private static async Task InsertJvAsync(
