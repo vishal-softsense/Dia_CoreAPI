@@ -218,6 +218,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public float MemoTranCode { get; set; }
         public float RtnCarats { get; set; }
         public float ReturnCarats { get; set; }
+        public float RtnCts { get; set; }
         public string? ImagePath { get; set; }
         public string? VideoPath { get; set; }
         public string? PagePath { get; set; }
