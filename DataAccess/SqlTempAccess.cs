@@ -195,7 +195,7 @@ namespace Dia_CoreAPI.DataAccess
             double PurchaseAmount, double ActualBack, double ActualRate, double ActualAmount, double BottomBack, double BottomRate,
             double B2BBack, double B2BRate, double B2CBack, double B2CRate, string MfgSeriesID, string MfgPacketID, string RoughId, string MinesId, DateTime PurchaseDate,
             double Less1, double Less2, double Less3, int CompanyID, string ActionType, double PurchaseCarats, double SPPurchaseRate, double SPPurchaseBack, double PurchaseMRP,
-            double PDollarrate, double MasterCurrencyRate, double MasterCurrencyAmount, double StockCurrencyRate, double StockCurrencyAmount, double AdatPer, double Brokerper, string ReportDate, int SinglePcs, [Optional] string City, [Optional] string ImagePath, [Optional] string VideoPath, [Optional] string PagePath, [Optional] string CountryOfOrigin, [Optional] string CountryOfMfg)
+            double PDollarrate, double MasterCurrencyRate, double MasterCurrencyAmount, double StockCurrencyRate, double StockCurrencyAmount, double AdatPer, double Brokerper, string ReportDate, int SinglePcs, [Optional] double LABWeight, [Optional] string City, [Optional] string ImagePath, [Optional] string VideoPath, [Optional] string PagePath, [Optional] string CountryOfOrigin, [Optional] string CountryOfMfg)
 
         //DateTime PurchaseDate, DateTime RateReviseDate, DateTime NewArrivalDate, DateTime StoneLastUnHoldDate, 
         {
@@ -317,6 +317,7 @@ namespace Dia_CoreAPI.DataAccess
             param.Add("@Brokerper", Brokerper);
             param.Add("@LabReportDate", ReportDate);
             param.Add("@SinglePcs", SinglePcs);
+            param.Add("@LABWeight", Weight);
             param.Add("@PurchaseAmount", PurchaseAmount);
             param.Add("@ActualRate", ActualRate);
             param.Add("@ActualBack", ActualBack);

@@ -705,14 +705,32 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             SolitairePurchaseReturnHeaderDto salePur, int maxSPCode,
             CurrencyContext ctx, int usercode, string userId, string companyId)
         {
-            long purchaseCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Purchase''"));
-            long vatCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Vat''"));
-            long sgstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''SGST''"));
-            long cgstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''CGST''"));
-            long igstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''IGST''"));
-            long brokerageCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Brokerage''"));
-            long adatAccCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Adat''"));
-            long cashCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Cash''"));
+
+            long purchaseCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Purchase''"), out purchaseCode);
+            long vatCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Vat''"), out vatCode);
+            long sgstCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''SGST''"), out sgstCode);
+            long cgstCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''CGST''"), out cgstCode);
+            long igstCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''IGST''"), out igstCode);
+            long brokerageCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Brokerage''"), out brokerageCode);
+            long adatAccCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Adat''"), out adatAccCode);
+            long cashCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Cash''"), out cashCode);
+
+            //long purchaseCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Purchase''"));
+            //long vatCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Vat''"));
+            //long sgstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''SGST''"));
+            //long cgstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''CGST''"));
+            //long igstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''IGST''"));
+            //long brokerageCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Brokerage''"));
+            //long adatAccCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Adat''"));
+            //long cashCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Cash''"));
 
             float saleJvAmount = salePur.FinalMAmount;
             var jvConvert = GetConvertAmount(ctx.MCurCode, saleJvAmount, 1, ctx.MCurOperatorM, ctx.MToSCurRate, ctx.SCurOperatorM, ctx.MCurCode, ctx.SCurCode);

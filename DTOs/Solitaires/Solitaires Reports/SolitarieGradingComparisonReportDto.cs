@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
@@ -24,9 +24,11 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
     public class LabWeightDiffRowDto
     {
         public string? LotNo { get; set; }
+        public decimal LabW { get; set; }
         public decimal OldWeight { get; set; }
         public decimal NewWeight { get; set; }
         public decimal Difference { get; set; }
+        public bool HasLabWeightDiffEntry { get; set; }
     }
 
     public class LabWeightDiffEntryRowDto
@@ -115,5 +117,7 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Reports
         public string? CHColor { get; set; }
         public string? PAColor { get; set; }
         public string? PHColor { get; set; }
+
+        public string? LabW { get; set; } // or LabW
     }
 }
