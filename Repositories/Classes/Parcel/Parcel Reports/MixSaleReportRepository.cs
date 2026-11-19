@@ -92,7 +92,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Reports
                 Item = GetString(row, "Item", "item"),
                 IssueCarats = GetDecimal(row, "IssueCarats", "issueCarats"),
                 Discount = GetDecimal(row, "Discount", "discount"),
-                ReturnCarats = GetDecimal(row, "ReturnCarats", "returnCarats"),
+                // Report "Rejection" reads ReturnCarats. Rejection is issue − selection;
+                // the sale line no longer stores that amount in the return-carats column.
+                ReturnCarats = RejectionCarats(
+                    GetDecimal(row, "IssueCarats", "issueCarats"),
+                    GetDecimal(row, "Carats", "carats"),
+                    GetDecimal(row, "ReturnCarats", "returnCarats")),
                 Carats = GetDecimal(row, "Carats", "carats"),
                 Rate = GetDecimal(row, "Rate", "rate"),
                 Amount = GetDecimal(row, "Amount", "amount"),
@@ -150,6 +155,17 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Reports
             var v = GetRawValue(row, keys);
             if (v == null) return null;
             return decimal.TryParse(Convert.ToString(v, CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal n) ? n : null;
+        }
+
+        /// <summary>
+        /// Sale report labels ReturnCarats as Rejection. Rejection is issue minus selection.
+        /// Older rows stored that figure in ReturnCarats; new sales leave ReturnCarats as the real return.
+        /// </summary>
+        private static decimal? RejectionCarats(decimal? issueCarats, decimal? selectionCarats, decimal? storedReturn)
+        {
+            if (issueCarats.HasValue && selectionCarats.HasValue && issueCarats.Value > selectionCarats.Value)
+                return issueCarats.Value - selectionCarats.Value;
+            return storedReturn;
         }
         #endregion
     }
