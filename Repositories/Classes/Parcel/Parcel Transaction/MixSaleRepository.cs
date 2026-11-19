@@ -738,6 +738,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                         string MCurOperatorM = await ExecuteCurrencyDetailScalarAsync(conn, trans, "MCurOperator", " and ID=" + MCurCode);
                         string SCurOperatorM = await ExecuteCurrencyDetailScalarAsync(conn, trans, "SCurOperator", " and ID=" + MCurCode);
 
+
+
                         var finalAmtRes = GetConvertAmount(MCurCode, FinalMAmount, 1, MCurOperatorM, MToSCurRate, SCurOperatorM, MCurCode, SCurCode);
                         double MCurFinalAmt = finalAmtRes.MCurAmt;
                         double SCurFinalAmt = finalAmtRes.SCurAmt;
@@ -1758,9 +1760,33 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             {
                 float rate = im.PurchaseRate != 0 ? im.PurchaseRate : im.Rate;
                 float amount = im.PurAmount != 0 ? im.PurAmount : im.Amount;
-                var amtRes = GetConvertAmount(curCode, amount, mCurBaseRate, mCurOperator, sCurBaseRate, sCurOperator, mCurCode, sCurCode);
 
-                bool isJewellery = IsJewelleryItem(im);
+				Console.WriteLine("========== MIX SALE CURRENCY DEBUG ==========");
+				Console.WriteLine($"Item: {im.LotNo}");
+				Console.WriteLine($"Input Rate: {im.Rate}");
+				Console.WriteLine($"Purchase Rate: {im.PurchaseRate}");
+				Console.WriteLine($"Input Amount: {im.Amount}");
+				Console.WriteLine($"Purchase Amount: {im.PurAmount}");
+
+				Console.WriteLine($"curCode: {curCode}");
+				Console.WriteLine($"mCurCode: {mCurCode}");
+				Console.WriteLine($"sCurCode: {sCurCode}");
+
+				Console.WriteLine($"mCurBaseRate: {mCurBaseRate}");
+				Console.WriteLine($"mCurOperator: {mCurOperator}");
+
+				Console.WriteLine($"sCurBaseRate: {sCurBaseRate}");
+				Console.WriteLine($"sCurOperator: {sCurOperator}");
+
+				Console.WriteLine("==============================================");
+
+
+				var amtRes = GetConvertAmount(curCode, amount, mCurBaseRate, mCurOperator, sCurBaseRate, sCurOperator, mCurCode, sCurCode);
+
+				Console.WriteLine($"Calculated Master Amount: {amtRes.MCurAmt}");
+				Console.WriteLine($"Calculated Stock Amount: {amtRes.SCurAmt}");
+
+				bool isJewellery = IsJewelleryItem(im);
                 string stockType = isJewellery ? "Jewellery" : (im.StockType ?? "Diamond");
                 string lotKey = EscapeSql(im.LotNo);
 
@@ -1783,8 +1809,15 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 string itemName = !string.IsNullOrWhiteSpace(im.ItemName) ? im.ItemName : im.LotNo ?? "";
 
                 float memoTransCode = im.MemoTransCode;
-                float returnCarats = im.RtnCarats != 0 ? im.RtnCarats : im.ReturnCarats;
                 float issueCarats = im.IssueCarats != 0 ? im.IssueCarats : im.Weight;
+                // Rejection is IssueCarats − selection (Weight). Do not store that amount as return carats
+                // when the request only repeated the rejection in RtnCarats / ReturnCarats.
+                float selectionCarats = im.Weight;
+                float rejection = issueCarats > selectionCarats ? issueCarats - selectionCarats : 0f;
+                float submittedReturn = im.ReturnCarats != 0 ? im.ReturnCarats : im.RtnCarats;
+                bool submittedReturnIsRejection =
+                    rejection > 0f && Math.Abs(submittedReturn - rejection) < 0.0005f;
+                float returnCarats = submittedReturnIsRejection ? 0f : submittedReturn;
                 float back = im.PurchaseBack;
                 float spCarats = memoTransCode != 0 ? float.Parse(im.Weight.ToString("N3")) : 0f;
 
@@ -1794,7 +1827,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 string pColor = im.PColor ?? im.Color ?? im.ColorId ?? "";
                 string pClarity = im.PClarity ?? im.Clarity ?? im.ClarityId ?? "";
 
-                using (var cmd = new SqlCommand("SP_InsertSalePurTran", conn, trans))
+
+				Console.WriteLine($"Saving Rate: {rate}");
+				Console.WriteLine($"Saving StockCurrencyRate: {sCurBaseRate}");
+				Console.WriteLine($"Saving StockCurrencyAmount: {amtRes.SCurAmt}");
+
+				using (var cmd = new SqlCommand("SP_InsertSalePurTran", conn, trans))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.Add(new SqlParameter("@SPdate", salePur.TrnDate));
