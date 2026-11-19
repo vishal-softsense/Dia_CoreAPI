@@ -407,6 +407,39 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             if (string.IsNullOrWhiteSpace(item.PClarity))
                 item.PClarity = item.ClarityId ?? item.Clarity;
+
+            // Disambiguate Rejection vs Return Carats from legacy TabSalePurTran
+            float selection = item.Weight != 0 ? item.Weight : item.Carats;
+            float issue = item.IssueCarats != 0 ? item.IssueCarats : selection;
+            float derivedRejection = issue > selection ? (float)Math.Round(issue - selection, 3) : 0f;
+            float rawReturn = item.ReturnCarats != 0 ? item.ReturnCarats : item.RtnCarats;
+
+            if (derivedRejection > 0)
+            {
+                item.RtnCarats = derivedRejection;
+                if (Math.Abs(rawReturn - derivedRejection) < 0.0005)
+                {
+                    item.ReturnCarats = 0f;
+                    item.RtnCts = 0f;
+                }
+                else if (rawReturn > derivedRejection)
+                {
+                    float realReturn = (float)Math.Round(rawReturn - derivedRejection, 3);
+                    item.ReturnCarats = realReturn;
+                    item.RtnCts = realReturn;
+                }
+                else
+                {
+                    item.ReturnCarats = 0f;
+                    item.RtnCts = 0f;
+                }
+            }
+            else
+            {
+                item.RtnCarats = 0f;
+                item.RtnCts = rawReturn;
+                item.ReturnCarats = rawReturn;
+            }
         }
 
         private static string EscapeSql(string? value) => (value ?? string.Empty).Replace("'", "''");
