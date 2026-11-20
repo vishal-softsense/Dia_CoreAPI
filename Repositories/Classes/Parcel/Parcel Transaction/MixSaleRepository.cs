@@ -2421,65 +2421,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             bool stockEffected,
             string companyId)
         {
-            if (!stockEffected || items == null || items.Count == 0)
-                return (true, string.Empty);
-
-            Dictionary<string, float>? previousByLot = null;
-            if (editInvCode.HasValue && editInvCode.Value > 0)
-            {
-                previousByLot = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
-                var existing = (await _sqlDataAccess.SelectDataFromSP<MixSaleTranWeightRow>(
-                    "GetSalepurTran_Sale",
-                    new Dictionary<string, object> { { "@Where", $" AND InvCode = {editInvCode.Value}" } },
-                    companyId)).ToList();
-
-                foreach (var ex in existing)
-                {
-                    if (string.IsNullOrWhiteSpace(ex.LotNo)) continue;
-                    float memo = ex.MemoTransCode != 0 ? ex.MemoTransCode : ex.MemoTranCode;
-                    if (memo != 0) continue;
-                    float w = RoundCarat(ex.IssueCarats != 0 ? ex.IssueCarats : (ex.Weight != 0 ? ex.Weight : ex.Carats));
-                    if (previousByLot.ContainsKey(ex.LotNo))
-                        previousByLot[ex.LotNo] += w;
-                    else
-                        previousByLot[ex.LotNo] = w;
-                }
-            }
-
-            var saleByLot = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
-            foreach (var im in items)
-            {
-                if (string.IsNullOrWhiteSpace(im.LotNo)) continue;
-                if (IsJewelleryItem(im)) continue;
-                float memoTransCode = im.MemoTransCode != 0 ? im.MemoTransCode : im.MemoTranCode;
-                if (memoTransCode != 0) continue;
-                float saleCts = GetSaleCarats(im);
-                if (saleCts <= 0) continue;
-                if (saleByLot.ContainsKey(im.LotNo))
-                    saleByLot[im.LotNo] += saleCts;
-                else
-                    saleByLot[im.LotNo] = saleCts;
-            }
-
-            foreach (var kv in saleByLot)
-            {
-                float onHand = await GetLotOnHandCaratsAsync(kv.Key, companyId);
-                if (onHand <= 0)
-                {
-                    var lots = await GetLotDetailAsync(kv.Key, companyId);
-                    onHand = GetLotAvailableWeight(lots.FirstOrDefault());
-                }
-
-                float previous = 0f;
-                if (previousByLot != null && previousByLot.TryGetValue(kv.Key, out var prevW))
-                    previous = RoundCarat(prevW);
-
-                float available = RoundCarat(onHand + previous);
-                if (kv.Value > available + 0.0005f)
-                    return (false, SaleExceedsStockMessage(kv.Key, kv.Value, available));
-            }
-
-            return (true, string.Empty);
+            // Unlocked: selling more carats than stock is allowed with warning
+            return await Task.FromResult((true, string.Empty));
         }
 
         #region Raw row DTOs
