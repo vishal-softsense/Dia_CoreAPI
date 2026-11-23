@@ -681,6 +681,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             public double FinalAmount { get; set; }
         }
 
+
         private class ShipViaRow
         {
             public string? Name { get; set; }
