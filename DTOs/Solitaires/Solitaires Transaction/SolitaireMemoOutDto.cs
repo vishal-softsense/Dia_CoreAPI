@@ -137,6 +137,8 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction
         public float Rate { get; set; }
         public float Amount { get; set; }
         public string? FinalAmount { get; set; }
+        public float OnHandCarats3Dec { get; set; }
+        public float BalanceCarats3Dec { get; set; }
     }
 
     public class SolitaireMemoOutLotRequest

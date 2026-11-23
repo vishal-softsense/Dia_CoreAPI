@@ -182,7 +182,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 if (available <= 0)
                     available = await GetLotOnHandCaratsAsync(item.LotNo, companyId);
                 if (carat > available + 0.0005f)
-                    throw new Exception(SaleExceedsStockMessage(item.LotNo, carat, available));
+                    alert = SaleExceedsStockMessage(item.LotNo, carat, available);
             }
 
             if (purRate != 0 && mrp != 0)
@@ -969,66 +969,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             float sBaseRate,
             string companyId)
         {
-            if (!stockEffected || items == null || items.Count == 0)
-                return (true, string.Empty);
-
-            Dictionary<string, float>? previousByLot = null;
-            if (editInvCode.HasValue && editInvCode.Value > 0)
-            {
-                previousByLot = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
-                // GetSalepurTran_Sale may expose weight as Weight or Carats (same as DeleteAsync reader)
-                var existing = (await _sqlDataAccess.SelectDataFromSP<SaleTranWeightRow>(
-                    "GetSalepurTran_Sale",
-                    new Dictionary<string, object> { { "@Where", $" AND InvCode = {editInvCode.Value}" } },
-                    companyId)).ToList();
-
-                foreach (var ex in existing)
-                {
-                    if (string.IsNullOrWhiteSpace(ex.LotNo)) continue;
-                    float w = RoundCarat(ex.Weight != 0 ? ex.Weight : ex.Carats);
-                    if (w == 0) w = RoundCarat(ex.SpCarats);
-                    if (previousByLot.ContainsKey(ex.LotNo))
-                        previousByLot[ex.LotNo] += w;
-                    else
-                        previousByLot[ex.LotNo] = w;
-                }
-            }
-
-            foreach (var im in items)
-            {
-                if (string.IsNullOrWhiteSpace(im.LotNo)) continue;
-
-                float memoTransCode = im.MemoTransCode != 0 ? im.MemoTransCode : im.MemoTranCode;
-                if (memoTransCode != 0) continue;
-
-                float saleWeight = RoundCarat(im.Weight);
-                if (saleWeight <= 0) continue;
-
-                var lots = await GetLotDetailAsync(
-                    new SolitaireSaleLotRequest
-                    {
-                        LotNo = im.LotNo,
-                        CurCode = curCode,
-                        SBaseRate = sBaseRate == 0 ? 1 : sBaseRate
-                    },
-                    companyId);
-
-                float onHand = GetLotAvailableWeight(lots.FirstOrDefault());
-                if (onHand <= 0)
-                    onHand = await GetLotOnHandCaratsAsync(im.LotNo, companyId);
-
-                float previous = 0f;
-                if (previousByLot != null && previousByLot.TryGetValue(im.LotNo, out var prevW))
-                    previous = RoundCarat(prevW);
-
-                float available = RoundCarat(onHand + previous);
-                if (saleWeight > available + 0.0005f)
-                {
-                    return (false, SaleExceedsStockMessage(im.LotNo, saleWeight, available));
-                }
-            }
-
-            return (true, string.Empty);
+            // Unlocked: selling more weight than stock is allowed with warning (matches MixSale)
+            return await Task.FromResult((true, string.Empty));
         }
 
         private static float RoundCarat(float carat)
