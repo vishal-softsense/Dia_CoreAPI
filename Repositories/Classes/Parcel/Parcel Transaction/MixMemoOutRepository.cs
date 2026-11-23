@@ -141,7 +141,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             var escapedLotNo = (request.LotNo ?? "").Replace("'", "''");
             List<MixMemoOutLotDetailDto> result;
 
-            if (request.SBaseRate == 1)
+            float sBaseRate = request.SBaseRate <= 0 ? 1 : request.SBaseRate;
+            if (sBaseRate == 1)
             {
                 // MVC GetMixMemoLotNoDataForPMemo → GetLotNoDataForAll @Type = 'MixMemo'
                 string sql = $" EXEC [GetLotNoDataForAll] @Type = 'MixMemo',@Where = ' AND LotNo = ''{escapedLotNo}'' '";
@@ -152,7 +153,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 string sCurOperator = await GetSCurOperatorAsync(request.CurCode, companyId);
                 string sCurOperatorToCon = GetSCurOperatorToCon(sCurOperator);
                 string where = $" AND LotNo = '{escapedLotNo}' ";
-                string sql = BuildMixMemoOtherCurSql(where, request.SBaseRate, sCurOperatorToCon);
+                string sql = BuildMixMemoOtherCurSql(where, sBaseRate, sCurOperatorToCon);
                 result = (await _sqlDataAccess.SelectRawSql<MixMemoOutLotDetailDto>(sql, companyId)).ToList();
             }
 
@@ -249,7 +250,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             }
 
             List<MixMemoOutLotDetailDto> lots;
-            if (request.SBaseRate == 1)
+            float sBaseRate = request.SBaseRate <= 0 ? 1 : request.SBaseRate;
+            if (sBaseRate == 1)
             {
                 string sql = $" EXEC [GetLotNoDataForAll] @Type = 'MixMemo',@Where = '{strWhere}'";
                 lots = (await _sqlDataAccess.SelectRawSql<MixMemoOutLotDetailDto>(sql, companyId)).ToList();
@@ -258,7 +260,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             {
                 string sCurOperator = await GetSCurOperatorAsync(request.CurCode, companyId);
                 string sCurOperatorToCon = GetSCurOperatorToCon(sCurOperator);
-                string sql = BuildMixMemoOtherCurSql(strWhere, request.SBaseRate, sCurOperatorToCon);
+                string sql = BuildMixMemoOtherCurSql(strWhere, sBaseRate, sCurOperatorToCon);
                 lots = (await _sqlDataAccess.SelectRawSql<MixMemoOutLotDetailDto>(sql, companyId)).ToList();
             }
 
@@ -840,10 +842,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             sCurOperator == "*" ? "/" : "*";
 
         // MVC GetLotNoDataForPSaleOtherCur
-        private static string BuildMixMemoOtherCurSql(string strWhere, float sBaseRate, string sCurOperatorToCon) =>
-            " SELECT  ItemName,LotNo,BalanceCarats3Dec ,Rate" + sCurOperatorToCon + sBaseRate +
-            " Rate,OnHandCarats3Dec Weight,0 MRP, 0 Back,format(Rate*BalanceCarats3Dec " + sCurOperatorToCon +
-            sBaseRate + " ,'0.00') as Amount,ShapeId,ColorId,ClarityId,SizeId,CertId FROM ViewItemClosingStockDateWise(GETDATE()) WHERE 1=1 " + strWhere;
+        private static string BuildMixMemoOtherCurSql(string strWhere, float sBaseRate, string sCurOperatorToCon)
+        {
+            if (sBaseRate <= 0) sBaseRate = 1;
+            return " SELECT  ItemName,LotNo,BalanceCarats3Dec ,Rate" + sCurOperatorToCon + sBaseRate +
+                " Rate,OnHandCarats3Dec Weight,0 MRP, 0 Back,format(Rate*BalanceCarats3Dec " + sCurOperatorToCon +
+                sBaseRate + " ,'0.00') as Amount,ShapeId,ColorId,ClarityId,SizeId,CertId FROM ViewItemClosingStockDateWise(GETDATE()) WHERE 1=1 " + strWhere;
+        }
 
         private static List<BasicDataDto> MapBasic(IEnumerable<StockBasic> source) =>
             source.Select(x => new BasicDataDto
