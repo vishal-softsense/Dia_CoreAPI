@@ -119,6 +119,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             }
 
             NormalizeLotWeights(result);
+            await ApplyOnHandWeightsAsync(result, companyId);
             return result;
         }
 
@@ -211,6 +212,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             }
 
             NormalizeLotWeights(lots);
+            await ApplyOnHandWeightsAsync(lots, companyId);
 
             foreach (var lotRow in lots)
             {
@@ -1011,6 +1013,48 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             if (double.IsNaN(mCurAmt) || double.IsInfinity(mCurAmt)) mCurAmt = 0;
             if (double.IsNaN(sCurAmt) || double.IsInfinity(sCurAmt)) sCurAmt = 0;
             return (mCurAmt, sCurAmt);
+        }
+
+        private class LotOnHandRow
+        {
+            public float OnHandCarats3Dec { get; set; }
+            public float BalanceCarats3Dec { get; set; }
+        }
+
+        private async Task<float> GetLotOnHandCaratsAsync(string lotNo, string companyId)
+        {
+            if (string.IsNullOrWhiteSpace(lotNo)) return 0f;
+            try
+            {
+                string escaped = (lotNo ?? "").Replace("'", "''");
+                string sql = $"SELECT OnHandCarats3Dec, BalanceCarats3Dec FROM ViewItemClosingStockDateWise(GETDATE()) WHERE LotNo = '{escaped}'";
+                var rows = (await _sqlDataAccess.SelectRawSql<LotOnHandRow>(sql, companyId)).ToList();
+                var first = rows.FirstOrDefault();
+                if (first == null) return 0f;
+                float onHand = RoundCarat(first.OnHandCarats3Dec);
+                if (onHand > 0) return onHand;
+                float bal = RoundCarat(first.BalanceCarats3Dec);
+                return bal > 0 ? bal : 0f;
+            }
+            catch
+            {
+                return 0f;
+            }
+        }
+
+        private async Task ApplyOnHandWeightsAsync(List<SolitaireMemoOutLotDetailDto> lots, string companyId)
+        {
+            if (lots == null || lots.Count == 0) return;
+            foreach (var lot in lots)
+            {
+                float onHand = RoundCarat(lot.OnHandCarats3Dec);
+                if (onHand == 0) onHand = RoundCarat(lot.BalanceCarats3Dec);
+                if (onHand == 0)
+                    onHand = await GetLotOnHandCaratsAsync(lot.LotNo ?? "", companyId);
+                if (onHand <= 0) continue;
+                lot.OnHandCarats3Dec = onHand;
+                lot.BalanceCarats3Dec = onHand;
+            }
         }
 
         #endregion

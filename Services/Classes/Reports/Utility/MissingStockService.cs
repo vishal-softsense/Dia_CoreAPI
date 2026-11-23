@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,6 +25,12 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
             MissingStockFilterDto filter,
             string companyId)
         {
+            if (string.Equals(filter?.Filters, "LotNo", StringComparison.OrdinalIgnoreCase) &&
+                string.IsNullOrWhiteSpace(filter?.LotNo))
+            {
+                return new List<MissingStockReportDto>();
+            }
+
             string where = BuildWhere(filter);
             string stockType = filter?.StoneTypes ?? "All";
             return await _repository.GetMissingStockDataAsync(stockType, where, companyId);
@@ -77,7 +83,7 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                 string strTmpNewLine = string.Join("'',''", lots);
                 where += " (LotNo IN (''" + strTmpNewLine + "''))";
             }
-            else if (filters == "LotNo Not")
+            else if (filters == "LotNo Not" && !string.IsNullOrWhiteSpace(lotNo))
             {
                 string strTmpNewLine = string.Join("'',''",
                     lotNo
@@ -87,7 +93,7 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
 
                 where += " (LotNo NOT IN (''" + strTmpNewLine + "'')) ";
             }
-            else if (filters == "LotNo Like")
+            else if (filters == "LotNo Like" && !string.IsNullOrWhiteSpace(lotNo))
             {
                 string strTmpNewLine = string.Join("'',''",
                     lotNo
@@ -96,6 +102,10 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                         .Where(x => !string.IsNullOrWhiteSpace(x)));
 
                 where += " (LotNo Like (''" + strTmpNewLine + "%''))";
+            }
+            else if (filters == "LotNo")
+            {
+                where += " (1=0)";
             }
 
             if (filters == "LotNo")
@@ -117,6 +127,10 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
             {
                 where += " (totcarats + memoIn > 0.05 OR OnHandCarats > 0.05) And CurStatus in (''S'',''MI'')";
             }
+
+            where = where.Trim();
+            if (where.EndsWith("And", StringComparison.OrdinalIgnoreCase))
+                where = where.Substring(0, where.Length - 3).Trim();
 
             return where;
         }
