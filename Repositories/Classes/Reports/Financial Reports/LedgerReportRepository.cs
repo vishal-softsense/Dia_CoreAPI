@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -125,10 +125,10 @@ namespace Dia_CoreAPI.Repositories.Classes.Reports.Financial_Reports
                 MCreditAmount = NormalizeLedgerCell(GetRawValue(row, "MCreditAmount", "mCreditAmount", "MCredit")),
                 InvDescription1 = GetString(row, "InvDescription1", "invDescription1", "Description1"),
 
-                GCode = NormalizeLedgerCell(GetRawValue(row, "GCode", "gCode")),
-                VCode = NormalizeLedgerCell(GetRawValue(row, "VCode", "vCode", "Vcode", "vcode")),
-                GCode1 = NormalizeLedgerCell(GetRawValue(row, "GCode1", "gCode1")),
-                VCode1 = NormalizeLedgerCell(GetRawValue(row, "VCode1", "vCode1"))
+                GCode = NormalizeLedgerCell(GetRawValue(row, "GCode", "gCode", "gcode", "GCODE")),
+                VCode = NormalizeLedgerCell(GetRawValue(row, "VCode", "vCode", "Vcode", "vcode", "VCODE")),
+                GCode1 = NormalizeLedgerCell(GetRawValue(row, "GCode1", "gCode1", "gcode1", "GCODE1")),
+                VCode1 = NormalizeLedgerCell(GetRawValue(row, "VCode1", "vCode1", "vcode1", "VCODE1"))
             };
         }
 

@@ -52,6 +52,8 @@ namespace Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction
         public int CurCode { get; set; }
         public float BaseRate { get; set; }
         public float SBaseRate { get; set; }
+        public float MasterCurrencyRate { get; set; }
+        public float StockCurrencyRate { get; set; }
         public long PartyCode { get; set; }
         public string? PartyName { get; set; }
         public long? AdatCode { get; set; }
