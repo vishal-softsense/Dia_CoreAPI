@@ -92,6 +92,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 companyId);
 
             if (header == null) return null;
+            NormalizeHeader(header);
 
             if (!header.chkoldsale)
                 header.chkoldsale = header.OutStanding;
@@ -126,13 +127,34 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             return new SolitaireSaleDetailDto { Header = header, Items = items };
         }
 
+        private static void NormalizeHeader(SolitaireSaleHeaderDto header)
+        {
+            if (header == null) return;
+
+            if (header.MasterCurrencyRate != 0 && header.BaseRate == 0)
+                header.BaseRate = header.MasterCurrencyRate;
+            else if (header.BaseRate != 0 && header.MasterCurrencyRate == 0)
+                header.MasterCurrencyRate = header.BaseRate;
+
+            if (header.StockCurrencyRate != 0 && header.SBaseRate == 0)
+                header.SBaseRate = header.StockCurrencyRate;
+            else if (header.SBaseRate != 0 && header.StockCurrencyRate == 0)
+                header.StockCurrencyRate = header.SBaseRate;
+
+            if (header.SBaseRate <= 0)
+                header.SBaseRate = 1;
+            if (header.StockCurrencyRate <= 0)
+                header.StockCurrencyRate = 1;
+        }
+
         public async Task<List<SolitaireSaleLotDetailDto>> GetLotDetailAsync(
             SolitaireSaleLotRequest request, string companyId)
         {
             var escapedLotNo = (request.LotNo ?? "").Replace("'", "''");
             List<SolitaireSaleLotDetailDto> result;
 
-            if (request.SBaseRate == 1)
+            float sBaseRate = request.SBaseRate <= 0 ? 1 : request.SBaseRate;
+            if (sBaseRate == 1)
             {
                 string sql = $" EXEC [GetLotNoDataForAll] @Type = 'SaleMemo',@Where = ' AND LotNo = ''{escapedLotNo}'' '";
                 result = (await _sqlDataAccess.SelectRawSql<SolitaireSaleLotDetailDto>(sql, companyId)).ToList();
@@ -142,7 +164,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 string sCurOperator = await GetSCurOperatorAsync(request.CurCode, companyId);
                 string sCurOperatorToCon = GetSCurOperatorToCon(sCurOperator);
                 string where = $" AND LotNo = '{escapedLotNo}' ";
-                string sql = BuildSaleMemoOtherCurSql(where, request.SBaseRate, sCurOperatorToCon);
+                string sql = BuildSaleMemoOtherCurSql(where, sBaseRate, sCurOperatorToCon);
                 result = (await _sqlDataAccess.SelectRawSql<SolitaireSaleLotDetailDto>(sql, companyId)).ToList();
             }
 
@@ -246,7 +268,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             }
 
             List<SolitaireSaleLotDetailDto> lots;
-            if (request.SBaseRate == 1)
+            float sBaseRate = request.SBaseRate <= 0 ? 1 : request.SBaseRate;
+            if (sBaseRate == 1)
             {
                 string sql = $" EXEC [GetLotNoDataForAll] @Type = 'SaleMemo',@Where = '{strWhere}'";
                 lots = (await _sqlDataAccess.SelectRawSql<SolitaireSaleLotDetailDto>(sql, companyId)).ToList();
@@ -255,7 +278,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             {
                 string sCurOperator = await GetSCurOperatorAsync(request.CurCode, companyId);
                 string sCurOperatorToCon = GetSCurOperatorToCon(sCurOperator);
-                string sql = BuildSaleMemoOtherCurSql(strWhere, request.SBaseRate, sCurOperatorToCon);
+                string sql = BuildSaleMemoOtherCurSql(strWhere, sBaseRate, sCurOperatorToCon);
                 lots = (await _sqlDataAccess.SelectRawSql<SolitaireSaleLotDetailDto>(sql, companyId)).ToList();
             }
 
@@ -346,7 +369,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             }
 
             List<SolitaireSaleLotDetailDto> lots;
-            if (request.SBaseRate == 1)
+            float sBaseRate = request.SBaseRate <= 0 ? 1 : request.SBaseRate;
+            if (sBaseRate == 1)
             {
                 string sql = $" EXEC [GetLotNoDataForAll] @Type = 'SaleMemo',@Where = '{strWhere}'";
                 lots = (await _sqlDataAccess.SelectRawSql<SolitaireSaleLotDetailDto>(sql, companyId)).ToList();
@@ -355,7 +379,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             {
                 string sCurOperator = await GetSCurOperatorAsync(request.CurCode, companyId);
                 string sCurOperatorToCon = GetSCurOperatorToCon(sCurOperator);
-                string sql = BuildSaleMemoOtherCurSql(strWhere, request.SBaseRate, sCurOperatorToCon);
+                string sql = BuildSaleMemoOtherCurSql(strWhere, sBaseRate, sCurOperatorToCon);
                 lots = (await _sqlDataAccess.SelectRawSql<SolitaireSaleLotDetailDto>(sql, companyId)).ToList();
             }
 
@@ -1051,10 +1075,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
         private static string GetSCurOperatorToCon(string sCurOperator) =>
             sCurOperator == "*" ? "/" : "*";
 
-        private static string BuildSaleMemoOtherCurSql(string strWhere, float sBaseRate, string sCurOperatorToCon) =>
-            " SELECT  ItemName,LotNo,BalanceCarats3Dec ,Rate" + sCurOperatorToCon + sBaseRate +
-            " Rate,OnHandCarats3Dec Weight,0 MRP, 0 Back,format(Rate*BalanceCarats3Dec " + sCurOperatorToCon +
-            sBaseRate + " ,'0.00') as Amount FROM ViewItemClosingStockDateWise(GETDATE()) WHERE 1=1 " + strWhere;
+        private static string BuildSaleMemoOtherCurSql(string strWhere, float sBaseRate, string sCurOperatorToCon)
+        {
+            if (sBaseRate <= 0) sBaseRate = 1;
+            return " SELECT  ItemName,LotNo,BalanceCarats3Dec ,Rate" + sCurOperatorToCon + sBaseRate +
+                " Rate,OnHandCarats3Dec Weight,0 MRP, 0 Back,format(Rate*BalanceCarats3Dec " + sCurOperatorToCon +
+                sBaseRate + " ,'0.00') as Amount FROM ViewItemClosingStockDateWise(GETDATE()) WHERE 1=1 " + strWhere;
+        }
 
         private static List<BasicDataDto> MapBasic(IEnumerable<StockBasic> source) =>
             source.Select(x => new BasicDataDto
