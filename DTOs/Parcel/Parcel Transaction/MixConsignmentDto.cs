@@ -218,6 +218,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public float MemoTransCode { get; set; }
         public float RtnCarats { get; set; }
         public float ReturnCarats { get; set; }
+        public float RtnCts { get; set; }
         public float SpCarats { get; set; }
         public string? ImagePath { get; set; }
         public string? VideoPath { get; set; }
@@ -337,6 +338,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public float Amount { get; set; }
         public float MemoTransCode { get; set; }
         public float RtnCarats { get; set; }
+        public float RtnCts { get; set; }
         public string? StockType { get; set; }
         public string? InvDescription { get; set; }
         public string? SuppLotNo { get; set; }
