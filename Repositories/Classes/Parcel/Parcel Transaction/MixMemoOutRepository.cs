@@ -159,7 +159,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             }
 
             NormalizeLotWeights(result);
-            await ApplyOnHandWeightsAsync(result, companyId);
+            SyncOnHandFromWeight(result);
             return result;
         }
 
@@ -268,7 +268,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             }
 
             NormalizeLotWeights(lots);
-            await ApplyOnHandWeightsAsync(lots, companyId);
+            SyncOnHandFromWeight(lots);
 
             foreach (var lotRow in lots)
             {
@@ -277,7 +277,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 float l2 = request.Less2 != 0 ? l1 * (100 + request.Less2) / 100 : l1;
                 float l3 = request.Less3 != 0 ? l2 * (100 + request.Less3) / 100 : l2;
 
-                if (lotRow.Weight < 0.05)
+                if (lotRow.Weight < 0.001f)
                 {
                     alert += " Lotno On Memo or Sold: " + lotRow.LotNo;
                     continue;
@@ -846,8 +846,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
         private static string BuildMixMemoOtherCurSql(string strWhere, float sBaseRate, string sCurOperatorToCon)
         {
             if (sBaseRate <= 0) sBaseRate = 1;
-            return " SELECT  ItemName,LotNo,BalanceCarats3Dec ,Rate" + sCurOperatorToCon + sBaseRate +
-                " Rate,OnHandCarats3Dec Weight,0 MRP, 0 Back,format(Rate*BalanceCarats3Dec " + sCurOperatorToCon +
+            return " SELECT  ItemName,LotNo,CASE WHEN ProductType = 'Shipping' THEN 'Shipping' ELSE 'Diamond' END AS StockType,Pcs,BalanceCarats3Dec ,Rate" + sCurOperatorToCon + sBaseRate +
+                " Rate,CASE WHEN ProductType = 'Shipping' THEN 0 ELSE OnHandCarats3Dec END AS Weight,0 MRP, 0 Back,format(Rate*BalanceCarats3Dec " + sCurOperatorToCon +
                 sBaseRate + " ,'0.00') as Amount,ShapeId,ColorId,ClarityId,SizeId,CertId FROM ViewItemClosingStockDateWise(GETDATE()) WHERE 1=1 " + strWhere;
         }
 
@@ -1352,45 +1352,16 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             public string? ItemName { get; set; }
         }
 
-        private class LotOnHandRow
-        {
-            public float OnHandCarats3Dec { get; set; }
-            public float BalanceCarats3Dec { get; set; }
-        }
-
-        private async Task<float> GetLotOnHandCaratsAsync(string lotNo, string companyId)
-        {
-            if (string.IsNullOrWhiteSpace(lotNo)) return 0f;
-            try
-            {
-                string escaped = (lotNo ?? "").Replace("'", "''");
-                string sql = $"SELECT OnHandCarats3Dec, BalanceCarats3Dec FROM ViewItemClosingStockDateWise(GETDATE()) WHERE LotNo = '{escaped}'";
-                var rows = (await _sqlDataAccess.SelectRawSql<LotOnHandRow>(sql, companyId)).ToList();
-                var first = rows.FirstOrDefault();
-                if (first == null) return 0f;
-                float onHand = RoundCarat(first.OnHandCarats3Dec);
-                if (onHand > 0) return onHand;
-                float bal = RoundCarat(first.BalanceCarats3Dec);
-                return bal > 0 ? bal : 0f;
-            }
-            catch
-            {
-                return 0f;
-            }
-        }
-
-        private async Task ApplyOnHandWeightsAsync(List<MixMemoOutLotDetailDto> lots, string companyId)
+        /// <summary>
+        /// GetLotNoDataForAll (@Type = 'MixMemo') and BuildMixMemoOtherCurSql return OnHandCarats3Dec aliased as Weight.
+        /// Keep OnHandCarats3Dec aligned with Weight without falling back to BalanceCarats3Dec.
+        /// </summary>
+        private static void SyncOnHandFromWeight(List<MixMemoOutLotDetailDto> lots)
         {
             if (lots == null || lots.Count == 0) return;
             foreach (var lot in lots)
             {
-                float onHand = RoundCarat(lot.OnHandCarats3Dec);
-                if (onHand == 0) onHand = RoundCarat(lot.BalanceCarats3Dec);
-                if (onHand == 0)
-                    onHand = await GetLotOnHandCaratsAsync(lot.LotNo ?? "", companyId);
-                if (onHand <= 0) continue;
-                lot.OnHandCarats3Dec = onHand;
-                lot.BalanceCarats3Dec = onHand;
+                lot.OnHandCarats3Dec = RoundCarat(lot.Weight);
             }
         }
 
