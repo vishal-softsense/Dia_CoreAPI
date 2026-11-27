@@ -11,5 +11,8 @@ namespace Dia_CoreAPI.Models
         public string UserRole { get; set; } = string.Empty;
         public int CompanyID { get; set; }
         public string ProfileImage { get; set; } = string.Empty;
+        public string CaratFormatNew { get; set; } = "0.00";
+        public string SolitaireCaratFormat { get; set; } = "0.00";
+        public string ParcelCaratFormat { get; set; } = "0.00";
     }
 }

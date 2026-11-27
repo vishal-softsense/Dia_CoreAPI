@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction;
+using Dia_CoreAPI.Utilities;
 using ExcelDataReader;
 using Microsoft.AspNetCore.Http;
 
@@ -92,7 +93,10 @@ namespace Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction
                     return (false, readResult.ErrorMessage ?? "Failed to read Excel file.");
 
                 var dt = readResult.Table;
-                string caratFormat = await _repository.GetSettingValueAsync("CaratFormat", companyId) ?? "0.00";
+                string caratFormat = CaratFormatHelper.NormalizeCaratFormat(
+                    await _repository.GetSettingValueAsync("ParcelCaratFormat", companyId)
+                    ?? await _repository.GetSettingValueAsync("CaratFormatNew", companyId)
+                    ?? await _repository.GetSettingValueAsync("CaratFormat", companyId));
 
                 if (!dt.Columns.Contains("LotNo") || !dt.Columns.Contains("Shape")
                     || !dt.Columns.Contains("Carats") || !dt.Columns.Contains("Color")
@@ -103,12 +107,9 @@ namespace Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction
 
                 foreach (DataRow row in dt.Rows)
                 {
-                    float tempCarat = float.Parse(Cell(row, "Carats"));
-                    string carat3D = Convert.ToDouble(tempCarat).ToString("N3");
-                    string carat2D = carat3D.Substring(0, carat3D.Length - 1);
-                    double carat = caratFormat == "0.000"
-                        ? Convert.ToDouble(carat3D)
-                        : Convert.ToDouble(carat2D);
+                    double carat = (double)CaratFormatHelper.TruncateDecimal(
+                        decimal.Parse(Cell(row, "Carats").Trim(), NumberStyles.Any, CultureInfo.InvariantCulture),
+                        caratFormat);
 
                     double back = 0;
                     double purRate = 0;
@@ -250,12 +251,7 @@ namespace Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction
 
                 foreach (var item in purExcel)
                 {
-                    float tempWeight = item.Weight;
-                    string weight3D = Convert.ToDouble(tempWeight).ToString("N3");
-                    string weight2D = weight3D.Substring(0, weight3D.Length - 1);
-                    double weight = caratFormat == "0.000"
-                        ? Convert.ToDouble(weight3D)
-                        : Convert.ToDouble(weight2D);
+                    double weight = CaratFormatHelper.TruncateFloat(item.Weight, caratFormat);
 
                     totalCarats += weight;
                     totalAmount += item.PurAmount;
@@ -265,7 +261,7 @@ namespace Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction
 
                 return (true, new MixPurchaseGridViewDto
                 {
-                    TotalCarats = Math.Round(totalCarats, 3),
+                    TotalCarats = CaratFormatHelper.TruncateDouble(totalCarats, caratFormat),
                     TotalAmount = totalAmount,
                     TotalMRPAmount = Math.Round(totalMRPAmount, 3),
                     TotalAmountWithoutless = Math.Round(totalAmountWithoutless, 3),
