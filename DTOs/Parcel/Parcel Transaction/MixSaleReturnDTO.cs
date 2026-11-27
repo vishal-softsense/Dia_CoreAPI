@@ -326,6 +326,10 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? StockType { get; set; }
         public string? JewItem { get; set; }
         public string? JewItemName { get; set; }
+        public long PartyCode { get; set; }
+        public string? PartyName { get; set; }
+        /// <summary>Sp_SelectCSaleForCSaleRtn returns the party account name as Party.</summary>
+        public string? Party { get; set; }
     }
 
     public class MixSaleReturnCSaleFillLineRequest
