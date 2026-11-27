@@ -206,10 +206,11 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
         public async Task<List<MixConsignmentLotDetailDto>> GetLotDetailAsync(string lotNo, string companyId)
         {
+            var escapedLotNo = (lotNo ?? string.Empty).Replace("'", "''");
             var parameters = new Dictionary<string, object>
             {
                 { "@Type", "MixMemoIn" },
-                { "@Where", $" AND LotNo = '{lotNo}' " }
+                { "@Where", $" AND LotNo = '{escapedLotNo}' " }
             };
 
             var result = (await _sqlDataAccess.SelectDataFromSP<MixConsignmentLotDetailDto>(
@@ -1282,8 +1283,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 float submittedReturn = im.ReturnCarats != 0 ? im.ReturnCarats : (im.RtnCts != 0 ? im.RtnCts : 0f);
                 bool submittedReturnIsRejection =
                     rejection > 0f && Math.Abs(submittedReturn - rejection) < 0.0005f;
-                float returnCarats = submittedReturnIsRejection ? 0f : submittedReturn;
-                float rtnCarats = CaratFormatHelper.TruncateFloat(im.RtnCarats != 0 ? im.RtnCarats : im.ReturnCarats, caratFormat);
+                float returnCarats = CaratFormatHelper.TruncateFloat(submittedReturnIsRejection ? 0f : submittedReturn, caratFormat);
 
                 if (!isJewellery && LotAlready.ToString() == "0")
                 {
@@ -1472,11 +1472,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     cmd.Parameters.Add(new SqlParameter("@Rate", Convert.ToDouble(im.PurchaseRate.ToString("N2"))));
                     cmd.Parameters.Add(new SqlParameter("@MRP", im.MRP));
                     cmd.Parameters.Add(new SqlParameter("@PMRPDown", Convert.ToDouble(im.PurchaseBack.ToString("N2"))));
-                    cmd.Parameters.Add(new SqlParameter("@ReturnCarats", Convert.ToDouble(returnCarats.ToString("N3"))));
-                    //float issueCarats = im.IssueCarats != 0 ? im.IssueCarats : im.Weight;
                     float issueCarats = CaratFormatHelper.TruncateFloat(im.IssueCarats != 0 ? im.IssueCarats : selectionCarats, caratFormat);
-                    cmd.Parameters.Add(new SqlParameter("@IssueCarats", Convert.ToDouble(issueCarats.ToString("N3"))));
-                    cmd.Parameters.Add(new SqlParameter("@ReturnCarats", (double)rtnCarats));
+                    cmd.Parameters.Add(new SqlParameter("@ReturnCarats", (double)returnCarats));
                     cmd.Parameters.Add(new SqlParameter("@IssueCarats", (double)issueCarats));
                     cmd.Parameters.Add(new SqlParameter("@amount", Convert.ToDouble(im.PurAmount.ToString("N2"))));
                     cmd.Parameters.Add(new SqlParameter("@ExportNo", ""));
@@ -1529,9 +1526,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                         cmd.CommandType = CommandType.StoredProcedure;
                         cmd.Parameters.Add(new SqlParameter("@code", im.MemoTransCode));
                         cmd.Parameters.Add(new SqlParameter("@RtnDate", salePur.TrnDate));
-                        cmd.Parameters.Add(new SqlParameter("@rtncts", float.Parse(returnCarats.ToString("N3"))));
-                        cmd.Parameters.Add(new SqlParameter("@spcts", float.Parse(im.Weight.ToString("N3"))));
-                        cmd.Parameters.Add(new SqlParameter("@rtncts", rtnCarats));
+                        cmd.Parameters.Add(new SqlParameter("@rtncts", returnCarats));
                         cmd.Parameters.Add(new SqlParameter("@spcts", selectionCarats));
                         cmd.Parameters.Add(new SqlParameter("@Actiontype", "contopur"));
                         await cmd.ExecuteNonQueryAsync();
