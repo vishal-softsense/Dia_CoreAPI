@@ -8,6 +8,7 @@ using Dia_CoreAPI.DTOs.Parcel.Parcel_Reports;
 using Dia_CoreAPI.DTOs.Reports.Utility;
 using BasicDataDto = Dia_CoreAPI.DTOs.StockAccount.BasicDataDto;
 using Dia_CoreAPI.Repositories.Interfaces.Reports.Utility;
+using Dia_CoreAPI.Utilities;
 
 namespace Dia_CoreAPI.Repositories.Classes.Reports.Utility
 {
@@ -102,6 +103,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Reports.Utility
             if (request?.spList == null || request.spList1 == null)
                 return (false, "Invalid data received.");
 
+            string caratFormat = await CaratFormatHelper.GetCaratFormatAsync(_db, companyIdStr);
             var connectionString = await _db.GetClientConnectionString(companyIdStr);
             using var sql = new SqlTempAccess(connectionString);
 
@@ -127,7 +129,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Reports.Utility
                     {
                         sql.InsertSalePurTran(
                             from.TrnDate, "StkTrn", "", 0, 0, "",
-                            float.Parse(qty.ToString("N3")), from.Pcs,
+                            CaratFormatHelper.TruncateFloat((float)qty, caratFormat), from.Pcs,
                             Convert.ToDouble(from.Rate.ToString("N2")), 0, 0, 0, 0,
                             amt, "", 0, 0, 0, "0", 0,
                             true, false, 0, maxFItemCode, maxTItemCode,
@@ -138,7 +140,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Reports.Utility
                     {
                         sql.InsertSalePurTran(
                             from.TrnDate, "StkTrn", "", 0, 0, "",
-                            float.Parse(qty.ToString("N3")) * -1, from.Pcs,
+                            CaratFormatHelper.TruncateFloat((float)qty, caratFormat) * -1, from.Pcs,
                             Convert.ToDouble(from.Rate.ToString("N2")), 0, 0, 0, 0,
                             amt, "", 0, 0, 0, "0", 0,
                             true, false, 0, maxTItemCode, maxFItemCode,
@@ -165,7 +167,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Reports.Utility
                     {
                         sql.InsertSalePurTran(
                             to.TrnDate, "StkTrn", "", 0, 0, "",
-                            float.Parse(qty.ToString("N3")), to.Pcs,
+                            CaratFormatHelper.TruncateFloat((float)qty, caratFormat), to.Pcs,
                             Convert.ToDouble(to.Rate.ToString("N2")), 0, 0, 0, 0,
                             amt, "", 0, 0, 0, "0", 0,
                             true, false, 0, maxFItemCode, maxTItemCode,
@@ -176,7 +178,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Reports.Utility
                     {
                         sql.InsertSalePurTran(
                             to.TrnDate, "StkTrn", "", 0, 0, "",
-                            float.Parse(qty.ToString("N3")) * -1, to.Pcs,
+                            CaratFormatHelper.TruncateFloat((float)qty, caratFormat) * -1, to.Pcs,
                             Convert.ToDouble(to.Rate.ToString("N2")), 0, 0, 0, 0,
                             amt, "", 0, 0, 0, "0", 0,
                             true, false, 0, maxTItemCode, maxFItemCode,

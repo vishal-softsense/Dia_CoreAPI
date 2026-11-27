@@ -2,6 +2,7 @@ using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction;
+using Dia_CoreAPI.Utilities;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using BasicDataDto = Dia_CoreAPI.DTOs.BasicDataDto;
@@ -147,10 +148,11 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
         public async Task<SolitairePartyHoldGridViewDto> AddItemInGridAsync(
             SolitairePartyHoldAddLotRequest item, string companyId)
         {
+            string caratFormat = await CaratFormatHelper.GetSolitaireCaratFormatAsync(_sqlDataAccess, companyId);
             var list = item.Items ?? new List<SolitairePartyHoldItemDto>();
             string alert = "";
 
-            float carat = RoundCarat(item.Carat);
+            float carat = CaratFormatHelper.TruncateFloat(item.Carat, caratFormat);
             if (carat <= 0) throw new Exception("Carat is invalid.");
 
             float purRate = item.Rate;
@@ -201,12 +203,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 list.Add(row);
             }
 
-            return BuildGridView(list, alert, isEdit);
+            return BuildGridView(list, alert, isEdit, caratFormat);
         }
 
         public async Task<SolitairePartyHoldGridViewDto> GetItemFromListAsync(
             SolitairePartyHoldGetItemFromListRequest request, string companyId)
         {
+            string caratFormat = await CaratFormatHelper.GetSolitaireCaratFormatAsync(_sqlDataAccess, companyId);
             var list = new List<SolitairePartyHoldItemDto>();
             string alert = "";
 
@@ -270,12 +273,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 });
             }
 
-            return BuildGridView(list, alert, false);
+            return BuildGridView(list, alert, false, caratFormat);
         }
 
-        public Task<SolitairePartyHoldGridViewDto> RefreshBackAsync(
+        public async Task<SolitairePartyHoldGridViewDto> RefreshBackAsync(
             SolitairePartyHoldRefreshBackRequest request, string companyId)
         {
+            string caratFormat = await CaratFormatHelper.GetSolitaireCaratFormatAsync(_sqlDataAccess, companyId);
             var list = request.Items ?? new List<SolitairePartyHoldItemDto>();
 
             if (request.refreshback != 0)
@@ -287,7 +291,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 var newList = new List<SolitairePartyHoldItemDto>();
                 foreach (var itemSData in list)
                 {
-                    float carat = RoundCarat(itemSData.Weight);
+                    float carat = CaratFormatHelper.TruncateFloat(itemSData.Weight, caratFormat);
                     float rate = itemSData.Rate != 0 ? itemSData.Rate : 0;
                     float back = itemSData.Back != 0 ? itemSData.Back : 0;
                     float mrp = itemSData.MRP != 0 ? itemSData.MRP : 0;
@@ -320,7 +324,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                     });
                 }
 
-                return Task.FromResult(BuildGridView(newList, "", false));
+                return BuildGridView(newList, "", false, caratFormat);
             }
 
             if (request.refreshrate != 0)
@@ -332,7 +336,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 var newList = new List<SolitairePartyHoldItemDto>();
                 foreach (var itemSData in list)
                 {
-                    float carat = RoundCarat(itemSData.Weight);
+                    float carat = CaratFormatHelper.TruncateFloat(itemSData.Weight, caratFormat);
                     float rate = itemSData.Rate != 0 ? itemSData.Rate : 0;
                     float mrp = itemSData.MRP != 0 ? itemSData.MRP : 0;
 
@@ -364,7 +368,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                     });
                 }
 
-                return Task.FromResult(BuildGridView(newList, "", false));
+                return BuildGridView(newList, "", false, caratFormat);
             }
 
             throw new Exception("Enter AvgBack Or rate");
@@ -562,12 +566,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
         #region Grid helpers
 
         private static SolitairePartyHoldGridViewDto BuildGridView(
-            List<SolitairePartyHoldItemDto> list, string alert, bool isEdit)
+            List<SolitairePartyHoldItemDto> list, string alert, bool isEdit, string? caratFormat = null)
         {
             double totalCarats = 0, totalAmount = 0, totalMRPAmount = 0, totalAmountWithoutless = 0;
             foreach (var item in list)
             {
-                double weight = Math.Round(Convert.ToDouble(item.Weight.ToString("N3")), 3);
+                double weight = CaratFormatHelper.TruncateFloat(item.Weight, caratFormat);
                 totalCarats += weight;
                 totalAmount += item.Amount;
                 totalMRPAmount += weight * item.MRP;
@@ -576,7 +580,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
 
             return new SolitairePartyHoldGridViewDto
             {
-                TotalCarats = Math.Round(totalCarats, 3),
+                TotalCarats = CaratFormatHelper.TruncateDouble(totalCarats, caratFormat),
                 TotalAmount = Math.Round(totalAmount, 2),
                 TotalMRPAmount = Math.Round(totalMRPAmount, 3),
                 TotalAmountWithoutless = Math.Round(totalAmountWithoutless, 3),
@@ -596,11 +600,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             }
         }
 
-        private static float RoundCarat(float carat)
-        {
-            string carat3D = Convert.ToDouble(carat).ToString("N3");
-            return float.Parse(carat3D);
-        }
+        private static float RoundCarat(float carat) =>
+            CaratFormatHelper.TruncateFloat(carat, 3);
 
         private async Task<string> GetSCurOperatorAsync(int curCode, string companyId)
         {
@@ -907,6 +908,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             int usercode, string userId, string companyId,
             bool isEdit)
         {
+            string caratFormat = await CaratFormatHelper.GetSolitaireCaratFormatAsync(conn, trans);
             foreach (var im in items)
             {
                 var amtRes = GetConvertAmount(ctx.CurCode, im.Amount, ctx.MCurBaseRate, ctx.MCurOperator, ctx.SCurBaseRate, ctx.SCurOperator, ctx.MCurCode, ctx.SCurCode);
@@ -914,6 +916,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 string itemCodeStr = await ExecuteCommonDataScalarAsync(conn, trans, "ItemCode", $" AND LotNo = ''{im.LotNo}''");
                 int itemCode = int.TryParse(itemCodeStr, out var ic) ? ic : 0;
 
+                float itemWeight = CaratFormatHelper.TruncateFloat(im.Weight, caratFormat);
                 double returnCarats = 0;
                 float spCarats = 0;
 
@@ -921,16 +924,16 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 {
                     if (im.SpCarats != 0 && im.ReturnCarats != 0)
                     {
-                        returnCarats = im.ReturnCarats;
-                        spCarats = im.SpCarats;
+                        returnCarats = CaratFormatHelper.TruncateDouble(im.ReturnCarats, caratFormat);
+                        spCarats = CaratFormatHelper.TruncateFloat(im.SpCarats, caratFormat);
                     }
                     else if (im.SpCarats != 0)
                     {
-                        spCarats = im.SpCarats;
+                        spCarats = CaratFormatHelper.TruncateFloat(im.SpCarats, caratFormat);
                     }
                     else if (im.ReturnCarats != 0)
                     {
-                        returnCarats = im.ReturnCarats;
+                        returnCarats = CaratFormatHelper.TruncateDouble(im.ReturnCarats, caratFormat);
                     }
                 }
 
@@ -942,7 +945,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 cmd.Parameters.Add(new SqlParameter("@InvCode", invCode));
                 cmd.Parameters.Add(new SqlParameter("@ItemCode", itemCode));
                 cmd.Parameters.Add(new SqlParameter("@ItemName", im.ItemName ?? ""));
-                cmd.Parameters.Add(new SqlParameter("@Carats", float.Parse(im.Weight.ToString("N3"))));
+                cmd.Parameters.Add(new SqlParameter("@Carats", itemWeight));
                 cmd.Parameters.Add(new SqlParameter("@Pcs", im.Pcs));
                 cmd.Parameters.Add(new SqlParameter("@Rate", Convert.ToDouble(im.Rate.ToString("N2"))));
                 cmd.Parameters.Add(new SqlParameter("@MRP", im.MRP));

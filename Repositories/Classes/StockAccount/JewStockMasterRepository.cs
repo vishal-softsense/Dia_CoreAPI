@@ -2,6 +2,7 @@ using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs.Masters;
 using Dia_CoreAPI.DTOs.StockAccount;
 using Dia_CoreAPI.Repositories.Interfaces.StockAccount;
+using Dia_CoreAPI.Utilities;
 using Microsoft.AspNetCore.Connections;
 using System.Data;
 
@@ -363,11 +364,12 @@ namespace Dia_CoreAPI.Repositories.Classes.StockAccount
             // Save diamond details
             if (diamond != null)
             {
+                string caratFormat = await CaratFormatHelper.GetCaratFormatAsync(_sqlDataAccess, companyId);
                 foreach (var dm in diamond)
                 {
                     string itemCode = await GetMaxItemCodeAsync($" AND LotNo = '{dm.StockID}'", companyId);
                     int maxItemCode = int.TryParse(itemCode, out int code) ? code : 0;
-                    await SaveStockDiamondDetailsDataAsync(model.DesignID ?? "", maxJewCode, maxItemCode, dm.StockID ?? "", dm.Type ?? "", dm.Shape ?? "", dm.Size ?? "", dm.Sieve ?? "", dm.Color ?? "", dm.Clarity ?? "", dm.Pcs, Math.Round(dm.Carat, 2), dm.Price, Math.Round(dm.Amount, 2), dm.Lab ?? "", "InsertStockDiamond", companyId);
+                    await SaveStockDiamondDetailsDataAsync(model.DesignID ?? "", maxJewCode, maxItemCode, dm.StockID ?? "", dm.Type ?? "", dm.Shape ?? "", dm.Size ?? "", dm.Sieve ?? "", dm.Color ?? "", dm.Clarity ?? "", dm.Pcs, CaratFormatHelper.TruncateDouble(dm.Carat, caratFormat), dm.Price, Math.Round(dm.Amount, 2), dm.Lab ?? "", "InsertStockDiamond", companyId);
                 }
             }
 

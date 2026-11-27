@@ -7,6 +7,7 @@ using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.Models;
 using Dia_CoreAPI.Models.Masters;
 using Dia_CoreAPI.Repositories.Interfaces.Masters;
+using Dia_CoreAPI.Utilities;
 
 namespace Dia_CoreAPI.Repositories.Classes.Masters
 {
@@ -21,6 +22,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Masters
 
         public async Task<IEnumerable<CompanySettingMaster>> GetSettingListAsync(string filter, string companyId)
         {
+            if (!string.IsNullOrEmpty(filter) &&
+                filter.IndexOf("DEFAULT STOCK SETTING", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                await CaratFormatHelper.EnsureSeparateCaratSettingsAsync(_sqlDataAccess, companyId);
+            }
+
             string cleanFilter = (filter ?? "").Replace("''", "'");
 
             var parameters = new Dictionary<string, object>
