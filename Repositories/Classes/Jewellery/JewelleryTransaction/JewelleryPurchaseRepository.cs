@@ -2,6 +2,7 @@ using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Jewellery.JewelleryTransaction;
 using Dia_CoreAPI.Repositories.Interfaces.Jewellery.JewelleryTransaction;
+using Dia_CoreAPI.Utilities;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using BasicDataDto = Dia_CoreAPI.DTOs.BasicDataDto;
@@ -1153,6 +1154,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryTransaction
             string userId,
             string companyId)
         {
+            string caratFormat = await CaratFormatHelper.GetCaratFormatAsync(conn, trans);
             foreach (var im in items)
             {
                 float PurAmount = im.Amount;
@@ -1182,7 +1184,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryTransaction
                     cmd.Parameters.Add(new SqlParameter("@Rate", Convert.ToDouble(im.Rate.ToString("N2"))));
                     cmd.Parameters.Add(new SqlParameter("@MRP", 0f));
                     cmd.Parameters.Add(new SqlParameter("@PMRPDown", 0d));
-                    cmd.Parameters.Add(new SqlParameter("@ReturnCarats", Convert.ToDouble(im.ReturnCarats.ToString("N3"))));
+                    float returnCarats = CaratFormatHelper.TruncateFloat(im.ReturnCarats, caratFormat);
+                    cmd.Parameters.Add(new SqlParameter("@ReturnCarats", (double)returnCarats));
                     cmd.Parameters.Add(new SqlParameter("@IssueCarats", 0d));
                     cmd.Parameters.Add(new SqlParameter("@amount", Convert.ToDouble(im.Amount.ToString("N2"))));
                     cmd.Parameters.Add(new SqlParameter("@ExportNo", ""));
@@ -1229,8 +1232,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Jewellery.JewelleryTransaction
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.Add(new SqlParameter("@code", im.MemoTransCode));
                     cmd.Parameters.Add(new SqlParameter("@RtnDate", salePur.TrnDate));
-                    cmd.Parameters.Add(new SqlParameter("@rtncts", float.Parse(im.ReturnCarats.ToString("N3"))));
-                    cmd.Parameters.Add(new SqlParameter("@spcts", float.Parse(im.Pcs.ToString("N3"))));
+                    cmd.Parameters.Add(new SqlParameter("@rtncts", CaratFormatHelper.TruncateFloat(im.ReturnCarats, caratFormat)));
+                    cmd.Parameters.Add(new SqlParameter("@spcts", (float)im.Pcs));
                     cmd.Parameters.Add(new SqlParameter("@Actiontype", memoAction));
                     await cmd.ExecuteNonQueryAsync();
                 }

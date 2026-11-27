@@ -2,6 +2,7 @@ using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
+using Dia_CoreAPI.Utilities;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
@@ -165,13 +166,14 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
         public async Task<MixMemoOutGridViewDto> AddItemInGridAsync(
             MixMemoOutAddLotRequest item, string companyId)
         {
+            string caratFormat = await CaratFormatHelper.GetParcelCaratFormatAsync(_sqlDataAccess, companyId);
             var list = item.Items ?? new List<MixMemoOutItemDto>();
             string alert = "";
             string stockType = string.IsNullOrWhiteSpace(item.StockType) ? "Diamond" : item.StockType;
             bool isJewellery = string.Equals(stockType, "Jewellery", StringComparison.OrdinalIgnoreCase);
             bool isShipping = string.Equals(stockType, "Shipping", StringComparison.OrdinalIgnoreCase);
 
-            float carat = RoundCarat(item.Carat);
+            float carat = CaratFormatHelper.TruncateFloat(item.Carat, caratFormat);
 
             if (!isShipping && carat <= 0)
                 throw new Exception("Carat is invalid.");
@@ -232,12 +234,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 list.Add(row);
             }
 
-            return BuildGridView(list, alert, isEdit);
+            return BuildGridView(list, alert, isEdit, caratFormat);
         }
 
         public async Task<MixMemoOutGridViewDto> GetItemFromListAsync(
             MixMemoOutGetItemFromListRequest request, string companyId)
         {
+            string caratFormat = await CaratFormatHelper.GetParcelCaratFormatAsync(_sqlDataAccess, companyId);
             var list = new List<MixMemoOutItemDto>();
             string alert = "";
 
@@ -308,12 +311,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 });
             }
 
-            return BuildGridView(list, alert, false);
+            return BuildGridView(list, alert, false, caratFormat);
         }
 
-        public Task<MixMemoOutGridViewDto> RefreshBackAsync(
+        public async Task<MixMemoOutGridViewDto> RefreshBackAsync(
             MixMemoOutRefreshBackRequest request, string companyId)
         {
+            string caratFormat = await CaratFormatHelper.GetParcelCaratFormatAsync(_sqlDataAccess, companyId);
             var list = request.Items ?? new List<MixMemoOutItemDto>();
 
             if (request.refreshback != 0)
@@ -325,7 +329,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 var newList = new List<MixMemoOutItemDto>();
                 foreach (var itemSData in list)
                 {
-                    float carat = RoundCarat(itemSData.Weight);
+                    float carat = CaratFormatHelper.TruncateFloat(itemSData.Weight, caratFormat);
                     float back = itemSData.Back != 0 ? itemSData.Back : 0;
                     float mrp = itemSData.MRP != 0 ? itemSData.MRP : 0;
 
@@ -341,7 +345,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     newList.Add(CloneItem(itemSData, l3, newBack, newRate));
                 }
 
-                return Task.FromResult(BuildGridView(newList, "", false));
+                return BuildGridView(newList, "", false, caratFormat);
             }
 
             if (request.refreshrate != 0)
@@ -353,7 +357,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 var newList = new List<MixMemoOutItemDto>();
                 foreach (var itemSData in list)
                 {
-                    float carat = RoundCarat(itemSData.Weight);
+                    float carat = CaratFormatHelper.TruncateFloat(itemSData.Weight, caratFormat);
                     float rate = itemSData.Rate != 0 ? itemSData.Rate : 0;
                     float mrp = itemSData.MRP != 0 ? itemSData.MRP : 0;
 
@@ -369,7 +373,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     newList.Add(CloneItem(itemSData, l3, newBack, newRate));
                 }
 
-                return Task.FromResult(BuildGridView(newList, "", false));
+                return BuildGridView(newList, "", false, caratFormat);
             }
 
             throw new Exception("Enter AvgBack Or rate");
@@ -787,12 +791,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             };
 
         private static MixMemoOutGridViewDto BuildGridView(
-            List<MixMemoOutItemDto> list, string alert, bool isEdit)
+            List<MixMemoOutItemDto> list, string alert, bool isEdit, string? caratFormat = null)
         {
             double totalCarats = 0, totalAmount = 0, totalMRPAmount = 0, totalAmountWithoutless = 0;
             foreach (var item in list)
             {
-                double weight = Math.Round(Convert.ToDouble(item.Weight.ToString("N3")), 3);
+                double weight = CaratFormatHelper.TruncateFloat(item.Weight, caratFormat);
                 totalCarats += weight;
                 totalAmount += item.Amount;
                 totalMRPAmount += weight * item.MRP;
@@ -801,7 +805,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             return new MixMemoOutGridViewDto
             {
-                TotalCarats = Math.Round(totalCarats, 3),
+                TotalCarats = CaratFormatHelper.TruncateDouble(totalCarats, caratFormat),
                 TotalAmount = Math.Round(totalAmount, 2),
                 TotalMRPAmount = Math.Round(totalMRPAmount, 3),
                 TotalAmountWithoutless = Math.Round(totalAmountWithoutless, 3),
@@ -821,11 +825,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             }
         }
 
-        private static float RoundCarat(float carat)
-        {
-            string carat3D = Convert.ToDouble(carat).ToString("N3");
-            return float.Parse(carat3D);
-        }
+        private static float RoundCarat(float carat) =>
+            CaratFormatHelper.TruncateFloat(carat, 3);
 
         private async Task<string> GetSCurOperatorAsync(int curCode, string companyId)
         {
@@ -1166,6 +1167,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             int usercode, string userId, string companyId,
             bool isEdit)
         {
+            string caratFormat = await CaratFormatHelper.GetParcelCaratFormatAsync(conn, trans);
             foreach (var im in items)
             {
                 var amtRes = GetConvertAmount(ctx.CurCode, im.Amount, ctx.MCurBaseRate, ctx.MCurOperator, ctx.SCurBaseRate, ctx.SCurOperator, ctx.MCurCode, ctx.SCurCode);
@@ -1188,6 +1190,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
                 string itemName = !string.IsNullOrWhiteSpace(im.ItemName) ? im.ItemName! : (im.LotNo ?? "");
 
+                float itemWeight = CaratFormatHelper.TruncateFloat(im.Weight, caratFormat);
                 double returnCarats = 0;
                 float spCarats = 0;
 
@@ -1195,16 +1198,16 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 {
                     if (im.SpCarats != 0 && im.ReturnCarats != 0)
                     {
-                        returnCarats = im.ReturnCarats;
-                        spCarats = im.SpCarats;
+                        returnCarats = CaratFormatHelper.TruncateDouble(im.ReturnCarats, caratFormat);
+                        spCarats = CaratFormatHelper.TruncateFloat(im.SpCarats, caratFormat);
                     }
                     else if (im.SpCarats != 0)
                     {
-                        spCarats = im.SpCarats;
+                        spCarats = CaratFormatHelper.TruncateFloat(im.SpCarats, caratFormat);
                     }
                     else if (im.ReturnCarats != 0)
                     {
-                        returnCarats = im.ReturnCarats;
+                        returnCarats = CaratFormatHelper.TruncateDouble(im.ReturnCarats, caratFormat);
                     }
                 }
 
@@ -1216,7 +1219,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 cmd.Parameters.Add(new SqlParameter("@InvCode", invCode));
                 cmd.Parameters.Add(new SqlParameter("@ItemCode", itemCode));
                 cmd.Parameters.Add(new SqlParameter("@ItemName", itemName));
-                cmd.Parameters.Add(new SqlParameter("@Carats", float.Parse(im.Weight.ToString("N3"))));
+                cmd.Parameters.Add(new SqlParameter("@Carats", itemWeight));
                 cmd.Parameters.Add(new SqlParameter("@Pcs", im.Pcs));
                 cmd.Parameters.Add(new SqlParameter("@Rate", Convert.ToDouble(im.Rate.ToString("N2"))));
                 cmd.Parameters.Add(new SqlParameter("@MRP", im.MRP));
