@@ -417,6 +417,7 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public double Rate { get; set; }
         public double PricePerCarat { get; set; }
         public double MasterCurrencyAmount { get; set; }
+        public double StockCurrencyAmount { get; set; }
         public double Amount { get; set; }
         public string? StockType { get; set; }
         public byte[]? ImageFullPath { get; set; }
@@ -427,9 +428,16 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
     {
         public string? TrnDate { get; set; }
         public string? RoundDate { get; set; }
+        public string? DueDate { get; set; }
         public string? BillNo { get; set; }
         public string? InvNo { get; set; }
         public short DueDays { get; set; }
+        public string? Currency { get; set; }
+        public string? CurrencySymbol { get; set; }
+        public string? StockSymbol { get; set; }
+        public string? MasterSymbol { get; set; }
+        public string? Symbol { get; set; }
+        public double BaseRate { get; set; }
         public string? PartyName { get; set; }
         public string? AddressLine1 { get; set; }
         public string? AddressLine2 { get; set; }
@@ -438,6 +446,9 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? SalesPersons { get; set; }
         public string? ShipVia { get; set; }
         public string? Tracking { get; set; }
+        public double SubTotal { get; set; }
+        public double Charges { get; set; }
+        public double Discount { get; set; }
         public double FinalAmount { get; set; }
         public string? bnm { get; set; }
         public string? BankAccNo { get; set; }

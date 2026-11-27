@@ -1219,6 +1219,24 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             var trnDate = GetPrintDateTime(header, "TrnDate");
             var roundDate = GetPrintDateTime(header, "RoundDate");
+            var dueDate = GetPrintDateTime(header, "DueDate");
+
+            var (stockSymbol, masterSymbol, sCurId) = await ResolvePrintSymbolsAsync(companyId);
+            var (currency, useStockAmount, currencySymbol) = ResolvePrintCurrency(header, stockSymbol, masterSymbol, sCurId);
+
+            double baseRate = GetPrintDouble(header, "BaseRate", "MasterCurrencyRate");
+            if (baseRate <= 0) baseRate = 1;
+
+            double finalAmount = useStockAmount
+                ? GetPrintDouble(header, "StockCurrencyFinalAmount", "FinalPayRecAmount", "NetAmount", "TotAmount")
+                : GetPrintDouble(header, "MasterCurrencyFinalAmount", "FinalMamount", "FinalAmount", "NetMAmount");
+
+            double subTotal = useStockAmount
+                ? GetPrintDouble(header, "TotAmount", "NetAmount")
+                : GetPrintDouble(header, "NetMAmount", "TotAmount");
+
+            double charges = GetPrintDouble(header, "Charges", "FreightCharges", "LabCharges", "OtherCharges");
+            double discount = GetPrintDouble(header, "Discount", "InvDisc", "InvDiscAmt", "NetDiscAmt");
 
             var result = new MixSalePrintViewDto
             {
@@ -1226,6 +1244,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 BillNo = GetPrintString(header, "BillNo"),
                 TrnDate = trnDate?.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture),
                 RoundDate = roundDate?.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture),
+                DueDate = dueDate?.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture),
+                DueDays = short.TryParse(GetPrintString(header, "DueDays"), out var dd) ? dd : (short)0,
                 PartyName = GetPrintString(header, "PartyName"),
                 AddressLine1 = GetPrintString(header, "AddressLine1"),
                 AddressLine2 = GetPrintString(header, "AddressLine2"),
@@ -1234,7 +1254,16 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 SalesPersons = GetPrintString(header, "SalesPersons", "SalesPerson"),
                 ShipVia = GetPrintString(header, "ShipVia"),
                 Tracking = GetPrintString(header, "Tracking"),
-                FinalAmount = GetPrintDouble(header, "FinalAmount"),
+                Currency = currency,
+                CurrencySymbol = currencySymbol,
+                StockSymbol = stockSymbol,
+                MasterSymbol = masterSymbol,
+                Symbol = GetPrintString(header, "Symbol"),
+                BaseRate = baseRate,
+                SubTotal = subTotal,
+                Charges = charges,
+                Discount = discount,
+                FinalAmount = finalAmount > 0 ? finalAmount : subTotal,
                 bnm = GetPrintString(header, "bnm"),
                 BankAccNo = GetPrintString(header, "BankAccNo"),
                 ABARoutingNumber = GetPrintString(header, "ABARoutingNumber"),
@@ -1261,7 +1290,11 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 var pcs = GetPrintInt(rowDict, "Pcs");
                 var carats = GetPrintDouble(rowDict, "Carats");
                 var rate = GetPrintDouble(rowDict, "Rate");
-                var amount = GetPrintDouble(rowDict, "MasterCurrencyAmount", "Amount");
+                
+                // MVC MixPurPrintInv / MixPurchaseController: stock → Amount; master → MasterCurrencyAmount
+                var stockAmt = GetPrintDouble(rowDict, "Amount", "StockCurrencyAmount");
+                var masterAmt = GetPrintDouble(rowDict, "MasterCurrencyAmount");
+                var amount = useStockAmount ? stockAmt : (masterAmt > 0 ? masterAmt : stockAmt);
 
                 // First/main image only (pipe-separated ImagePath → primary). Embed for print.
                 byte[]? imgBytes = imageResult.Item1;
@@ -1288,7 +1321,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     TotalDiamondCarat = GetPrintNullableDouble(rowDict, "TotalDiamondCarat"),
                     Rate = rate,
                     PricePerCarat = rate,
-                    MasterCurrencyAmount = amount,
+                    MasterCurrencyAmount = masterAmt,
+                    StockCurrencyAmount = stockAmt,
                     Amount = amount,
                     StockType = GetPrintString(rowDict, "StockType", "SubType", "Category"),
                     ImageFullPath = imgBytes,
@@ -1296,7 +1330,67 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 });
             }
 
+            if (result.FinalAmount <= 0 && result.Items.Count > 0)
+            {
+                result.FinalAmount = result.Items.Sum(x => x.Amount);
+            }
+            if (result.SubTotal <= 0 && result.Items.Count > 0)
+            {
+                result.SubTotal = result.Items.Sum(x => x.Amount);
+            }
+
             return result;
+        }
+
+        private async Task<(string stockSymbol, string masterSymbol, float sCurId)> ResolvePrintSymbolsAsync(string companyId)
+        {
+            var stockSymbol = await _sqlDataAccess.ExecuteQuerySingle<string>(
+                "SELECT Value FROM TabSettingMaster WHERE Name = 'SSymbol'",
+                new { },
+                companyId) ?? "USD";
+            var masterSymbol = await _sqlDataAccess.ExecuteQuerySingle<string>(
+                "SELECT Value FROM TabSettingMaster WHERE Name = 'MSymbol'",
+                new { },
+                companyId) ?? "INR";
+
+            // MVC SqlDataAccess.GetSCurID → EXEC GetCurrencyDetail @Type='SCurID'
+            var sCurParam = new Dictionary<string, object> { { "@Type", "SCurID" }, { "@Where", "" } };
+            var sCurIdText = await _sqlDataAccess.SelectDataFromSPSingle<string>("GetCurrencyDetail", sCurParam, companyId);
+            float.TryParse(sCurIdText, out var sCurId);
+            return (stockSymbol, masterSymbol, sCurId);
+        }
+
+        private static (string currency, bool useStockAmount, string currencySymbol) ResolvePrintCurrency(
+            IDictionary<string, object> header,
+            string stockSymbol,
+            string masterSymbol,
+            float sCurId)
+        {
+            string? entrySymbol = GetPrintString(header, "Symbol");
+            var curCodeText = GetPrintString(header, "CurCode");
+            float curCode = 0f;
+            if (!string.IsNullOrWhiteSpace(curCodeText))
+            {
+                float.TryParse(curCodeText, NumberStyles.Any, CultureInfo.InvariantCulture, out curCode);
+            }
+
+            if (string.IsNullOrWhiteSpace(entrySymbol) && curCode > 0)
+            {
+                // In Diasense/MVC: if curCode == sCurId (e.g. 7) → stockSymbol (USD); else → masterSymbol (INR)
+                entrySymbol = Math.Abs(curCode - sCurId) < 0.0001f ? stockSymbol : masterSymbol;
+            }
+
+            bool isStock =
+                string.Equals(entrySymbol, stockSymbol, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entrySymbol, "USD", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entrySymbol, "$", StringComparison.OrdinalIgnoreCase)
+                || (curCode > 0 && Math.Abs(curCode - sCurId) < 0.0001f);
+
+            string currency = isStock ? stockSymbol : (entrySymbol ?? masterSymbol);
+            bool useStockAmount = isStock;
+            string currencySymbol = isStock ? (stockSymbol == "USD" ? "$" : stockSymbol) : (masterSymbol == "INR" ? "₹" : masterSymbol);
+
+            return (currency, useStockAmount, currencySymbol);
         }
 
         private static string? ResolvePrintLotNo(IDictionary<string, object>? row)
