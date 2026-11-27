@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -46,7 +46,7 @@ namespace Dia_CoreAPI.Controllers.Reports.Utility
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { success = false, message = "Error loading Stock Telly.", error = ex.Message });
+                return StatusCode(500, new { success = false, message = "Error loading Stock Tally.", error = ex.Message });
             }
         }
 

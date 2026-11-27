@@ -50,5 +50,8 @@ namespace Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction
 
         public Task<List<object>> GetLotsAsync(string? searchBy, string companyId)
             => _repository.GetLotsAsync(searchBy, companyId);
+
+        public Task<MixPurchaseReturnCPurLookupResultDto> GetCPurForCPurRtnAsync(string? partyCode, string? memoNo, string companyId)
+            => _repository.GetCPurForCPurRtnAsync(partyCode, memoNo, companyId);
     }
 }

@@ -266,4 +266,38 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public double PricePerCarat { get; set; }
         public double Amount { get; set; }
     }
+
+    /// <summary>MVC purchase-to-purchase-return lookup (parallel of Sp_SelectCSaleForCSaleRtn).</summary>
+    public class MixPurchaseReturnCPurLookupRequest
+    {
+        public string? PartyCode { get; set; }
+        public string? MemoNo { get; set; }
+    }
+
+    public class MixPurchaseReturnCPurLookupResultDto
+    {
+        public long PartyCode { get; set; }
+        public string? PartyName { get; set; }
+        public List<MixPurchaseReturnCPurLineDto> Lines { get; set; } = new();
+    }
+
+    public class MixPurchaseReturnCPurLineDto
+    {
+        public string? Date { get; set; }
+        public string? MemoNo { get; set; }
+        public string? Lotno { get; set; }
+        public double carats { get; set; }
+        public double RtnCts { get; set; }
+        public double BalanceCts { get; set; }
+        public double rate { get; set; }
+        public string? Symbol { get; set; }
+        public string? itemname { get; set; }
+        public double MemoTransCode { get; set; }
+        public float CurCode { get; set; }
+        public string? StockType { get; set; }
+        public long PartyCode { get; set; }
+        /// <summary>AccGrpName from the purchase invoice. SP also aliases this as Party.</summary>
+        public string? PartyName { get; set; }
+        public string? Party { get; set; }
+    }
 }

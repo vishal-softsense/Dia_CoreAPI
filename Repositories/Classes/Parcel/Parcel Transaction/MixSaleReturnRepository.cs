@@ -543,7 +543,37 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             string party = (partyCode ?? "").Replace("'", "''");
             string invNo = (memoNo ?? "").Replace("'", "''");
             string sql = $" EXEC [Sp_SelectCSaleForCSaleRtn] @Party = '{party}',@invno = '{invNo}' ";
-            return (await _sqlDataAccess.SelectRawSql<MixSaleReturnCSaleLineDto>(sql, companyId)).ToList();
+            var lines = (await _sqlDataAccess.SelectRawSql<MixSaleReturnCSaleLineDto>(sql, companyId)).ToList();
+
+            if (!string.IsNullOrWhiteSpace(invNo))
+            {
+                var header = await FindSaleHeaderByInvNoAsync(invNo, companyId);
+                if (header != null && header.PartyCode != 0)
+                {
+                    foreach (var line in lines)
+                    {
+                        line.PartyCode = header.PartyCode;
+                        if (string.IsNullOrWhiteSpace(line.PartyName))
+                            line.PartyName = header.PartyName ?? line.Party;
+                    }
+                }
+            }
+
+            return lines;
+        }
+
+        private async Task<MixSaleReturnHeaderDto?> FindSaleHeaderByInvNoAsync(string invNo, string companyId)
+        {
+            foreach (var trnType in new[] { "CSale", "CSALE" })
+            {
+                var header = await _sqlDataAccess.SelectDataFromSPSingle<MixSaleReturnHeaderDto>(
+                    "GetSalepurRecord",
+                    new Dictionary<string, object> { { "@Where", $" tsp.TrnType = '{trnType}' AND tsp.InvNo = '{invNo}'" } },
+                    companyId);
+                if (header != null && header.PartyCode != 0)
+                    return header;
+            }
+            return null;
         }
 
         public async Task<MixSaleReturnGridViewDto> FillFromCSaleAsync(
