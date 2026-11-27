@@ -509,6 +509,51 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             }).ToList();
         }
 
+        public async Task<MixPurchaseReturnCPurLookupResultDto> GetCPurForCPurRtnAsync(string? partyCode, string? memoNo, string companyId)
+        {
+            // MVC twin of Sp_SelectCSaleForCSaleRtn
+            string party = (partyCode ?? "").Replace("'", "''");
+            string invNo = (memoNo ?? "").Replace("'", "''");
+            string sql = $" EXEC [Sp_SelectCPurForCPurRtn] @Party = '{party}',@invno = '{invNo}' ";
+            var lines = (await _sqlDataAccess.SelectRawSql<MixPurchaseReturnCPurLineDto>(sql, companyId)).ToList();
+
+            var result = new MixPurchaseReturnCPurLookupResultDto { Lines = lines };
+            var lineParty = lines.FirstOrDefault(x => x.PartyCode != 0);
+            if (lineParty != null)
+            {
+                result.PartyCode = lineParty.PartyCode;
+                result.PartyName = !string.IsNullOrWhiteSpace(lineParty.PartyName)
+                    ? lineParty.PartyName
+                    : lineParty.Party;
+            }
+
+            if (result.PartyCode == 0 && !string.IsNullOrWhiteSpace(invNo))
+            {
+                var header = await FindPurchaseHeaderByInvNoAsync(invNo, companyId);
+                if (header != null && header.PartyCode != 0)
+                {
+                    result.PartyCode = header.PartyCode;
+                    result.PartyName = header.PartyName;
+                }
+            }
+
+            return result;
+        }
+
+        private async Task<MixPurchaseReturnHeaderDto?> FindPurchaseHeaderByInvNoAsync(string invNo, string companyId)
+        {
+            foreach (var trnType in new[] { "CPUR", "CPur" })
+            {
+                var header = await _sqlDataAccess.SelectDataFromSPSingle<MixPurchaseReturnHeaderDto>(
+                    "GetSalepurRecord",
+                    new Dictionary<string, object> { { "@Where", $" tsp.TrnType = '{trnType}' AND tsp.InvNo = '{invNo}'" } },
+                    companyId);
+                if (header != null && header.PartyCode != 0)
+                    return header;
+            }
+            return null;
+        }
+
         #region Grid helpers
 
         private static MixPurchaseReturnGridViewDto BuildGridView(
