@@ -1,0 +1,52 @@
+query GetReport($ReportNumber: String!) {
+  getReport(report_number: $ReportNumber) {
+    report_number
+    report_date
+    report_type
+    results {
+      shape_and_cutting_style
+      measurements
+      carat_weight
+      color_grade
+      clarity_grade
+      cut_grade
+      polish
+      symmetry
+      fluorescence
+      clarity_characteristics
+      inscriptions
+      color_origin
+      color_distribution
+      country_of_origin
+      diamond_type
+      report_comments
+      lotno
+      proportions {
+        depth_pct
+        table_pct
+        crown_angle
+        crown_height
+        pavilion_angle
+        pavilion_depth
+        star_length
+        lower_half
+        girdle
+      }
+      culet {
+        culet_code
+      }
+      data {
+        shape {
+          shape_code
+        }
+        measurements {
+          min_diam
+          max_diam
+          length
+          width
+          depth
+        }
+      }
+    }
+  }
+}
