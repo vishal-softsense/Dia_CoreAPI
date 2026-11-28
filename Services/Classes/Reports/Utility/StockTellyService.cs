@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
@@ -78,21 +78,23 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
 
             var importRows = new List<StockTellyListDto>();
             var dt = readResult.Table;
+            var colMap = ResolveImportColumns(dt);
 
             for (int i = 0; i < dt.Rows.Count; i++)
             {
-                if (string.IsNullOrWhiteSpace(dt.Rows[i][0]?.ToString()))
+                string lotNo = colMap.LotNo >= 0 ? (dt.Rows[i][colMap.LotNo]?.ToString() ?? string.Empty) : string.Empty;
+                if (string.IsNullOrWhiteSpace(lotNo))
                     break;
 
-                string lotNo = dt.Rows[i][0].ToString() ?? string.Empty;
                 string itemCode = await _repository.GetLotNoAsync(" AND LotNo = '" + lotNo.Replace("'", "''") + "'", companyId) ?? "0";
                 int.TryParse(itemCode, out int parsedItemCode);
 
-                double pcs = ParseExcelNumber(dt.Rows[i], 1);
-                double carats = ParseExcelNumber(dt.Rows[i], 2);
-                double onHand = ParseExcelNumber(dt.Rows[i], 3);
-                double rate = ParseExcelNumber(dt.Rows[i], 4);
-                double amount = dt.Columns.Count > 5 ? ParseExcelNumber(dt.Rows[i], 5) : 0;
+                double pcs = ParseExcelNumber(dt.Rows[i], colMap.Pcs);
+                double carats = ParseExcelNumber(dt.Rows[i], colMap.Carats);
+                double onHand = ParseExcelNumber(dt.Rows[i], colMap.OnHand);
+                double memoOut = ParseExcelNumber(dt.Rows[i], colMap.MemoOut);
+                double rate = ParseExcelNumber(dt.Rows[i], colMap.Rate);
+                double amount = ParseExcelNumber(dt.Rows[i], colMap.Amount);
                 if (amount == 0 && onHand > 0 && rate > 0)
                     amount = Math.Round(onHand * rate, 2);
 
@@ -103,6 +105,7 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                     Pcs = (int)pcs,
                     carats = carats,
                     OnHand = onHand,
+                    MemoOut = memoOut,
                     Rate = rate,
                     Amount = amount
                 });
@@ -142,6 +145,7 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
                 Pcs = row.Pcs,
                 carats = ParseDouble(row.carats),
                 OnHand = ParseDouble(row.OnHand),
+                MemoOut = ParseDouble(row.MemoOut),
                 Rate = ParseDouble(row.Rate),
                 Amount = ParseDouble(row.Amount)
             };
@@ -219,9 +223,58 @@ namespace Dia_CoreAPI.Services.Classes.Reports.Utility
             return " Rate AS AskingRate,Back As AskingBack,Round((CONVERT(decimal(18, 2), Round((CONVERT(decimal(18, 3), OnHandCarats)), 3, 1) * ISNULL(Rate, 0))), 2, 1) AS AskingAmount ";
         }
 
+        /// <summary>Resolve Excel columns by normalized header name, with positional fallback for legacy 6-column files.</summary>
+        private static (int LotNo, int Pcs, int Carats, int OnHand, int MemoOut, int Rate, int Amount) ResolveImportColumns(DataTable table)
+        {
+            var byName = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            for (int c = 0; c < table.Columns.Count; c++)
+            {
+                var key = NormalizeHeader(table.Columns[c].ColumnName);
+                if (!string.IsNullOrEmpty(key) && !byName.ContainsKey(key))
+                    byName[key] = c;
+            }
+
+            int Find(int fallback, params string[] aliases)
+            {
+                foreach (var alias in aliases)
+                {
+                    if (byName.TryGetValue(alias, out int idx))
+                        return idx;
+                }
+                return fallback >= 0 && fallback < table.Columns.Count ? fallback : -1;
+            }
+
+            int memoOutIdx = Find(-1, "memoout");
+            bool hasMemoOut = memoOutIdx >= 0;
+
+            return (
+                LotNo: Find(0, "lotno", "lotnumber"),
+                Pcs: Find(1, "pcs"),
+                Carats: Find(2, "carats", "carat"),
+                OnHand: Find(3, "onhand", "onhandcarats"),
+                MemoOut: memoOutIdx,
+                Rate: Find(hasMemoOut ? 5 : 4, "rate", "askingprice", "askingrate"),
+                Amount: Find(hasMemoOut ? 6 : 5, "amount")
+            );
+        }
+
+        private static string NormalizeHeader(string? header)
+        {
+            if (string.IsNullOrWhiteSpace(header))
+                return string.Empty;
+
+            var sb = new StringBuilder(header.Length);
+            foreach (char ch in header)
+            {
+                if (char.IsLetterOrDigit(ch))
+                    sb.Append(char.ToLowerInvariant(ch));
+            }
+            return sb.ToString();
+        }
+
         private static double ParseExcelNumber(DataRow row, int columnIndex)
         {
-            if (row == null || columnIndex >= row.Table.Columns.Count || row[columnIndex] == null || row[columnIndex] == DBNull.Value)
+            if (row == null || columnIndex < 0 || columnIndex >= row.Table.Columns.Count || row[columnIndex] == null || row[columnIndex] == DBNull.Value)
                 return 0;
 
             var text = row[columnIndex].ToString();
