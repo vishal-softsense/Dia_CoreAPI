@@ -527,6 +527,9 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 AddressLine1 = header.AddressLine1,
                 AddressLine2 = header.AddressLine2,
                 AddressLine3 = header.AddressLine3,
+                CityCode = header.CityCode ?? header.City,
+                ZipCode = header.ZipCode ?? header.Zipcode ?? header.Zip,
+                StateCode = header.StateCode ?? header.State,
                 ShipVia = header.ShipVia,
                 Tracking = header.Tracking,
                 SalesPerson = header.SalesPersons ?? header.SalesPerson,
@@ -536,6 +539,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 FinalAmount = header.FinalAmount,
                 Items = new List<MixMemoOutPrintItemDto>()
             };
+
+            await PopulatePartyCityStateZipAsync(result, header.PartyCode, companyId);
 
             foreach (var dr in rows)
             {
@@ -633,12 +638,17 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 AddressLine1 = StatusStr(header, "AddressLine1", "addressLine1"),
                 AddressLine2 = StatusStr(header, "AddressLine2", "addressLine2"),
                 AddressLine3 = StatusStr(header, "AddressLine3", "addressLine3"),
+                CityCode = StatusStr(header, "CityCode", "City", "cityCode", "city"),
+                ZipCode = StatusStr(header, "ZipCode", "Zipcode", "Zip", "zipCode", "zipcode", "zip"),
+                StateCode = StatusStr(header, "StateCode", "State", "stateCode", "state"),
                 ShipVia = StatusStr(header, "ShipVia", "shipVia"),
                 Tracking = StatusStr(header, "Tracking", "tracking"),
                 SalesPerson = StatusStr(header, "SalesPerson", "Seller", "salesPerson", "seller"),
                 SalesPersons = StatusStr(header, "SalesPerson", "Seller", "salesPerson", "seller"),
                 Items = new List<MixMemoOutPrintItemDto>()
             };
+
+            await PopulatePartyCityStateZipAsync(result, null, companyId);
 
             foreach (var dr in rows)
             {
@@ -886,8 +896,53 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             public double SCurFinalAmt { get; set; }
         }
 
+        private async Task PopulatePartyCityStateZipAsync(MixMemoOutPrintViewDto result, long? partyCode, string companyId)
+        {
+            if (!string.IsNullOrWhiteSpace(result.CityCode) &&
+                !string.IsNullOrWhiteSpace(result.StateCode) &&
+                !string.IsNullOrWhiteSpace(result.ZipCode))
+            {
+                return;
+            }
+
+            try
+            {
+                string? where = null;
+                if (partyCode.HasValue && partyCode.Value > 0)
+                {
+                    where = $" AND TAG.AccGrpCode = {partyCode.Value} ";
+                }
+                else if (!string.IsNullOrWhiteSpace(result.PartyName))
+                {
+                    var escapedParty = result.PartyName.Trim().Replace("'", "''");
+                    where = $" AND TAG.AccGrpName = '{escapedParty}' ";
+                }
+
+                if (string.IsNullOrEmpty(where))
+                    return;
+
+                var param = new Dictionary<string, object> { { "@where", where } };
+                var accGrp = await _sqlDataAccess.SelectDataFromSPSingle<MixMemoOutPartyAddressDto>(
+                    "GetAccountDataForEdit", param, companyId);
+                if (accGrp == null)
+                    return;
+
+                if (string.IsNullOrWhiteSpace(result.CityCode))
+                    result.CityCode = !string.IsNullOrWhiteSpace(accGrp.CityCode) ? accGrp.CityCode : accGrp.City;
+                if (string.IsNullOrWhiteSpace(result.StateCode))
+                    result.StateCode = !string.IsNullOrWhiteSpace(accGrp.StateCode) ? accGrp.StateCode : accGrp.State;
+                if (string.IsNullOrWhiteSpace(result.ZipCode))
+                    result.ZipCode = !string.IsNullOrWhiteSpace(accGrp.ZipCode) ? accGrp.ZipCode : accGrp.Zipcode;
+            }
+            catch
+            {
+                // Ignore fallback errors so print view still renders
+            }
+        }
+
         private class PrintInvRow
         {
+            public long? PartyCode { get; set; }
             public string? InvNo { get; set; }
             public string? BillNo { get; set; }
             public DateTime? TrnDate { get; set; }
@@ -897,6 +952,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             public string? AddressLine1 { get; set; }
             public string? AddressLine2 { get; set; }
             public string? AddressLine3 { get; set; }
+            public string? CityCode { get; set; }
+            public string? City { get; set; }
+            public string? ZipCode { get; set; }
+            public string? Zipcode { get; set; }
+            public string? Zip { get; set; }
+            public string? StateCode { get; set; }
+            public string? State { get; set; }
             public string? ShipVia { get; set; }
             public string? Tracking { get; set; }
             public string? SalesPerson { get; set; }
