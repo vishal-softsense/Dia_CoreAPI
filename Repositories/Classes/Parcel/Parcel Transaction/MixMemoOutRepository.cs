@@ -2,6 +2,7 @@ using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
+using Dia_CoreAPI.Utilities;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
@@ -141,7 +142,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             var escapedLotNo = (request.LotNo ?? "").Replace("'", "''");
             List<MixMemoOutLotDetailDto> result;
 
-            if (request.SBaseRate == 1)
+            float sBaseRate = request.SBaseRate <= 0 ? 1 : request.SBaseRate;
+            if (sBaseRate == 1)
             {
                 // MVC GetMixMemoLotNoDataForPMemo → GetLotNoDataForAll @Type = 'MixMemo'
                 string sql = $" EXEC [GetLotNoDataForAll] @Type = 'MixMemo',@Where = ' AND LotNo = ''{escapedLotNo}'' '";
@@ -152,24 +154,26 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 string sCurOperator = await GetSCurOperatorAsync(request.CurCode, companyId);
                 string sCurOperatorToCon = GetSCurOperatorToCon(sCurOperator);
                 string where = $" AND LotNo = '{escapedLotNo}' ";
-                string sql = BuildMixMemoOtherCurSql(where, request.SBaseRate, sCurOperatorToCon);
+                string sql = BuildMixMemoOtherCurSql(where, sBaseRate, sCurOperatorToCon);
                 result = (await _sqlDataAccess.SelectRawSql<MixMemoOutLotDetailDto>(sql, companyId)).ToList();
             }
 
             NormalizeLotWeights(result);
+            SyncOnHandFromWeight(result);
             return result;
         }
 
         public async Task<MixMemoOutGridViewDto> AddItemInGridAsync(
             MixMemoOutAddLotRequest item, string companyId)
         {
+            string caratFormat = await CaratFormatHelper.GetParcelCaratFormatAsync(_sqlDataAccess, companyId);
             var list = item.Items ?? new List<MixMemoOutItemDto>();
             string alert = "";
             string stockType = string.IsNullOrWhiteSpace(item.StockType) ? "Diamond" : item.StockType;
             bool isJewellery = string.Equals(stockType, "Jewellery", StringComparison.OrdinalIgnoreCase);
             bool isShipping = string.Equals(stockType, "Shipping", StringComparison.OrdinalIgnoreCase);
 
-            float carat = RoundCarat(item.Carat);
+            float carat = CaratFormatHelper.TruncateFloat(item.Carat, caratFormat);
 
             if (!isShipping && carat <= 0)
                 throw new Exception("Carat is invalid.");
@@ -230,12 +234,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 list.Add(row);
             }
 
-            return BuildGridView(list, alert, isEdit);
+            return BuildGridView(list, alert, isEdit, caratFormat);
         }
 
         public async Task<MixMemoOutGridViewDto> GetItemFromListAsync(
             MixMemoOutGetItemFromListRequest request, string companyId)
         {
+            string caratFormat = await CaratFormatHelper.GetParcelCaratFormatAsync(_sqlDataAccess, companyId);
             var list = new List<MixMemoOutItemDto>();
             string alert = "";
 
@@ -248,7 +253,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             }
 
             List<MixMemoOutLotDetailDto> lots;
-            if (request.SBaseRate == 1)
+            float sBaseRate = request.SBaseRate <= 0 ? 1 : request.SBaseRate;
+            if (sBaseRate == 1)
             {
                 string sql = $" EXEC [GetLotNoDataForAll] @Type = 'MixMemo',@Where = '{strWhere}'";
                 lots = (await _sqlDataAccess.SelectRawSql<MixMemoOutLotDetailDto>(sql, companyId)).ToList();
@@ -257,11 +263,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             {
                 string sCurOperator = await GetSCurOperatorAsync(request.CurCode, companyId);
                 string sCurOperatorToCon = GetSCurOperatorToCon(sCurOperator);
-                string sql = BuildMixMemoOtherCurSql(strWhere, request.SBaseRate, sCurOperatorToCon);
+                string sql = BuildMixMemoOtherCurSql(strWhere, sBaseRate, sCurOperatorToCon);
                 lots = (await _sqlDataAccess.SelectRawSql<MixMemoOutLotDetailDto>(sql, companyId)).ToList();
             }
 
             NormalizeLotWeights(lots);
+            SyncOnHandFromWeight(lots);
 
             foreach (var lotRow in lots)
             {
@@ -270,7 +277,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 float l2 = request.Less2 != 0 ? l1 * (100 + request.Less2) / 100 : l1;
                 float l3 = request.Less3 != 0 ? l2 * (100 + request.Less3) / 100 : l2;
 
-                if (lotRow.Weight < 0.05)
+                if (lotRow.Weight < 0.001f)
                 {
                     alert += " Lotno On Memo or Sold: " + lotRow.LotNo;
                     continue;
@@ -304,12 +311,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 });
             }
 
-            return BuildGridView(list, alert, false);
+            return BuildGridView(list, alert, false, caratFormat);
         }
 
-        public Task<MixMemoOutGridViewDto> RefreshBackAsync(
+        public async Task<MixMemoOutGridViewDto> RefreshBackAsync(
             MixMemoOutRefreshBackRequest request, string companyId)
         {
+            string caratFormat = await CaratFormatHelper.GetParcelCaratFormatAsync(_sqlDataAccess, companyId);
             var list = request.Items ?? new List<MixMemoOutItemDto>();
 
             if (request.refreshback != 0)
@@ -321,7 +329,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 var newList = new List<MixMemoOutItemDto>();
                 foreach (var itemSData in list)
                 {
-                    float carat = RoundCarat(itemSData.Weight);
+                    float carat = CaratFormatHelper.TruncateFloat(itemSData.Weight, caratFormat);
                     float back = itemSData.Back != 0 ? itemSData.Back : 0;
                     float mrp = itemSData.MRP != 0 ? itemSData.MRP : 0;
 
@@ -337,7 +345,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     newList.Add(CloneItem(itemSData, l3, newBack, newRate));
                 }
 
-                return Task.FromResult(BuildGridView(newList, "", false));
+                return BuildGridView(newList, "", false, caratFormat);
             }
 
             if (request.refreshrate != 0)
@@ -349,7 +357,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 var newList = new List<MixMemoOutItemDto>();
                 foreach (var itemSData in list)
                 {
-                    float carat = RoundCarat(itemSData.Weight);
+                    float carat = CaratFormatHelper.TruncateFloat(itemSData.Weight, caratFormat);
                     float rate = itemSData.Rate != 0 ? itemSData.Rate : 0;
                     float mrp = itemSData.MRP != 0 ? itemSData.MRP : 0;
 
@@ -365,7 +373,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     newList.Add(CloneItem(itemSData, l3, newBack, newRate));
                 }
 
-                return Task.FromResult(BuildGridView(newList, "", false));
+                return BuildGridView(newList, "", false, caratFormat);
             }
 
             throw new Exception("Enter AvgBack Or rate");
@@ -793,12 +801,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             };
 
         private static MixMemoOutGridViewDto BuildGridView(
-            List<MixMemoOutItemDto> list, string alert, bool isEdit)
+            List<MixMemoOutItemDto> list, string alert, bool isEdit, string? caratFormat = null)
         {
             double totalCarats = 0, totalAmount = 0, totalMRPAmount = 0, totalAmountWithoutless = 0;
             foreach (var item in list)
             {
-                double weight = Math.Round(Convert.ToDouble(item.Weight.ToString("N3")), 3);
+                double weight = CaratFormatHelper.TruncateFloat(item.Weight, caratFormat);
                 totalCarats += weight;
                 totalAmount += item.Amount;
                 totalMRPAmount += weight * item.MRP;
@@ -807,7 +815,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             return new MixMemoOutGridViewDto
             {
-                TotalCarats = Math.Round(totalCarats, 3),
+                TotalCarats = CaratFormatHelper.TruncateDouble(totalCarats, caratFormat),
                 TotalAmount = Math.Round(totalAmount, 2),
                 TotalMRPAmount = Math.Round(totalMRPAmount, 3),
                 TotalAmountWithoutless = Math.Round(totalAmountWithoutless, 3),
@@ -827,11 +835,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             }
         }
 
-        private static float RoundCarat(float carat)
-        {
-            string carat3D = Convert.ToDouble(carat).ToString("N3");
-            return float.Parse(carat3D);
-        }
+        private static float RoundCarat(float carat) =>
+            CaratFormatHelper.TruncateFloat(carat, 3);
 
         private async Task<string> GetSCurOperatorAsync(int curCode, string companyId)
         {
@@ -848,10 +853,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             sCurOperator == "*" ? "/" : "*";
 
         // MVC GetLotNoDataForPSaleOtherCur
-        private static string BuildMixMemoOtherCurSql(string strWhere, float sBaseRate, string sCurOperatorToCon) =>
-            " SELECT  ItemName,LotNo,BalanceCarats3Dec ,Rate" + sCurOperatorToCon + sBaseRate +
-            " Rate,OnHandCarats3Dec Weight,0 MRP, 0 Back,format(Rate*BalanceCarats3Dec " + sCurOperatorToCon +
-            sBaseRate + " ,'0.00') as Amount,ShapeId,ColorId,ClarityId,SizeId,CertId FROM ViewItemClosingStockDateWise(GETDATE()) WHERE 1=1 " + strWhere;
+        private static string BuildMixMemoOtherCurSql(string strWhere, float sBaseRate, string sCurOperatorToCon)
+        {
+            if (sBaseRate <= 0) sBaseRate = 1;
+            return " SELECT  ItemName,LotNo,CASE WHEN ProductType = 'Shipping' THEN 'Shipping' ELSE 'Diamond' END AS StockType,Pcs,BalanceCarats3Dec ,Rate" + sCurOperatorToCon + sBaseRate +
+                " Rate,CASE WHEN ProductType = 'Shipping' THEN 0 ELSE OnHandCarats3Dec END AS Weight,0 MRP, 0 Back,format(Rate*BalanceCarats3Dec " + sCurOperatorToCon +
+                sBaseRate + " ,'0.00') as Amount,ShapeId,ColorId,ClarityId,SizeId,CertId FROM ViewItemClosingStockDateWise(GETDATE()) WHERE 1=1 " + strWhere;
+        }
 
         private static List<BasicDataDto> MapBasic(IEnumerable<StockBasic> source) =>
             source.Select(x => new BasicDataDto
@@ -1221,6 +1229,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             int usercode, string userId, string companyId,
             bool isEdit)
         {
+            string caratFormat = await CaratFormatHelper.GetParcelCaratFormatAsync(conn, trans);
             foreach (var im in items)
             {
                 var amtRes = GetConvertAmount(ctx.CurCode, im.Amount, ctx.MCurBaseRate, ctx.MCurOperator, ctx.SCurBaseRate, ctx.SCurOperator, ctx.MCurCode, ctx.SCurCode);
@@ -1243,6 +1252,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
                 string itemName = !string.IsNullOrWhiteSpace(im.ItemName) ? im.ItemName! : (im.LotNo ?? "");
 
+                float itemWeight = CaratFormatHelper.TruncateFloat(im.Weight, caratFormat);
                 double returnCarats = 0;
                 float spCarats = 0;
 
@@ -1250,16 +1260,16 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 {
                     if (im.SpCarats != 0 && im.ReturnCarats != 0)
                     {
-                        returnCarats = im.ReturnCarats;
-                        spCarats = im.SpCarats;
+                        returnCarats = CaratFormatHelper.TruncateDouble(im.ReturnCarats, caratFormat);
+                        spCarats = CaratFormatHelper.TruncateFloat(im.SpCarats, caratFormat);
                     }
                     else if (im.SpCarats != 0)
                     {
-                        spCarats = im.SpCarats;
+                        spCarats = CaratFormatHelper.TruncateFloat(im.SpCarats, caratFormat);
                     }
                     else if (im.ReturnCarats != 0)
                     {
-                        returnCarats = im.ReturnCarats;
+                        returnCarats = CaratFormatHelper.TruncateDouble(im.ReturnCarats, caratFormat);
                     }
                 }
 
@@ -1271,7 +1281,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 cmd.Parameters.Add(new SqlParameter("@InvCode", invCode));
                 cmd.Parameters.Add(new SqlParameter("@ItemCode", itemCode));
                 cmd.Parameters.Add(new SqlParameter("@ItemName", itemName));
-                cmd.Parameters.Add(new SqlParameter("@Carats", float.Parse(im.Weight.ToString("N3"))));
+                cmd.Parameters.Add(new SqlParameter("@Carats", itemWeight));
                 cmd.Parameters.Add(new SqlParameter("@Pcs", im.Pcs));
                 cmd.Parameters.Add(new SqlParameter("@Rate", Convert.ToDouble(im.Rate.ToString("N2"))));
                 cmd.Parameters.Add(new SqlParameter("@MRP", im.MRP));
@@ -1402,6 +1412,19 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             public string? Type { get; set; }
             public string? LotNo { get; set; }
             public string? ItemName { get; set; }
+        }
+
+        /// <summary>
+        /// GetLotNoDataForAll (@Type = 'MixMemo') and BuildMixMemoOtherCurSql return OnHandCarats3Dec aliased as Weight.
+        /// Keep OnHandCarats3Dec aligned with Weight without falling back to BalanceCarats3Dec.
+        /// </summary>
+        private static void SyncOnHandFromWeight(List<MixMemoOutLotDetailDto> lots)
+        {
+            if (lots == null || lots.Count == 0) return;
+            foreach (var lot in lots)
+            {
+                lot.OnHandCarats3Dec = RoundCarat(lot.Weight);
+            }
         }
 
         #endregion

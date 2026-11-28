@@ -2,6 +2,7 @@ using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction;
+using Dia_CoreAPI.Utilities;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using BasicDataDto = Dia_CoreAPI.DTOs.BasicDataDto;
@@ -131,10 +132,11 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
         public async Task<SolitairePurchaseReturnGridViewDto> AddItemInGridAsync(
             SolitairePurchaseReturnAddLotRequest item, string companyId)
         {
+            string caratFormat = await CaratFormatHelper.GetSolitaireCaratFormatAsync(_sqlDataAccess, companyId);
             var list = item.Items ?? new List<SolitairePurchaseReturnItemDto>();
             string alert = "";
 
-            float carat = RoundCarat(item.Carat, companyId);
+            float carat = CaratFormatHelper.TruncateFloat(item.Carat, caratFormat);
             if (carat <= 0) throw new Exception("Carat is invalid.");
 
             float purRate = item.Rate;
@@ -179,12 +181,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 list.Add(row);
             }
 
-            return BuildGridView(list, alert, isEdit);
+            return BuildGridView(list, alert, isEdit, caratFormat);
         }
 
         public async Task<SolitairePurchaseReturnGridViewDto> GetItemFromListAsync(
             SolitairePurchaseReturnGetItemFromListRequest request, string companyId)
         {
+            string caratFormat = await CaratFormatHelper.GetSolitaireCaratFormatAsync(_sqlDataAccess, companyId);
             var list = request.Items ?? new List<SolitairePurchaseReturnItemDto>();
             string alert = "";
 
@@ -234,7 +237,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 });
             }
 
-            return BuildGridView(list, alert, false);
+            return BuildGridView(list, alert, false, caratFormat);
         }
 
         public async Task<(bool Success, string Message)> AddAsync(
@@ -372,12 +375,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
         #region Grid helpers
 
         private static SolitairePurchaseReturnGridViewDto BuildGridView(
-            List<SolitairePurchaseReturnItemDto> list, string alert, bool isEdit)
+            List<SolitairePurchaseReturnItemDto> list, string alert, bool isEdit, string? caratFormat = null)
         {
             double totalCarats = 0, totalAmount = 0, totalMRPAmount = 0, totalAmountWithoutless = 0;
             foreach (var item in list)
             {
-                double weight = Math.Round(Convert.ToDouble(item.Weight.ToString("N3")), 3);
+                double weight = CaratFormatHelper.TruncateFloat(item.Weight, caratFormat);
                 totalCarats += weight;
                 totalAmount += item.Amount;
                 totalMRPAmount += weight * item.MRP;
@@ -386,7 +389,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
 
             return new SolitairePurchaseReturnGridViewDto
             {
-                TotalCarats = Math.Round(totalCarats, 3),
+                TotalCarats = CaratFormatHelper.TruncateDouble(totalCarats, caratFormat),
                 TotalAmount = Math.Round(totalAmount, 2),
                 TotalMRPAmount = Math.Round(totalMRPAmount, 3),
                 TotalAmountWithoutless = Math.Round(totalAmountWithoutless, 3),
@@ -396,11 +399,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             };
         }
 
-        private static float RoundCarat(float carat, string companyId)
-        {
-            string carat3D = Convert.ToDouble(carat).ToString("N3");
-            return float.Parse(carat3D);
-        }
+        private static float RoundCarat(float carat, string companyId) =>
+            CaratFormatHelper.TruncateFloat(carat, 3);
 
         private static List<BasicDataDto> MapBasic(IEnumerable<StockBasic> source) =>
             source.Select(x => new BasicDataDto
@@ -639,6 +639,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             int invCode, CurrencyContext ctx,
             int usercode, string userId, string companyId)
         {
+            string caratFormat = await CaratFormatHelper.GetSolitaireCaratFormatAsync(conn, trans);
             foreach (var im in items)
             {
                 var rateRes = GetConvertAmount(ctx.CurCode, im.Rate, ctx.MCurBaseRate, ctx.MCurOperator, ctx.SCurBaseRate, ctx.SCurOperator, ctx.MCurCode, ctx.SCurCode);
@@ -655,7 +656,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                 cmd.Parameters.Add(new SqlParameter("@InvCode", invCode));
                 cmd.Parameters.Add(new SqlParameter("@ItemCode", itemCode));
                 cmd.Parameters.Add(new SqlParameter("@ItemName", im.ItemName ?? ""));
-                cmd.Parameters.Add(new SqlParameter("@Carats", float.Parse(im.Weight.ToString("N3"))));
+                cmd.Parameters.Add(new SqlParameter("@Carats", CaratFormatHelper.TruncateFloat(im.Weight, caratFormat)));
                 cmd.Parameters.Add(new SqlParameter("@Pcs", im.Pcs));
                 cmd.Parameters.Add(new SqlParameter("@Rate", Convert.ToDouble(im.Rate.ToString("N2"))));
                 cmd.Parameters.Add(new SqlParameter("@MRP", im.MRP));
@@ -705,14 +706,32 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             SolitairePurchaseReturnHeaderDto salePur, int maxSPCode,
             CurrencyContext ctx, int usercode, string userId, string companyId)
         {
-            long purchaseCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Purchase''"));
-            long vatCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Vat''"));
-            long sgstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''SGST''"));
-            long cgstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''CGST''"));
-            long igstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''IGST''"));
-            long brokerageCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Brokerage''"));
-            long adatAccCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Adat''"));
-            long cashCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Cash''"));
+
+            long purchaseCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Purchase''"), out purchaseCode);
+            long vatCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Vat''"), out vatCode);
+            long sgstCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''SGST''"), out sgstCode);
+            long cgstCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''CGST''"), out cgstCode);
+            long igstCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''IGST''"), out igstCode);
+            long brokerageCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Brokerage''"), out brokerageCode);
+            long adatAccCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Adat''"), out adatAccCode);
+            long cashCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Cash''"), out cashCode);
+
+            //long purchaseCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Purchase''"));
+            //long vatCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Vat''"));
+            //long sgstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''SGST''"));
+            //long cgstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''CGST''"));
+            //long igstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''IGST''"));
+            //long brokerageCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Brokerage''"));
+            //long adatAccCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Adat''"));
+            //long cashCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Cash''"));
 
             float saleJvAmount = salePur.FinalMAmount;
             var jvConvert = GetConvertAmount(ctx.MCurCode, saleJvAmount, 1, ctx.MCurOperatorM, ctx.MToSCurRate, ctx.SCurOperatorM, ctx.MCurCode, ctx.SCurCode);

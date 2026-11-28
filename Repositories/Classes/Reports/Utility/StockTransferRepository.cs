@@ -6,6 +6,7 @@ using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Reports.Utility;
 using Dia_CoreAPI.Repositories.Interfaces.Reports.Utility;
+using Dia_CoreAPI.Utilities;
 using BasicDataDto = Dia_CoreAPI.DTOs.StockAccount.BasicDataDto;
 
 namespace Dia_CoreAPI.Repositories.Classes.Reports.Utility
@@ -103,10 +104,11 @@ namespace Dia_CoreAPI.Repositories.Classes.Reports.Utility
 
                 string tItemCode = sql.GetMaxItemCode(" AND LotNo = ''" + (model.Tolotno ?? "").Replace("'", "''") + "''");
                 int maxTItemCode = Convert.ToInt32(tItemCode);
+                string caratFormat = await CaratFormatHelper.GetCaratFormatAsync(_db, companyIdStr);
 
                 sql.InsertSalePurTran(
                     model.TrnDate, "StkTrn", "", 0, 0, "",
-                    float.Parse(model.Carats.ToString("N3")), 1,
+                    CaratFormatHelper.TruncateFloat((float)model.Carats, caratFormat), 1,
                     Convert.ToDouble(model.ToPrice.ToString("N2")), 0, 0, 0, 0, 0, "", 0, 0, 0, "0", 0,
                     true, false, 0, maxFItemCode, maxTItemCode,
                     model.FromPrice, model.ToPrice, 0, 0, 0, "",

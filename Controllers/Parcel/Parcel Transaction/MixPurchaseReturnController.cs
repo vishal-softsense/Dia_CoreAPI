@@ -206,6 +206,27 @@ namespace Dia_CoreAPI.Controllers.Parcel.Parcel_Transaction
             }
         }
 
+        /// <summary>MVC: purchase invoice lines available to return, plus the invoice party.</summary>
+        [HttpPost("cpur-to-cpurrtn")]
+        public async Task<IActionResult> CPurToCPurRtn([FromBody] MixPurchaseReturnCPurLookupRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request?.PartyCode) && string.IsNullOrWhiteSpace(request?.MemoNo))
+                    return Ok(new { success = false, Data = "No invoice Found" });
+
+                var data = await _service.GetCPurForCPurRtnAsync(request?.PartyCode, request?.MemoNo, CompanyId);
+                if (data?.Lines == null || data.Lines.Count == 0)
+                    return Ok(new { success = false, Data = "No invoice Found" });
+
+                return Ok(new { success = true, Data = data });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { success = false, Data = ex.Message });
+            }
+        }
+
         [HttpGet("lots")]
         public async Task<IActionResult> GetLots([FromQuery] string? searchby)
         {

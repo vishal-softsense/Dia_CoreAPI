@@ -2,6 +2,7 @@ using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
+using Dia_CoreAPI.Utilities;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using BasicDataDto = Dia_CoreAPI.DTOs.BasicDataDto;
@@ -151,11 +152,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
         public async Task<MixSaleReturnGridViewDto> AddItemInGridAsync(
             MixSaleReturnAddLotRequest item, string companyId)
         {
+            string caratFormat = await CaratFormatHelper.GetParcelCaratFormatAsync(_sqlDataAccess, companyId);
             var list = item.Items ?? new List<MixSaleReturnItemDto>();
             string alert = "";
 
             float weight = item.Weight != 0 ? item.Weight : item.Carat;
-            float selectionCarats = RoundCarat(weight);
+            float selectionCarats = CaratFormatHelper.TruncateFloat(weight, caratFormat);
             float rate = item.Rate;
             float back = item.Back;
             float mrp = item.MRP;
@@ -224,12 +226,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             else
                 list.Add(row);
 
-            return BuildGridView(list, alert, isEdit);
+            return BuildGridView(list, alert, isEdit, caratFormat);
         }
 
         public async Task<MixSaleReturnGridViewDto> GetItemFromListAsync(
             MixSaleReturnGetItemFromListRequest request, string companyId)
         {
+            string caratFormat = await CaratFormatHelper.GetParcelCaratFormatAsync(_sqlDataAccess, companyId);
             var list = request.Items ?? new List<MixSaleReturnItemDto>();
             string alert = "";
 
@@ -294,7 +297,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 });
             }
 
-            return BuildGridView(list, alert, false);
+            return BuildGridView(list, alert, false, caratFormat);
         }
 
         public async Task<(bool Success, string Message)> AddAsync(
@@ -540,14 +543,45 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             string party = (partyCode ?? "").Replace("'", "''");
             string invNo = (memoNo ?? "").Replace("'", "''");
             string sql = $" EXEC [Sp_SelectCSaleForCSaleRtn] @Party = '{party}',@invno = '{invNo}' ";
-            return (await _sqlDataAccess.SelectRawSql<MixSaleReturnCSaleLineDto>(sql, companyId)).ToList();
+            var lines = (await _sqlDataAccess.SelectRawSql<MixSaleReturnCSaleLineDto>(sql, companyId)).ToList();
+
+            if (!string.IsNullOrWhiteSpace(invNo))
+            {
+                var header = await FindSaleHeaderByInvNoAsync(invNo, companyId);
+                if (header != null && header.PartyCode != 0)
+                {
+                    foreach (var line in lines)
+                    {
+                        line.PartyCode = header.PartyCode;
+                        if (string.IsNullOrWhiteSpace(line.PartyName))
+                            line.PartyName = header.PartyName ?? line.Party;
+                    }
+                }
+            }
+
+            return lines;
         }
 
-        public Task<MixSaleReturnGridViewDto> FillFromCSaleAsync(
+        private async Task<MixSaleReturnHeaderDto?> FindSaleHeaderByInvNoAsync(string invNo, string companyId)
+        {
+            foreach (var trnType in new[] { "CSale", "CSALE" })
+            {
+                var header = await _sqlDataAccess.SelectDataFromSPSingle<MixSaleReturnHeaderDto>(
+                    "GetSalepurRecord",
+                    new Dictionary<string, object> { { "@Where", $" tsp.TrnType = '{trnType}' AND tsp.InvNo = '{invNo}'" } },
+                    companyId);
+                if (header != null && header.PartyCode != 0)
+                    return header;
+            }
+            return null;
+        }
+
+        public async Task<MixSaleReturnGridViewDto> FillFromCSaleAsync(
             List<MixSaleReturnCSaleFillLineRequest> lines,
             List<MixSaleReturnItemDto> existingItems,
             string companyId)
         {
+            string caratFormat = await CaratFormatHelper.GetParcelCaratFormatAsync(_sqlDataAccess, companyId);
             // MVC: CSaleToCSaleRtnFill — merge checked CSale lines into return item grid
             var list = existingItems?.ToList() ?? new List<MixSaleReturnItemDto>();
             string alert = "";
@@ -557,11 +591,11 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 if (!im.Chk) continue;
 
                 if (string.IsNullOrWhiteSpace(im.LotNo) || im.Weight < 0 || im.Rate == 0)
-                    return Task.FromResult(new MixSaleReturnGridViewDto
+                    return new MixSaleReturnGridViewDto
                     {
                         Alert = "invalid data pleasee Eneter valid Data.",
                         ExcelData = list
-                    });
+                    };
 
                 float rate = im.Rate;
                 float amount;
@@ -628,19 +662,18 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 });
             }
 
-            var grid = BuildGridView(list, alert, false);
-            return Task.FromResult(grid);
+            return BuildGridView(list, alert, false, caratFormat);
         }
 
         #region Grid helpers
 
         private static MixSaleReturnGridViewDto BuildGridView(
-            List<MixSaleReturnItemDto> list, string alert, bool isEdit)
+            List<MixSaleReturnItemDto> list, string alert, bool isEdit, string? caratFormat = null)
         {
             double totalCarats = 0, totalAmount = 0, totalMRPAmount = 0, totalAmountWithoutless = 0;
             foreach (var item in list)
             {
-                double weight = Math.Round(Convert.ToDouble(item.Weight.ToString("N3")), 3);
+                double weight = CaratFormatHelper.TruncateFloat(item.Weight, caratFormat);
                 totalCarats += weight;
                 totalAmount += item.Amount;
                 totalMRPAmount += weight * item.MRP;
@@ -649,7 +682,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             return new MixSaleReturnGridViewDto
             {
-                TotalCarats = Math.Round(totalCarats, 3),
+                TotalCarats = CaratFormatHelper.TruncateDouble(totalCarats, caratFormat),
                 TotalAmount = Math.Round(totalAmount, 2),
                 TotalMRPAmount = Math.Round(totalMRPAmount, 3),
                 TotalAmountWithoutless = Math.Round(totalAmountWithoutless, 3),
@@ -659,11 +692,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             };
         }
 
-        private static float RoundCarat(float carat)
-        {
-            string carat3D = Convert.ToDouble(carat).ToString("N3");
-            return float.Parse(carat3D);
-        }
+        private static float RoundCarat(float carat, string? caratFormat = null) =>
+            CaratFormatHelper.TruncateFloat(carat, caratFormat);
 
         private static List<BasicDataDto> MapBasic(IEnumerable<StockBasic> source) =>
             source.Select(x => new BasicDataDto
@@ -985,6 +1015,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             bool stockEffected, int usercode, string userId, string companyId,
             bool isAdd)
         {
+            string caratFormat = await CaratFormatHelper.GetParcelCaratFormatAsync(conn, trans);
             foreach (var im in items)
             {
                 var amtRes = GetConvertAmount(ctx.CurCode, im.Amount, ctx.MCurBaseRate, ctx.MCurOperator, ctx.SCurBaseRate, ctx.SCurOperator, ctx.MCurCode, ctx.SCurCode);
@@ -1022,13 +1053,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     cmd.Parameters.Add(new SqlParameter("@InvCode", invCode));
                     cmd.Parameters.Add(new SqlParameter("@ItemCode", maxItemCode));
                     cmd.Parameters.Add(new SqlParameter("@ItemName", itemName));
-                    cmd.Parameters.Add(new SqlParameter("@Carats", float.Parse(im.Weight.ToString("N3"))));
+                    cmd.Parameters.Add(new SqlParameter("@Carats", CaratFormatHelper.TruncateFloat(im.Weight, caratFormat)));
                     cmd.Parameters.Add(new SqlParameter("@Pcs", im.Pcs));
                     cmd.Parameters.Add(new SqlParameter("@Rate", Convert.ToDouble(im.Rate.ToString("N2"))));
                     cmd.Parameters.Add(new SqlParameter("@MRP", im.MRP));
                     cmd.Parameters.Add(new SqlParameter("@PMRPDown", Convert.ToDouble(im.Back.ToString("N2"))));
-                    cmd.Parameters.Add(new SqlParameter("@ReturnCarats", Convert.ToDouble(im.ReturnCarats.ToString("N2"))));
-                    cmd.Parameters.Add(new SqlParameter("@IssueCarats", Convert.ToDouble(issueCarats.ToString("N2"))));
+                    cmd.Parameters.Add(new SqlParameter("@ReturnCarats", CaratFormatHelper.TruncateDouble(im.ReturnCarats, caratFormat)));
+                    cmd.Parameters.Add(new SqlParameter("@IssueCarats", CaratFormatHelper.TruncateDouble(issueCarats, caratFormat)));
                     cmd.Parameters.Add(new SqlParameter("@amount", Convert.ToDouble(im.Amount.ToString("N2"))));
                     cmd.Parameters.Add(new SqlParameter("@ExportNo", im.ExportNo ?? ""));
                     cmd.Parameters.Add(new SqlParameter("@Less1", im.Less1));
@@ -1078,8 +1109,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.Add(new SqlParameter("@code", memoTransCode));
                     cmd.Parameters.Add(new SqlParameter("@RtnDate", salePur.TrnDate));
-                    cmd.Parameters.Add(new SqlParameter("@rtncts", float.Parse(im.Weight.ToString("N3"))));
-                    cmd.Parameters.Add(new SqlParameter("@spcts", float.Parse(im.ReturnCarats.ToString("N3"))));
+                    cmd.Parameters.Add(new SqlParameter("@rtncts", CaratFormatHelper.TruncateFloat(im.Weight, caratFormat)));
+                    cmd.Parameters.Add(new SqlParameter("@spcts", CaratFormatHelper.TruncateFloat(im.ReturnCarats, caratFormat)));
                     cmd.Parameters.Add(new SqlParameter("@Actiontype", memoAction));
                     await cmd.ExecuteNonQueryAsync();
                 }
@@ -1091,14 +1122,32 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             MixSaleReturnHeaderDto salePur, int maxSPCode,
             CurrencyContext ctx, int usercode, string userId, string companyId)
         {
-            long saleCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''SALE''"));
-            long vatCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Vat''"));
-            long sgstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''SGST''"));
-            long cgstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''CGST''"));
-            long igstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''IGST''"));
-            long brokerageCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Brokerage''"));
-            long adatAccCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Adat''"));
-            long cashCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Cash''"));
+
+            long saleCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''SALE''"), out saleCode);
+            long vatCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Vat''"), out vatCode);
+            long sgstCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''SGST''"), out sgstCode);
+            long cgstCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''CGST''"), out cgstCode);
+            long igstCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''IGST''"), out igstCode);
+            long brokerageCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Brokerage''"), out brokerageCode);
+            long adatAccCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Adat''"), out adatAccCode);
+            long cashCode = 0;
+            long.TryParse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Cash''"), out cashCode);
+
+            //long saleCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''SALE''"));
+            //long vatCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Vat''"));
+            //long sgstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''SGST''"));
+            //long cgstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''CGST''"));
+            //long igstCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''IGST''"));
+            //long brokerageCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Brokerage''"));
+            //long adatAccCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Adat''"));
+            //long cashCode = long.Parse(await ExecuteCommonDataScalarAsync(conn, trans, "Party", " And AccGrpName=''Cash''"));
 
             float saleJvAmount = salePur.FinalMAmount;
             var jvConvert = GetConvertAmount(ctx.MCurCode, saleJvAmount, 1, ctx.MCurOperatorM, ctx.MToSCurRate, ctx.SCurOperatorM, ctx.MCurCode, ctx.SCurCode);

@@ -115,6 +115,8 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? Status { get; set; }
         public float SpCarats { get; set; }
         public float ReturnCarats { get; set; }
+        public float OnHandCarats3Dec { get; set; }
+        public float BalanceCarats3Dec { get; set; }
         public string? StockType { get; set; }
         public string? InvDescription { get; set; }
         public string? Stock_ID { get; set; }
@@ -155,6 +157,8 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? SieveId { get; set; }
         public float SpCarats { get; set; }
         public float ReturnCarats { get; set; }
+        public float OnHandCarats3Dec { get; set; }
+        public float BalanceCarats3Dec { get; set; }
     }
 
     public class MixMemoOutLotRequest

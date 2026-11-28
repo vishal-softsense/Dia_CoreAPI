@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
@@ -109,7 +109,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
                 CAColor = GetString(dict, "CAColor"),
                 CHColor = GetString(dict, "CHColor"),
                 PAColor = GetString(dict, "PAColor"),
-                PHColor = GetString(dict, "PHColor")
+                PHColor = GetString(dict, "PHColor"),
+                LabW = GetBestNumericString(dict, "LabW", "labW")
             };
         }
 
@@ -178,6 +179,64 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Reports
             if (int.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out var value))
                 return value;
             return 0;
+        }
+
+        public async Task<HashSet<string>> GetLotsWithLabWeightDiffEntryAsync(
+            IEnumerable<string> lotNos,
+            string companyId)
+        {
+            var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var normalizedLots = (lotNos ?? Enumerable.Empty<string>())
+                .Where(l => !string.IsNullOrWhiteSpace(l))
+                .Select(l => l.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (normalizedLots.Count == 0)
+                return result;
+
+            var connectionString = await _db.GetClientConnectionString(companyId);
+            await using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync();
+
+            const int batchSize = 500;
+            for (int offset = 0; offset < normalizedLots.Count; offset += batchSize)
+            {
+                var batch = normalizedLots.Skip(offset).Take(batchSize).ToList();
+                var paramNames = new List<string>(batch.Count);
+
+                await using var cmd = conn.CreateCommand();
+                for (int i = 0; i < batch.Count; i++)
+                {
+                    var paramName = $"@Lot{i}";
+                    paramNames.Add(paramName);
+                    cmd.Parameters.Add(paramName, SqlDbType.NVarChar, 100).Value = batch[i];
+                }
+
+                cmd.CommandText = $@"
+                    SELECT DISTINCT im.LotNo
+                    FROM TabSalePurTran t
+                    INNER JOIN TabItemMaster lab ON lab.LotNo = 'LabWeightDiff'
+                    INNER JOIN TabItemMaster im
+                        ON (t.FItemCode = im.ItemCode AND t.TItemCode = lab.ItemCode)
+                        OR (t.TItemCode = im.ItemCode AND t.FItemCode = lab.ItemCode)
+                    WHERE t.TrnType = 'StkTrn'
+                      AND ISNULL(t.DeleteFlag, 0) = 0
+                      AND im.LotNo IN ({string.Join(", ", paramNames)})";
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    if (reader[0] != DBNull.Value)
+                    {
+                        var lotNo = Convert.ToString(reader[0], CultureInfo.InvariantCulture)?.Trim();
+                        if (!string.IsNullOrWhiteSpace(lotNo))
+                            result.Add(lotNo);
+                    }
+                }
+            }
+
+            return result;
         }
 
         public async Task<MakeLabWeightDiffEntryResultDto> MakeLabWeightDiffEntryAsync(

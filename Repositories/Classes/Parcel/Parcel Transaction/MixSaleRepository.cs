@@ -118,10 +118,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 new { },
                 companyId);
 
-            var caratFormatNew = await _sqlDataAccess.ExecuteQuerySingle<string>(
-                "SELECT Value FROM TabSettingMaster WHERE Name = 'CaratFormatNew'",
-                new { },
-                companyId);
+            var caratFormatNew = await CaratFormatHelper.GetParcelCaratFormatAsync(_sqlDataAccess, companyId);
 
             return new MixSalePageDataDto
             {
@@ -407,6 +404,39 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             if (string.IsNullOrWhiteSpace(item.PClarity))
                 item.PClarity = item.ClarityId ?? item.Clarity;
+
+            // Disambiguate Rejection vs Return Carats from legacy TabSalePurTran
+            float selection = item.Weight != 0 ? item.Weight : item.Carats;
+            float issue = item.IssueCarats != 0 ? item.IssueCarats : selection;
+            float derivedRejection = issue > selection ? (float)Math.Round(issue - selection, 3) : 0f;
+            float rawReturn = item.ReturnCarats != 0 ? item.ReturnCarats : item.RtnCarats;
+
+            if (derivedRejection > 0)
+            {
+                item.RtnCarats = derivedRejection;
+                if (Math.Abs(rawReturn - derivedRejection) < 0.0005)
+                {
+                    item.ReturnCarats = 0f;
+                    item.RtnCts = 0f;
+                }
+                else if (rawReturn > derivedRejection)
+                {
+                    float realReturn = (float)Math.Round(rawReturn - derivedRejection, 3);
+                    item.ReturnCarats = realReturn;
+                    item.RtnCts = realReturn;
+                }
+                else
+                {
+                    item.ReturnCarats = 0f;
+                    item.RtnCts = 0f;
+                }
+            }
+            else
+            {
+                item.RtnCarats = 0f;
+                item.RtnCts = rawReturn;
+                item.ReturnCarats = rawReturn;
+            }
         }
 
         private static string EscapeSql(string? value) => (value ?? string.Empty).Replace("'", "''");
@@ -480,10 +510,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             MixSaleAddLotRequest item,
             string companyId)
         {
-            var caratFormat = await _sqlDataAccess.ExecuteQuerySingle<string>(
-                "SELECT Value FROM TabSettingMaster WHERE Name = 'CaratFormatNew'",
-                new { },
-                companyId) ?? "0.000";
+            var caratFormat = await CaratFormatHelper.GetParcelCaratFormatAsync(_sqlDataAccess, companyId);
 
             double totalCarats = 0;
             double totalAmount = 0;
@@ -600,7 +627,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             return new MixSaleGridViewDto
             {
-                TotalCarats = Math.Round(totalCarats, 3),
+                TotalCarats = CaratFormatHelper.TruncateDouble(totalCarats, caratFormat),
                 TotalAmount = Math.Round(totalAmount, 2),
                 TotalMRPAmount = Math.Round(totalMRPAmount, 3),
                 TotalAmountWithoutless = Math.Round(totalAmountWithoutless, 3),
@@ -609,14 +636,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             };
         }
 
-        private static float FormatSelectionCarats(float weight, string caratFormat)
-        {
-            string weight3D = Convert.ToDouble(weight).ToString("N3");
-            if (caratFormat == "0.000")
-                return float.Parse(weight3D);
-            string weight2D = weight3D.Substring(0, weight3D.Length - 1);
-            return float.Parse(weight2D);
-        }
+        private static float FormatSelectionCarats(float weight, string caratFormat) =>
+            CaratFormatHelper.TruncateFloat(weight, caratFormat);
 
         private static float ToFloat(object? value)
         {
@@ -687,10 +708,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             foreach (var lot in lots)
                 NormalizeLotDetail(lot);
 
-            var caratFormat = await _sqlDataAccess.ExecuteQuerySingle<string>(
-                "SELECT Value FROM TabSettingMaster WHERE Name = 'CaratFormatNew'",
-                new { },
-                companyId) ?? "0.000";
+            var caratFormat = await CaratFormatHelper.GetParcelCaratFormatAsync(_sqlDataAccess, companyId);
 
             var itemsToAdd = new List<MixSaleItemDto>();
             double totalCarats = 0;
@@ -801,7 +819,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             return new MixSaleGridViewDto
             {
-                TotalCarats = Math.Round(totalCarats, 3),
+                TotalCarats = CaratFormatHelper.TruncateDouble(totalCarats, caratFormat),
                 TotalAmount = Math.Round(totalAmount, 2),
                 TotalMRPAmount = Math.Round(totalMRPAmount, 3),
                 TotalAmountWithoutless = Math.Round(totalAmountWithoutless, 3),
@@ -848,6 +866,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                         float FinalMAmount = salePur.FinalMAmount;
                         string MCurOperatorM = await ExecuteCurrencyDetailScalarAsync(conn, trans, "MCurOperator", " and ID=" + MCurCode);
                         string SCurOperatorM = await ExecuteCurrencyDetailScalarAsync(conn, trans, "SCurOperator", " and ID=" + MCurCode);
+
+
 
                         var finalAmtRes = GetConvertAmount(MCurCode, FinalMAmount, 1, MCurOperatorM, MToSCurRate, SCurOperatorM, MCurCode, SCurCode);
                         double MCurFinalAmt = finalAmtRes.MCurAmt;
@@ -1133,7 +1153,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                                 cmd.Parameters.Add(new SqlParameter("@code", row.MemoTransCode));
                                 cmd.Parameters.Add(new SqlParameter("@RtnDate", trnDate));
                                 cmd.Parameters.Add(new SqlParameter("@rtncts", 0f));
-                                cmd.Parameters.Add(new SqlParameter("@spcts", -float.Parse(row.Weight.ToString("N3"))));
+                                cmd.Parameters.Add(new SqlParameter("@spcts", -CaratFormatHelper.TruncateFloat(row.Weight, 3)));
                                 cmd.Parameters.Add(new SqlParameter("@Actiontype", "memotosaletest"));
                                 await cmd.ExecuteNonQueryAsync();
                             }
@@ -1199,6 +1219,24 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
             var trnDate = GetPrintDateTime(header, "TrnDate");
             var roundDate = GetPrintDateTime(header, "RoundDate");
+            var dueDate = GetPrintDateTime(header, "DueDate");
+
+            var (stockSymbol, masterSymbol, sCurId) = await ResolvePrintSymbolsAsync(companyId);
+            var (currency, useStockAmount, currencySymbol) = ResolvePrintCurrency(header, stockSymbol, masterSymbol, sCurId);
+
+            double baseRate = GetPrintDouble(header, "BaseRate", "MasterCurrencyRate");
+            if (baseRate <= 0) baseRate = 1;
+
+            double finalAmount = useStockAmount
+                ? GetPrintDouble(header, "StockCurrencyFinalAmount", "FinalPayRecAmount", "NetAmount", "TotAmount")
+                : GetPrintDouble(header, "MasterCurrencyFinalAmount", "FinalMamount", "FinalAmount", "NetMAmount");
+
+            double subTotal = useStockAmount
+                ? GetPrintDouble(header, "TotAmount", "NetAmount")
+                : GetPrintDouble(header, "NetMAmount", "TotAmount");
+
+            double charges = GetPrintDouble(header, "Charges", "FreightCharges", "LabCharges", "OtherCharges");
+            double discount = GetPrintDouble(header, "Discount", "InvDisc", "InvDiscAmt", "NetDiscAmt");
 
             var result = new MixSalePrintViewDto
             {
@@ -1206,6 +1244,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 BillNo = GetPrintString(header, "BillNo"),
                 TrnDate = trnDate?.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture),
                 RoundDate = roundDate?.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture),
+                DueDate = dueDate?.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture),
+                DueDays = short.TryParse(GetPrintString(header, "DueDays"), out var dd) ? dd : (short)0,
                 PartyName = GetPrintString(header, "PartyName"),
                 AddressLine1 = GetPrintString(header, "AddressLine1"),
                 AddressLine2 = GetPrintString(header, "AddressLine2"),
@@ -1214,7 +1254,16 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 SalesPersons = GetPrintString(header, "SalesPersons", "SalesPerson"),
                 ShipVia = GetPrintString(header, "ShipVia"),
                 Tracking = GetPrintString(header, "Tracking"),
-                FinalAmount = GetPrintDouble(header, "FinalAmount"),
+                Currency = currency,
+                CurrencySymbol = currencySymbol,
+                StockSymbol = stockSymbol,
+                MasterSymbol = masterSymbol,
+                Symbol = GetPrintString(header, "Symbol"),
+                BaseRate = baseRate,
+                SubTotal = subTotal,
+                Charges = charges,
+                Discount = discount,
+                FinalAmount = finalAmount > 0 ? finalAmount : subTotal,
                 bnm = GetPrintString(header, "bnm"),
                 BankAccNo = GetPrintString(header, "BankAccNo"),
                 ABARoutingNumber = GetPrintString(header, "ABARoutingNumber"),
@@ -1241,7 +1290,11 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 var pcs = GetPrintInt(rowDict, "Pcs");
                 var carats = GetPrintDouble(rowDict, "Carats");
                 var rate = GetPrintDouble(rowDict, "Rate");
-                var amount = GetPrintDouble(rowDict, "MasterCurrencyAmount", "Amount");
+                
+                // MVC MixPurPrintInv / MixPurchaseController: stock → Amount; master → MasterCurrencyAmount
+                var stockAmt = GetPrintDouble(rowDict, "Amount", "StockCurrencyAmount");
+                var masterAmt = GetPrintDouble(rowDict, "MasterCurrencyAmount");
+                var amount = useStockAmount ? stockAmt : (masterAmt > 0 ? masterAmt : stockAmt);
 
                 // First/main image only (pipe-separated ImagePath → primary). Embed for print.
                 byte[]? imgBytes = imageResult.Item1;
@@ -1268,7 +1321,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     TotalDiamondCarat = GetPrintNullableDouble(rowDict, "TotalDiamondCarat"),
                     Rate = rate,
                     PricePerCarat = rate,
-                    MasterCurrencyAmount = amount,
+                    MasterCurrencyAmount = masterAmt,
+                    StockCurrencyAmount = stockAmt,
                     Amount = amount,
                     StockType = GetPrintString(rowDict, "StockType", "SubType", "Category"),
                     ImageFullPath = imgBytes,
@@ -1276,7 +1330,67 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 });
             }
 
+            if (result.FinalAmount <= 0 && result.Items.Count > 0)
+            {
+                result.FinalAmount = result.Items.Sum(x => x.Amount);
+            }
+            if (result.SubTotal <= 0 && result.Items.Count > 0)
+            {
+                result.SubTotal = result.Items.Sum(x => x.Amount);
+            }
+
             return result;
+        }
+
+        private async Task<(string stockSymbol, string masterSymbol, float sCurId)> ResolvePrintSymbolsAsync(string companyId)
+        {
+            var stockSymbol = await _sqlDataAccess.ExecuteQuerySingle<string>(
+                "SELECT Value FROM TabSettingMaster WHERE Name = 'SSymbol'",
+                new { },
+                companyId) ?? "USD";
+            var masterSymbol = await _sqlDataAccess.ExecuteQuerySingle<string>(
+                "SELECT Value FROM TabSettingMaster WHERE Name = 'MSymbol'",
+                new { },
+                companyId) ?? "INR";
+
+            // MVC SqlDataAccess.GetSCurID → EXEC GetCurrencyDetail @Type='SCurID'
+            var sCurParam = new Dictionary<string, object> { { "@Type", "SCurID" }, { "@Where", "" } };
+            var sCurIdText = await _sqlDataAccess.SelectDataFromSPSingle<string>("GetCurrencyDetail", sCurParam, companyId);
+            float.TryParse(sCurIdText, out var sCurId);
+            return (stockSymbol, masterSymbol, sCurId);
+        }
+
+        private static (string currency, bool useStockAmount, string currencySymbol) ResolvePrintCurrency(
+            IDictionary<string, object> header,
+            string stockSymbol,
+            string masterSymbol,
+            float sCurId)
+        {
+            string? entrySymbol = GetPrintString(header, "Symbol");
+            var curCodeText = GetPrintString(header, "CurCode");
+            float curCode = 0f;
+            if (!string.IsNullOrWhiteSpace(curCodeText))
+            {
+                float.TryParse(curCodeText, NumberStyles.Any, CultureInfo.InvariantCulture, out curCode);
+            }
+
+            if (string.IsNullOrWhiteSpace(entrySymbol) && curCode > 0)
+            {
+                // In Diasense/MVC: if curCode == sCurId (e.g. 7) → stockSymbol (USD); else → masterSymbol (INR)
+                entrySymbol = Math.Abs(curCode - sCurId) < 0.0001f ? stockSymbol : masterSymbol;
+            }
+
+            bool isStock =
+                string.Equals(entrySymbol, stockSymbol, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entrySymbol, "USD", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entrySymbol, "$", StringComparison.OrdinalIgnoreCase)
+                || (curCode > 0 && Math.Abs(curCode - sCurId) < 0.0001f);
+
+            string currency = isStock ? stockSymbol : (entrySymbol ?? masterSymbol);
+            bool useStockAmount = isStock;
+            string currencySymbol = isStock ? (stockSymbol == "USD" ? "$" : stockSymbol) : (masterSymbol == "INR" ? "₹" : masterSymbol);
+
+            return (currency, useStockAmount, currencySymbol);
         }
 
         private static string? ResolvePrintLotNo(IDictionary<string, object>? row)
@@ -1883,13 +1997,38 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             string companyId,
             bool isEdit)
         {
+            string caratFormat = await CaratFormatHelper.GetParcelCaratFormatAsync(conn, trans);
             foreach (var im in items)
             {
                 float rate = im.PurchaseRate != 0 ? im.PurchaseRate : im.Rate;
                 float amount = im.PurAmount != 0 ? im.PurAmount : im.Amount;
-                var amtRes = GetConvertAmount(curCode, amount, mCurBaseRate, mCurOperator, sCurBaseRate, sCurOperator, mCurCode, sCurCode);
 
-                bool isJewellery = IsJewelleryItem(im);
+				Console.WriteLine("========== MIX SALE CURRENCY DEBUG ==========");
+				Console.WriteLine($"Item: {im.LotNo}");
+				Console.WriteLine($"Input Rate: {im.Rate}");
+				Console.WriteLine($"Purchase Rate: {im.PurchaseRate}");
+				Console.WriteLine($"Input Amount: {im.Amount}");
+				Console.WriteLine($"Purchase Amount: {im.PurAmount}");
+
+				Console.WriteLine($"curCode: {curCode}");
+				Console.WriteLine($"mCurCode: {mCurCode}");
+				Console.WriteLine($"sCurCode: {sCurCode}");
+
+				Console.WriteLine($"mCurBaseRate: {mCurBaseRate}");
+				Console.WriteLine($"mCurOperator: {mCurOperator}");
+
+				Console.WriteLine($"sCurBaseRate: {sCurBaseRate}");
+				Console.WriteLine($"sCurOperator: {sCurOperator}");
+
+				Console.WriteLine("==============================================");
+
+
+				var amtRes = GetConvertAmount(curCode, amount, mCurBaseRate, mCurOperator, sCurBaseRate, sCurOperator, mCurCode, sCurCode);
+
+				Console.WriteLine($"Calculated Master Amount: {amtRes.MCurAmt}");
+				Console.WriteLine($"Calculated Stock Amount: {amtRes.SCurAmt}");
+
+				bool isJewellery = IsJewelleryItem(im);
                 string stockType = isJewellery ? "Jewellery" : (im.StockType ?? "Diamond");
                 string lotKey = EscapeSql(im.LotNo);
 
@@ -1912,10 +2051,17 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 string itemName = !string.IsNullOrWhiteSpace(im.ItemName) ? im.ItemName : im.LotNo ?? "";
 
                 float memoTransCode = im.MemoTransCode;
-                float returnCarats = im.RtnCarats != 0 ? im.RtnCarats : im.ReturnCarats;
-                float issueCarats = im.IssueCarats != 0 ? im.IssueCarats : im.Weight;
+                float selectionCarats = CaratFormatHelper.TruncateFloat(im.Weight, caratFormat);
+                float issueCarats = CaratFormatHelper.TruncateFloat(im.IssueCarats != 0 ? im.IssueCarats : selectionCarats, caratFormat);
+                // Rejection is IssueCarats − selection (Weight). Do not store that amount as return carats
+                // when the request only repeated the rejection in RtnCarats / ReturnCarats.
+                float rejection = issueCarats > selectionCarats ? issueCarats - selectionCarats : 0f;
+                float submittedReturn = CaratFormatHelper.TruncateFloat(im.ReturnCarats != 0 ? im.ReturnCarats : im.RtnCarats, caratFormat);
+                bool submittedReturnIsRejection =
+                    rejection > 0f && Math.Abs(submittedReturn - rejection) < 0.0005f;
+                float returnCarats = submittedReturnIsRejection ? 0f : submittedReturn;
                 float back = im.PurchaseBack;
-                float spCarats = memoTransCode != 0 ? float.Parse(im.Weight.ToString("N3")) : 0f;
+                float spCarats = memoTransCode != 0 ? selectionCarats : 0f;
 
                 string pShape = im.PShape ?? im.Shape ?? im.ShapeId ?? "";
                 string pSize = im.PSize ?? im.Size ?? "";
@@ -1923,7 +2069,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 string pColor = im.PColor ?? im.Color ?? im.ColorId ?? "";
                 string pClarity = im.PClarity ?? im.Clarity ?? im.ClarityId ?? "";
 
-                using (var cmd = new SqlCommand("SP_InsertSalePurTran", conn, trans))
+
+				Console.WriteLine($"Saving Rate: {rate}");
+				Console.WriteLine($"Saving StockCurrencyRate: {sCurBaseRate}");
+				Console.WriteLine($"Saving StockCurrencyAmount: {amtRes.SCurAmt}");
+
+				using (var cmd = new SqlCommand("SP_InsertSalePurTran", conn, trans))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.Add(new SqlParameter("@SPdate", salePur.TrnDate));
@@ -1932,13 +2083,13 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     cmd.Parameters.Add(new SqlParameter("@InvCode", maxSPCode));
                     cmd.Parameters.Add(new SqlParameter("@ItemCode", maxItemCode));
                     cmd.Parameters.Add(new SqlParameter("@ItemName", itemName));
-                    cmd.Parameters.Add(new SqlParameter("@Carats", float.Parse(im.Weight.ToString("N3"))));
+                    cmd.Parameters.Add(new SqlParameter("@Carats", selectionCarats));
                     cmd.Parameters.Add(new SqlParameter("@Pcs", im.Pcs));
                     cmd.Parameters.Add(new SqlParameter("@Rate", Convert.ToDouble(rate.ToString("N2"))));
                     cmd.Parameters.Add(new SqlParameter("@MRP", im.MRP));
                     cmd.Parameters.Add(new SqlParameter("@PMRPDown", Convert.ToDouble(back.ToString("N2"))));
-                    cmd.Parameters.Add(new SqlParameter("@ReturnCarats", Convert.ToDouble(returnCarats.ToString("N2"))));
-                    cmd.Parameters.Add(new SqlParameter("@IssueCarats", Convert.ToDouble(issueCarats.ToString("N2"))));
+                    cmd.Parameters.Add(new SqlParameter("@ReturnCarats", (double)returnCarats));
+                    cmd.Parameters.Add(new SqlParameter("@IssueCarats", (double)issueCarats));
                     cmd.Parameters.Add(new SqlParameter("@amount", Convert.ToDouble(amount.ToString("N2"))));
                     cmd.Parameters.Add(new SqlParameter("@ExportNo", im.ExportNo ?? ""));
                     cmd.Parameters.Add(new SqlParameter("@Less1", im.Less1));
@@ -1991,8 +2142,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.Add(new SqlParameter("@code", memoTransCode));
                     cmd.Parameters.Add(new SqlParameter("@RtnDate", salePur.TrnDate));
-                    cmd.Parameters.Add(new SqlParameter("@rtncts", float.Parse(returnCarats.ToString("N3"))));
-                    cmd.Parameters.Add(new SqlParameter("@spcts", float.Parse(im.Weight.ToString("N3"))));
+                    cmd.Parameters.Add(new SqlParameter("@rtncts", returnCarats));
+                    cmd.Parameters.Add(new SqlParameter("@spcts", selectionCarats));
                     cmd.Parameters.Add(new SqlParameter("@Actiontype", memoAction));
                     await cmd.ExecuteNonQueryAsync();
                 }
@@ -2262,11 +2413,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
 
         #endregion
 
-        private static float RoundCarat(float carat)
-        {
-            string carat3D = Convert.ToDouble(carat).ToString("N3");
-            return float.Parse(carat3D);
-        }
+        private static float RoundCarat(float carat) =>
+            CaratFormatHelper.TruncateFloat(carat, 3);
 
         private static float GetSaleCarats(MixSaleItemDto item)
         {
@@ -2350,65 +2498,8 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             bool stockEffected,
             string companyId)
         {
-            if (!stockEffected || items == null || items.Count == 0)
-                return (true, string.Empty);
-
-            Dictionary<string, float>? previousByLot = null;
-            if (editInvCode.HasValue && editInvCode.Value > 0)
-            {
-                previousByLot = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
-                var existing = (await _sqlDataAccess.SelectDataFromSP<MixSaleTranWeightRow>(
-                    "GetSalepurTran_Sale",
-                    new Dictionary<string, object> { { "@Where", $" AND InvCode = {editInvCode.Value}" } },
-                    companyId)).ToList();
-
-                foreach (var ex in existing)
-                {
-                    if (string.IsNullOrWhiteSpace(ex.LotNo)) continue;
-                    float memo = ex.MemoTransCode != 0 ? ex.MemoTransCode : ex.MemoTranCode;
-                    if (memo != 0) continue;
-                    float w = RoundCarat(ex.IssueCarats != 0 ? ex.IssueCarats : (ex.Weight != 0 ? ex.Weight : ex.Carats));
-                    if (previousByLot.ContainsKey(ex.LotNo))
-                        previousByLot[ex.LotNo] += w;
-                    else
-                        previousByLot[ex.LotNo] = w;
-                }
-            }
-
-            var saleByLot = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
-            foreach (var im in items)
-            {
-                if (string.IsNullOrWhiteSpace(im.LotNo)) continue;
-                if (IsJewelleryItem(im)) continue;
-                float memoTransCode = im.MemoTransCode != 0 ? im.MemoTransCode : im.MemoTranCode;
-                if (memoTransCode != 0) continue;
-                float saleCts = GetSaleCarats(im);
-                if (saleCts <= 0) continue;
-                if (saleByLot.ContainsKey(im.LotNo))
-                    saleByLot[im.LotNo] += saleCts;
-                else
-                    saleByLot[im.LotNo] = saleCts;
-            }
-
-            foreach (var kv in saleByLot)
-            {
-                float onHand = await GetLotOnHandCaratsAsync(kv.Key, companyId);
-                if (onHand <= 0)
-                {
-                    var lots = await GetLotDetailAsync(kv.Key, companyId);
-                    onHand = GetLotAvailableWeight(lots.FirstOrDefault());
-                }
-
-                float previous = 0f;
-                if (previousByLot != null && previousByLot.TryGetValue(kv.Key, out var prevW))
-                    previous = RoundCarat(prevW);
-
-                float available = RoundCarat(onHand + previous);
-                if (kv.Value > available + 0.0005f)
-                    return (false, SaleExceedsStockMessage(kv.Key, kv.Value, available));
-            }
-
-            return (true, string.Empty);
+            // Unlocked: selling more carats than stock is allowed with warning
+            return await Task.FromResult((true, string.Empty));
         }
 
         #region Raw row DTOs

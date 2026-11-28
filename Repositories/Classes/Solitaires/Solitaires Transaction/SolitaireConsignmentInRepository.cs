@@ -2,6 +2,7 @@ using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.DTOs;
 using Dia_CoreAPI.DTOs.Solitaires.Solitaires_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Solitaires.Solitaires_Transaction;
+using Dia_CoreAPI.Utilities;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using BasicDataDto = Dia_CoreAPI.DTOs.BasicDataDto;
@@ -249,15 +250,14 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
             SolitaireConsignmentInAddLotRequest item,
             string companyId)
         {
+            string caratFormat = await CaratFormatHelper.GetSolitaireCaratFormatAsync(_sqlDataAccess, companyId);
             double totalCarats = 0;
             double totalAmount = 0;
             double totalMRPAmount = 0;
             double totalAmountWithoutless = 0;
             string alert = "";
 
-            float tempCarat = item.Carat;
-            string carat3D = Convert.ToDouble(tempCarat).ToString("N3");
-            float carat = float.Parse(carat3D);
+            float carat = CaratFormatHelper.TruncateFloat(item.Carat, caratFormat);
 
             if (carat <= 0)
                 throw new Exception("Carat is invalid.");
@@ -316,7 +316,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
 
             foreach (var r in list)
             {
-                double weight = Convert.ToDouble(r.Weight.ToString("N3"));
+                double weight = CaratFormatHelper.TruncateFloat(r.Weight, caratFormat);
                 totalCarats += weight;
                 totalAmount += r.PurAmount;
                 totalMRPAmount += weight * r.MRP;
@@ -325,7 +325,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
 
             return new SolitaireConsignmentInGridViewDto
             {
-                TotalCarats = Math.Round(totalCarats, 3),
+                TotalCarats = CaratFormatHelper.TruncateDouble(totalCarats, caratFormat),
                 TotalAmount = Math.Round(totalAmount, 2),
                 TotalMRPAmount = Math.Round(totalMRPAmount, 3),
                 TotalAmountWithoutless = Math.Round(totalAmountWithoutless, 3),
@@ -771,6 +771,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
         {
             string generateLotno = await GetSettingValueAsync(conn, trans, "GenerateSolitairePurchaseLotno");
             string city = await GetSettingValueAsync(conn, trans, "StoneCity");
+            string caratFormat = await CaratFormatHelper.GetSolitaireCaratFormatAsync(conn, trans);
 
             foreach (var im in items)
             {
@@ -841,8 +842,9 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                         cmd.Parameters.Add(new SqlParameter("@Category", salePur.Category ?? ""));
                         cmd.Parameters.Add(new SqlParameter("@ProductType", salePur.Category ?? ""));
                         cmd.Parameters.Add(new SqlParameter("@Pcs", im.Pcs));
-                        cmd.Parameters.Add(new SqlParameter("@Weight", Convert.ToDouble(im.Weight.ToString("N3"))));
-                        cmd.Parameters.Add(new SqlParameter("@CaratCL", Convert.ToDouble(im.Weight.ToString("N3"))));
+                        float itemWeight = CaratFormatHelper.TruncateFloat(im.Weight, caratFormat);
+                        cmd.Parameters.Add(new SqlParameter("@Weight", (double)itemWeight));
+                        cmd.Parameters.Add(new SqlParameter("@CaratCL", (double)itemWeight));
                         cmd.Parameters.Add(new SqlParameter("@SieveId", ""));
                         cmd.Parameters.Add(new SqlParameter("@ShapeId", im.Shape ?? ""));
                         cmd.Parameters.Add(new SqlParameter("@ColorId", im.Color ?? ""));
@@ -930,7 +932,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                         cmd.Parameters.Add(new SqlParameter("@AdminRemarks", ""));
                         cmd.Parameters.Add(new SqlParameter("@PurchaseRate", Math.Round(PurSCurRate, 4)));
                         cmd.Parameters.Add(new SqlParameter("@PurchaseBack", im.PurchaseBack));
-                        cmd.Parameters.Add(new SqlParameter("@PurchaseCarats", Convert.ToDouble(im.Weight.ToString("N3"))));
+                        cmd.Parameters.Add(new SqlParameter("@PurchaseCarats", (double)CaratFormatHelper.TruncateFloat(im.Weight, caratFormat)));
                         cmd.Parameters.Add(new SqlParameter("@SPPurchaseRate", Math.Round(im.PurchaseRate, 4)));
                         cmd.Parameters.Add(new SqlParameter("@SPPurchaseBack", im.PurchaseBack));
                         cmd.Parameters.Add(new SqlParameter("@PurchaseMRP", im.MRP));
@@ -990,12 +992,14 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                     cmd.Parameters.Add(new SqlParameter("@InvCode", maxSPCode));
                     cmd.Parameters.Add(new SqlParameter("@ItemCode", MaxItemCode));
                     cmd.Parameters.Add(new SqlParameter("@ItemName", itemName));
-                    cmd.Parameters.Add(new SqlParameter("@Carats", float.Parse(im.Weight.ToString("N3"))));
+                    float itemWeight = CaratFormatHelper.TruncateFloat(im.Weight, caratFormat);
+                    float truncatedRtn = CaratFormatHelper.TruncateFloat(rtnCarats, caratFormat);
+                    cmd.Parameters.Add(new SqlParameter("@Carats", itemWeight));
                     cmd.Parameters.Add(new SqlParameter("@Pcs", im.Pcs));
                     cmd.Parameters.Add(new SqlParameter("@Rate", Convert.ToDouble(im.PurchaseRate.ToString("N2"))));
                     cmd.Parameters.Add(new SqlParameter("@MRP", im.MRP));
                     cmd.Parameters.Add(new SqlParameter("@PMRPDown", Convert.ToDouble(im.PurchaseBack.ToString("N2"))));
-                    cmd.Parameters.Add(new SqlParameter("@ReturnCarats", Convert.ToDouble(rtnCarats.ToString("N3"))));
+                    cmd.Parameters.Add(new SqlParameter("@ReturnCarats", (double)truncatedRtn));
                     cmd.Parameters.Add(new SqlParameter("@IssueCarats", 0d));
                     cmd.Parameters.Add(new SqlParameter("@amount", Convert.ToDouble(im.PurAmount.ToString("N2"))));
                     cmd.Parameters.Add(new SqlParameter("@ExportNo", ""));
@@ -1061,7 +1065,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Solitaires.Solitaires_Transaction
                         cmd.Parameters.Add(new SqlParameter("@GraderName", "Selected"));
                         cmd.Parameters.Add(new SqlParameter("@EColorCode", im.Color ?? ""));
                         cmd.Parameters.Add(new SqlParameter("@EClarityCode", im.Clarity ?? ""));
-                        cmd.Parameters.Add(new SqlParameter("@carats", Convert.ToDouble(im.Weight.ToString("N3"))));
+                        cmd.Parameters.Add(new SqlParameter("@carats", (double)CaratFormatHelper.TruncateFloat(im.Weight, caratFormat)));
                         cmd.Parameters.Add(new SqlParameter("@rate", Math.Round(AkingSCurRate, 4)));
                         cmd.Parameters.Add(new SqlParameter("@ActualRate", Math.Round(ActualSCurRate, 4)));
                         cmd.Parameters.Add(new SqlParameter("@amount", Math.Round(im.PurAmount, 4)));

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Dia_CoreAPI.DataAccess;
 using Dia_CoreAPI.Models;
 using Dia_CoreAPI.Repositories.Interfaces;
+using Dia_CoreAPI.Utilities;
 using Microsoft.Data.SqlClient;
 
 namespace Dia_CoreAPI.Repositories.Classes
@@ -62,28 +63,38 @@ namespace Dia_CoreAPI.Repositories.Classes
                 await clientConnection.OpenAsync();
             }
 
-            using var reader = await command.ExecuteReaderAsync();
-            if (await reader.ReadAsync())
+            LoginResponseModel? user = null;
+            using (var reader = await command.ExecuteReaderAsync())
             {
-                string dbPassword = reader["UserPassword"]?.ToString() ?? string.Empty;
-                if (dbPassword != password)
+                if (await reader.ReadAsync())
                 {
-                    return (null, "Invalid Password");
-                }
+                    string dbPassword = reader["UserPassword"]?.ToString() ?? string.Empty;
+                    if (dbPassword != password)
+                    {
+                        return (null, "Invalid Password");
+                    }
 
-                var user = new LoginResponseModel
-                {
-                    UserID = Convert.ToInt32(reader["UserID"]),
-                    UserName = reader["UserName"]?.ToString() ?? string.Empty,
-                    FirstName = reader["FirstName"]?.ToString() ?? string.Empty,
-                    LastName = reader["LastName"]?.ToString() ?? string.Empty,
-                    Title = reader["Title"]?.ToString() ?? string.Empty,
-                    UserTypeId = Convert.ToInt32(reader["UserTypeId"]),
-                    UserRole = reader["UserRoleName"]?.ToString() ?? string.Empty,
-                    CompanyID = Convert.ToInt32(reader["CompanyID"]),
-                    ProfileImage = reader["ProfileImage"]?.ToString() ?? string.Empty
-                };
-                
+                    user = new LoginResponseModel
+                    {
+                        UserID = Convert.ToInt32(reader["UserID"]),
+                        UserName = reader["UserName"]?.ToString() ?? string.Empty,
+                        FirstName = reader["FirstName"]?.ToString() ?? string.Empty,
+                        LastName = reader["LastName"]?.ToString() ?? string.Empty,
+                        Title = reader["Title"]?.ToString() ?? string.Empty,
+                        UserTypeId = Convert.ToInt32(reader["UserTypeId"]),
+                        UserRole = reader["UserRoleName"]?.ToString() ?? string.Empty,
+                        CompanyID = Convert.ToInt32(reader["CompanyID"]),
+                        ProfileImage = reader["ProfileImage"]?.ToString() ?? string.Empty
+                    };
+                }
+            }
+
+            if (user != null)
+            {
+                var (defaultFmt, solitaireFmt, parcelFmt) = await CaratFormatHelper.GetLoginCaratFormatsAsync(clientConnection);
+                user.CaratFormatNew = defaultFmt;
+                user.SolitaireCaratFormat = solitaireFmt;
+                user.ParcelCaratFormat = parcelFmt;
                 return (user, string.Empty);
             }
 

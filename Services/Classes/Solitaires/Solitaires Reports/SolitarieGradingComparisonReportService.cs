@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -26,10 +26,19 @@ namespace Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports
 
         public async Task<object> GetReportAsync(GradingComparisonReportFilterDto filter, string companyId)
         {
-            var rows = await _repo.GetReportAsync(filter, companyId);
+            var rows = (await _repo.GetReportAsync(filter, companyId)).ToList();
 
             if (filter?.LabWeightDifference == true)
-                return BuildLabWeightDiffRows(rows);
+            {
+                var lotNos = rows
+                    .Select(GetLotKey)
+                    .Where(k => !string.IsNullOrWhiteSpace(k))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                var lotsWithDiffEntry = await _repo.GetLotsWithLabWeightDiffEntryAsync(lotNos, companyId);
+                return BuildLabWeightDiffRows(rows, lotsWithDiffEntry);
+            }
 
             return rows;
         }
@@ -42,11 +51,14 @@ namespace Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports
         }
 
         /// <summary>
-        /// Builds Lab Weight Difference rows from grading comparison pairs
-        /// (first row carats = Old Weight, second row carats = New Weight per LotNo).
+        /// Builds Lab Weight Difference rows from grading comparison pairs.
+        /// Uses LabW as Old Weight when a Lab Weight Diff Entry exists for the LotNo;
+        /// otherwise uses the original first-row Carats as Old Weight.
+        /// Second-row Carats is New Weight.
         /// </summary>
         internal static List<LabWeightDiffRowDto> BuildLabWeightDiffRows(
-            IEnumerable<GradingComparisonReportRowDto> reportRows)
+            IEnumerable<GradingComparisonReportRowDto> reportRows,
+            ISet<string>? lotsWithDiffEntry = null)
         {
             var result = new List<LabWeightDiffRowDto>();
             if (reportRows == null)
@@ -68,16 +80,23 @@ namespace Dia_CoreAPI.Services.Classes.Solitaires.Solitaires_Reports
                 if (string.IsNullOrWhiteSpace(lotKey) || group.Count < 2)
                     continue;
 
-                var oldWeight = ParseCarats(group[0].carats);
-                var newWeight = ParseCarats(group[1].carats);
+                var hasEntry = lotsWithDiffEntry != null && lotsWithDiffEntry.Contains(lotKey);
+                var rawLabW = group.Select(r => r.LabW).FirstOrDefault(v => !string.IsNullOrWhiteSpace(v));
+                var labW = Math.Round(ParseCarats(rawLabW), 3, MidpointRounding.AwayFromZero);
+                var originalCarats = Math.Round(ParseCarats(group[0].carats), 3, MidpointRounding.AwayFromZero);
+
+                var oldWeight = hasEntry ? labW : originalCarats;
+                var newWeight = Math.Round(ParseCarats(group[1].carats), 3, MidpointRounding.AwayFromZero);
                 var difference = Math.Round(Math.Abs(oldWeight - newWeight), 3, MidpointRounding.AwayFromZero);
 
                 result.Add(new LabWeightDiffRowDto
                 {
                     LotNo = lotKey,
-                    OldWeight = Math.Round(oldWeight, 3, MidpointRounding.AwayFromZero),
-                    NewWeight = Math.Round(newWeight, 3, MidpointRounding.AwayFromZero),
-                    Difference = difference
+                    LabW = labW,
+                    OldWeight = oldWeight,
+                    NewWeight = newWeight,
+                    Difference = difference,
+                    HasLabWeightDiffEntry = hasEntry
                 });
             }
 
