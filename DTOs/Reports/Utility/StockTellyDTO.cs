@@ -38,6 +38,7 @@ namespace Dia_CoreAPI.DTOs.Reports.Utility
         public int Pcs { get; set; }
         public double carats { get; set; }
         public double OnHand { get; set; }
+        public double MemoOut { get; set; }
         public double Rate { get; set; }
         public double Amount { get; set; }
     }

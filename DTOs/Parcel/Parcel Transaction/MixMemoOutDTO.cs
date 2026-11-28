@@ -262,6 +262,9 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? AddressLine1 { get; set; }
         public string? AddressLine2 { get; set; }
         public string? AddressLine3 { get; set; }
+        public string? CityCode { get; set; }
+        public string? ZipCode { get; set; }
+        public string? StateCode { get; set; }
         public string? ShipVia { get; set; }
         public string? Tracking { get; set; }
         public string? SalesPerson { get; set; }
@@ -286,5 +289,15 @@ namespace Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction
         public string? text { get; set; }
         public string? name { get; set; }
         public string? TextName { get; set; }
+    }
+
+    public class MixMemoOutPartyAddressDto
+    {
+        public string? CityCode { get; set; }
+        public string? City { get; set; }
+        public string? StateCode { get; set; }
+        public string? State { get; set; }
+        public string? Zipcode { get; set; }
+        public string? ZipCode { get; set; }
     }
 }
