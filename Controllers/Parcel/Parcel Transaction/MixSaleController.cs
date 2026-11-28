@@ -98,7 +98,7 @@ namespace Dia_CoreAPI.Controllers.Parcel.Parcel_Transaction
                     return Ok(new { success = false, Data = "You are not authorized to perform this task." });
 
                 var result = await _service.AddAsync(request, UserId, CompanyId);
-                return Ok(new { success = result.Success, Data = result.Message });
+                return Ok(new { success = result.Success, Data = result.Message, code = result.Code, invNo = result.InvNo });
             }
             catch (Exception ex)
             {

@@ -828,7 +828,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             };
         }
 
-        public async Task<(bool Success, string Message)> AddAsync(
+        public async Task<(bool Success, string Message, int Code, string InvNo)> AddAsync(
             MixSaleHeaderDto salePur,
             List<MixSaleItemDto> items,
             string userId,
@@ -886,7 +886,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                         if (!weightCheck.Ok)
                         {
                             trans.Rollback();
-                            return (false, weightCheck.Message);
+                            return (false, weightCheck.Message, 0, string.Empty);
                         }
 
                         await InsertSalePurAsync(
@@ -912,12 +912,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                         }
 
                         trans.Commit();
-                        return (true, "Mix Sale Record Saved.");
+                        return (true, "Mix Sale Record Saved.", MaxSPCode, MaxInvNo.ToString());
                     }
                     catch (Exception ex)
                     {
                         trans.Rollback();
-                        return (false, ex.Message);
+                        return (false, ex.Message, 0, string.Empty);
                     }
                 }
             }
