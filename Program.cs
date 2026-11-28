@@ -39,6 +39,10 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// QuestPDF Community License
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+QuestPDF.Settings.ThrowOnMissingFontFamilies = false;
+
 // Google Drive (same credential file / folder settings pattern as MVC)
 GoogleDriveHelper.Configure(
     builder.Environment.ContentRootPath,
@@ -138,6 +142,7 @@ builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Tra
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction.IMixConsignmentReturnService, Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction.MixConsignmentReturnService>();
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction.IMixSaleRepository, Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction.MixSaleRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction.IMixSaleService, Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction.MixSaleService>();
+builder.Services.AddScoped<IDocumentEmailService, DocumentEmailService>();
 builder.Services.AddScoped<Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction.IMixMemoOutReturnRepository, Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction.MixMemoOutReturnRepository>();
 builder.Services.AddScoped<Dia_CoreAPI.Services.Interfaces.Parcel.Parcel_Transaction.IMixMemoOutReturnService, Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction.MixMemoOutReturnService>();
 

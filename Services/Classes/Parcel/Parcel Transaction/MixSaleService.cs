@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 using Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction;
@@ -39,7 +39,7 @@ namespace Dia_CoreAPI.Services.Classes.Parcel.Parcel_Transaction
         public Task<MixSaleGridViewDto> GetBackFromExcelAsync(MixSaleGetBackFromExcelRequest request, string companyId)
             => _repository.GetBackFromExcelAsync(request, companyId);
 
-        public Task<(bool Success, string Message)> AddAsync(MixSaleSaveRequest request, string userId, string companyId)
+        public Task<(bool Success, string Message, int Code, string InvNo)> AddAsync(MixSaleSaveRequest request, string userId, string companyId)
             => _repository.AddAsync(request.SalePur, request.Items ?? new(), userId, companyId);
 
         public Task<(bool Success, string Message)> EditAsync(MixSaleSaveRequest request, string userId, string companyId)

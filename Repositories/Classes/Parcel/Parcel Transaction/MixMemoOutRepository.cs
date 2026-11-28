@@ -379,7 +379,7 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
             throw new Exception("Enter AvgBack Or rate");
         }
 
-        public async Task<(bool Success, string Message)> AddAsync(
+        public async Task<(bool Success, string Message, int Code, string InvNo)> AddAsync(
             MixMemoOutHeaderDto salePur,
             List<MixMemoOutItemDto> items,
             string userId,
@@ -405,12 +405,12 @@ namespace Dia_CoreAPI.Repositories.Classes.Parcel.Parcel_Transaction
                 await ProcessMemoOutItemsAsync(conn, trans, salePur, items, maxSPCode, ctx, usercode, userId, companyId, isEdit: false);
 
                 trans.Commit();
-                return (true, "Mix Memo Out Record Saved.");
+                return (true, "Mix Memo Out Record Saved.", maxSPCode, maxInvNo.ToString());
             }
             catch (Exception ex)
             {
                 trans.Rollback();
-                return (false, ex.Message);
+                return (false, ex.Message, 0, string.Empty);
             }
         }
 

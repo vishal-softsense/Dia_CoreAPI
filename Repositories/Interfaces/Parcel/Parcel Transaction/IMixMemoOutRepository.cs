@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Dia_CoreAPI.DTOs.Parcel.Parcel_Transaction;
 
@@ -14,7 +14,7 @@ namespace Dia_CoreAPI.Repositories.Interfaces.Parcel.Parcel_Transaction
         Task<MixMemoOutGridViewDto> AddItemInGridAsync(MixMemoOutAddLotRequest request, string companyId);
         Task<MixMemoOutGridViewDto> GetItemFromListAsync(MixMemoOutGetItemFromListRequest request, string companyId);
         Task<MixMemoOutGridViewDto> RefreshBackAsync(MixMemoOutRefreshBackRequest request, string companyId);
-        Task<(bool Success, string Message)> AddAsync(MixMemoOutHeaderDto header, List<MixMemoOutItemDto> items, string userId, string companyId);
+        Task<(bool Success, string Message, int Code, string InvNo)> AddAsync(MixMemoOutHeaderDto header, List<MixMemoOutItemDto> items, string userId, string companyId);
         Task<(bool Success, string Message)> EditAsync(MixMemoOutHeaderDto header, List<MixMemoOutItemDto> items, string userId, string companyId);
         Task<(bool Success, string Message)> DeleteAsync(int id, string userId, string companyId);
         Task<MixMemoOutPrintViewDto?> GetPrintViewAsync(string invNo, string companyId);
